@@ -1,4 +1,4 @@
-use crate::memory::WRAM;
+use crate::{cpu_internals::ProgramStatusWord, memory::WRAM};
 
 ///
 /// Tracks the most recent activity of the bus for the purposes of timing
@@ -75,7 +75,7 @@ pub struct CpuV810 {
     /// ID 5: Program Status Word
     ///
     /// Contains status flags and the interrupt masking level.
-    psw: u32,
+    psw: ProgramStatusWord,
 
     /// ID 6: Processor ID Register
     ///
@@ -119,7 +119,7 @@ impl CpuV810 {
             fepc: 0,
             fepse: 0,
             ecr: 0,
-            psw: 0,
+            psw: ProgramStatusWord::new(),
             pir: 0,
             tkcw: 0,
             chch: 0,
@@ -152,7 +152,7 @@ impl CpuV810 {
 
                 self.set_gen_purpose_reg(reg2_index, sign_extend(immediate as u32, 5));
 
-                return (1, BusActivity::Standard);
+                (1, BusActivity::Standard)
             }
             0b00_0000 => {
                 // MOV Register
@@ -162,7 +162,7 @@ impl CpuV810 {
 
                 self.set_gen_purpose_reg(reg2_index, reg1);
 
-                return (1, BusActivity::Standard);
+                (1, BusActivity::Standard)
             }
             0b10_1000 => {
                 // MOVEA Add
@@ -174,10 +174,10 @@ impl CpuV810 {
 
                 self.set_gen_purpose_reg(
                     reg2_index,
-                    self.general_purpose_reg[reg1_index] + immediate,
+                    self.general_purpose_reg[reg1_index].wrapping_add(immediate),
                 );
 
-                return (1, BusActivity::Standard);
+                (1, BusActivity::Standard)
             }
             0b10_1111 => {
                 // MOVHI Add upper immediate
@@ -188,20 +188,20 @@ impl CpuV810 {
 
                 self.set_gen_purpose_reg(
                     reg2_index,
-                    self.general_purpose_reg[reg1_index] + (immediate as u32) << 16,
+                    self.general_purpose_reg[reg1_index].wrapping_add((immediate as u32) << 16),
                 );
 
-                return (1, BusActivity::Standard);
+                (1, BusActivity::Standard)
             }
 
             // Load and Input
             0b11_1000 => {
                 // IN.B Input single byte
-                self.load_instruction_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 0)
+                self.load_inst_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 0)
             }
             0b11_1001 => {
                 // IN.H Input 16 bit word
-                self.load_instruction_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 0)
+                self.load_inst_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 0)
             }
             0b11_1011 | 0b11_0011 => {
                 // IN.W/LD.W Load word
@@ -210,21 +210,21 @@ impl CpuV810 {
                 let disp = self.fetch_instruction_word(wram) as u32;
                 let disp = sign_extend(disp, 16);
 
-                let address = self.general_purpose_reg[reg1_index] + disp;
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
                 let value = wram.get_u32(address);
 
                 self.set_gen_purpose_reg(reg2_index, value);
 
-                return (self.load_inst_cycle_count(), BusActivity::Load);
+                (self.load_inst_cycle_count(), BusActivity::Load)
             }
             0b11_0000 => {
                 // LD.B Load single byte (sign extend)
-                self.load_instruction_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 8)
+                self.load_inst_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 8)
             }
             0b11_0001 => {
                 // LD.B Load 16 bit word (sign extend)
-                self.load_instruction_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
+                self.load_inst_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
             }
 
             // Store and Output
@@ -235,14 +235,14 @@ impl CpuV810 {
                 let disp = self.fetch_instruction_word(wram) as u32;
                 let disp = sign_extend(disp, 16);
 
-                let address = self.general_purpose_reg[reg1_index] + disp;
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
                 wram.set_u8(address, (self.general_purpose_reg[reg2_index] & 0xFF) as u8);
 
-                return (
+                (
                     self.store_inst_cycle_count(),
                     self.incrementing_store_bus_activity(),
-                );
+                )
             }
             0b11_1101 | 0b11_0101 => {
                 // OUT.H/ST.H Store 16 bit word
@@ -251,17 +251,17 @@ impl CpuV810 {
                 let disp = self.fetch_instruction_word(wram) as u32;
                 let disp = sign_extend(disp, 16);
 
-                let address = self.general_purpose_reg[reg1_index] + disp;
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
                 wram.set_u16(
                     address,
                     (self.general_purpose_reg[reg2_index] & 0xFFFF) as u16,
                 );
 
-                return (
+                (
                     self.store_inst_cycle_count(),
                     self.incrementing_store_bus_activity(),
-                );
+                )
             }
             0b11_1111 | 0b11_0111 => {
                 // OUT.W/ST.W Store word
@@ -270,14 +270,113 @@ impl CpuV810 {
                 let disp = self.fetch_instruction_word(wram) as u32;
                 let disp = sign_extend(disp, 16);
 
-                let address = self.general_purpose_reg[reg1_index] + disp;
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
                 wram.set_u32(address, self.general_purpose_reg[reg2_index]);
 
-                return (
+                (
                     self.store_inst_cycle_count(),
                     self.incrementing_store_bus_activity(),
-                );
+                )
+            }
+
+            // Arithmetic
+            0b01_0001 => {
+                // ADD immediate
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
+                let immediate = sign_extend(immediate as u32, 5);
+
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                self.add_inst(reg2, immediate, reg2_index);
+
+                (1, BusActivity::Standard)
+            }
+            0b00_0001 => {
+                // ADD reg
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+                let reg1 = self.general_purpose_reg[reg1_index];
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                self.add_inst(reg1, reg2, reg2_index)
+            }
+            0b10_1001 => {
+                // ADD 16 bit immediate
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+                let immediate = sign_extend(self.fetch_instruction_word(wram) as u32, 16);
+
+                let reg1 = self.general_purpose_reg[reg1_index];
+
+                self.add_inst(reg1, immediate, reg2_index)
+            }
+            0b01_0011 => {
+                // CMP immediate
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
+                let immediate = sign_extend(immediate as u32, 5);
+
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                self.sub_inst(reg2, immediate, None)
+            }
+            0b00_0011 => {
+                // CMP register
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+                let reg1 = self.general_purpose_reg[reg1_index];
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                self.sub_inst(reg2, reg1, None)
+            }
+            0b00_1001 => {
+                // DIV
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+                let reg1 = self.general_purpose_reg[reg1_index];
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                if reg1 == 0 {
+                    todo!("Handle divide by zero exception");
+                }
+
+                let (result, remainder, overflow) = if reg2 == 0x8000_0000 && reg1 == 0xFFFF_FFFF {
+                    // Special case to set overflow
+                    (0x8000_0000, 0, true)
+                } else {
+                    let reg1 = reg1 as i32;
+                    let reg2 = reg2 as i32;
+
+                    let remainder = (reg2 % reg1) as u32;
+                    let result = (reg2 / reg1) as u32;
+
+                    (result, remainder, false)
+                };
+
+                // Remainder
+                self.general_purpose_reg[30] = remainder;
+                self.set_gen_purpose_reg(reg2_index, result);
+                self.psw.update_alu_flags(result, overflow, None);
+
+                (38, BusActivity::Standard)
+            }
+            0b00_1011 => {
+                // DIVU (unsigned)
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+                let reg1 = self.general_purpose_reg[reg1_index];
+                let reg2 = self.general_purpose_reg[reg2_index];
+
+                if reg1 == 0 {
+                    todo!("Handle divide by zero exception");
+                }
+
+                let remainder = reg2 % reg1;
+                let result = reg2 / reg1;
+                self.general_purpose_reg[30] = remainder;
+                self.set_gen_purpose_reg(reg2_index, result);
+                self.psw.update_alu_flags(result, false, None);
+
+                (36, BusActivity::Standard)
             }
         }
     }
@@ -300,7 +399,7 @@ impl CpuV810 {
         self.general_purpose_reg[index] = value;
     }
 
-    fn load_instruction_16(
+    fn load_inst_16(
         &mut self,
         wram: &mut WRAM,
         instruction: u16,
@@ -313,7 +412,7 @@ impl CpuV810 {
         let disp = self.fetch_instruction_word(wram) as u32;
         let disp = sign_extend(disp, 16);
 
-        let address = self.general_purpose_reg[reg1_index] + disp;
+        let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
         let address = address & address_mask;
 
         let mut value = wram.get_u16(address);
@@ -331,7 +430,40 @@ impl CpuV810 {
 
         self.set_gen_purpose_reg(reg2_index, value);
 
-        return (self.load_inst_cycle_count(), BusActivity::Load);
+        (self.load_inst_cycle_count(), BusActivity::Load)
+    }
+
+    fn add_inst(&mut self, a: u32, b: u32, store_reg_index: usize) -> (u32, BusActivity) {
+        let (result, carry) = a.overflowing_add(b);
+
+        // Taken from rustual-boy
+        let overflow = ((!(a ^ b) & (b ^ result)) & 0x80000000) != 0;
+
+        self.psw.update_alu_flags(result, overflow, Some(carry));
+
+        self.set_gen_purpose_reg(store_reg_index, result);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn sub_inst(
+        &mut self,
+        lhs: u32,
+        rhs: u32,
+        store_reg_index: Option<usize>,
+    ) -> (u32, BusActivity) {
+        let (result, carry) = lhs.overflowing_sub(rhs);
+
+        // Taken from rustual-boy
+        let overflow = (((lhs ^ rhs) & !(rhs ^ result)) & 0x80000000) != 0;
+
+        self.psw.update_alu_flags(result, overflow, Some(carry));
+
+        if let Some(store_reg_index) = store_reg_index {
+            self.set_gen_purpose_reg(store_reg_index, result);
+        }
+
+        (1, BusActivity::Standard)
     }
 
     fn load_inst_cycle_count(&self) -> u32 {
