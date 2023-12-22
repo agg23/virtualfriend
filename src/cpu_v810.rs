@@ -1,4 +1,7 @@
-use crate::{cpu_internals::ProgramStatusWord, memory::WRAM};
+use bitvec::prelude::Lsb0;
+use bitvec::{array::BitArray, order::LocalBits};
+
+use crate::{bus::Bus, cpu_internals::ProgramStatusWord};
 
 ///
 /// Tracks the most recent activity of the bus for the purposes of timing
@@ -137,8 +140,8 @@ impl CpuV810 {
     ///
     /// Returns the number of cycles consumed
     ///
-    pub fn step(&mut self, wram: &mut WRAM) -> (u32, BusActivity) {
-        let instruction = self.fetch_instruction_word(wram);
+    pub fn step(&mut self, bus: &mut Bus) -> (u32, BusActivity) {
+        let instruction = self.fetch_instruction_word(bus);
 
         let opcode = (instruction >> 11) & 0x1F;
 
@@ -169,7 +172,7 @@ impl CpuV810 {
                 // Don't modify flags
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
                 let immediate = sign_extend(immediate as u32, 16);
 
                 self.set_gen_purpose_reg(
@@ -184,7 +187,7 @@ impl CpuV810 {
                 // Don't modify flags
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
 
                 self.set_gen_purpose_reg(
                     reg2_index,
@@ -197,22 +200,22 @@ impl CpuV810 {
             // Load and Input
             0b11_1000 => {
                 // IN.B Input single byte
-                self.load_inst_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 0)
+                self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 0)
             }
             0b11_1001 => {
                 // IN.H Input 16 bit word
-                self.load_inst_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 0)
+                self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 0)
             }
             0b11_1011 | 0b11_0011 => {
                 // IN.W/LD.W Load word
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let disp = self.fetch_instruction_word(wram) as u32;
+                let disp = self.fetch_instruction_word(bus) as u32;
                 let disp = sign_extend(disp, 16);
 
                 let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
-                let value = wram.get_u32(address);
+                let value = bus.get_u32(address);
 
                 self.set_gen_purpose_reg(reg2_index, value);
 
@@ -220,11 +223,11 @@ impl CpuV810 {
             }
             0b11_0000 => {
                 // LD.B Load single byte (sign extend)
-                self.load_inst_16(wram, instruction, 0xFFFF_FFFF, 0xFF, 8)
+                self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 8)
             }
             0b11_0001 => {
                 // LD.B Load 16 bit word (sign extend)
-                self.load_inst_16(wram, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
+                self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
             }
 
             // Store and Output
@@ -232,12 +235,12 @@ impl CpuV810 {
                 // OUT.B/ST.B Store byte
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let disp = self.fetch_instruction_word(wram) as u32;
+                let disp = self.fetch_instruction_word(bus) as u32;
                 let disp = sign_extend(disp, 16);
 
                 let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
-                wram.set_u8(address, (self.general_purpose_reg[reg2_index] & 0xFF) as u8);
+                bus.set_u8(address, (self.general_purpose_reg[reg2_index] & 0xFF) as u8);
 
                 (
                     self.store_inst_cycle_count(),
@@ -248,12 +251,12 @@ impl CpuV810 {
                 // OUT.H/ST.H Store 16 bit word
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let disp = self.fetch_instruction_word(wram) as u32;
+                let disp = self.fetch_instruction_word(bus) as u32;
                 let disp = sign_extend(disp, 16);
 
                 let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
-                wram.set_u16(
+                bus.set_u16(
                     address,
                     (self.general_purpose_reg[reg2_index] & 0xFFFF) as u16,
                 );
@@ -267,12 +270,12 @@ impl CpuV810 {
                 // OUT.W/ST.W Store word
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let disp = self.fetch_instruction_word(wram) as u32;
+                let disp = self.fetch_instruction_word(bus) as u32;
                 let disp = sign_extend(disp, 16);
 
                 let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
-                wram.set_u32(address, self.general_purpose_reg[reg2_index]);
+                bus.set_u32(address, self.general_purpose_reg[reg2_index]);
 
                 (
                     self.store_inst_cycle_count(),
@@ -304,7 +307,7 @@ impl CpuV810 {
             0b10_1001 => {
                 // ADD 16 bit immediate
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-                let immediate = sign_extend(self.fetch_instruction_word(wram) as u32, 16);
+                let immediate = sign_extend(self.fetch_instruction_word(bus) as u32, 16);
 
                 let reg1 = self.general_purpose_reg[reg1_index];
 
@@ -439,7 +442,7 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(wram) as u32;
+                let immediate = self.fetch_instruction_word(bus) as u32;
 
                 let result = reg1 & (immediate as u32);
 
@@ -483,7 +486,7 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(wram) as u32;
+                let immediate = self.fetch_instruction_word(bus) as u32;
 
                 let result = reg1 | immediate;
 
@@ -497,7 +500,7 @@ impl CpuV810 {
                 let (_, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
 
                 self.sar_inst(reg2, immediate as u32, reg2_index)
             }
@@ -515,7 +518,7 @@ impl CpuV810 {
                 let (_, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
 
                 self.shl_inst(reg2, immediate as u32, reg2_index)
             }
@@ -533,7 +536,7 @@ impl CpuV810 {
                 let (_, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
 
                 self.shr_inst(reg2, immediate as u32, reg2_index)
             }
@@ -565,7 +568,7 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(wram);
+                let immediate = self.fetch_instruction_word(bus);
 
                 let result = reg1 ^ (immediate as u32);
 
@@ -657,7 +660,7 @@ impl CpuV810 {
             }
             0b10_1011 => {
                 // JAL Jump and link
-                self.jump(wram, instruction, true)
+                self.jump(bus, instruction, true)
             }
             0b00_0110 => {
                 // JMP Jump register
@@ -671,7 +674,7 @@ impl CpuV810 {
             }
             0b10_1010 => {
                 // JR Jump relative
-                self.jump(wram, instruction, false)
+                self.jump(bus, instruction, false)
             }
             0b01_1100 => {
                 // LDSR Load to system register
@@ -743,11 +746,12 @@ impl CpuV810 {
                 // TRAP
                 todo!("Raise exception and set restore PC");
             }
+
             0b11_1110 => {
                 // Floating point operations
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-                let second_instruction = self.fetch_instruction_word(wram);
+                let second_instruction = self.fetch_instruction_word(bus);
                 let sub_opcode = second_instruction >> 10;
 
                 let reg1_int = self.general_purpose_reg[reg1_index];
@@ -856,16 +860,32 @@ impl CpuV810 {
                         // TODO: This is a range of 9-14 cycles
                         (14, BusActivity::Standard)
                     }
-                    _ => {
-                        todo!()
-                    }
+                    _ => panic!("Invalid float instruction {sub_opcode:x}"),
                 }
             }
+
+            0b01_1111 => {
+                // Bit string operations
+                let (sub_opcode, _) = extract_reg1_2_index(instruction);
+
+                match sub_opcode {
+                    0b0_1001 => {
+                        // ANDBSU AND bit string
+                        self.bit_string_process_upwards(bus, |source, dest| *dest = source & *dest);
+                    }
+                    _ => panic!("Invalid bit string instruction {sub_opcode:x}"),
+                }
+
+                // TODO: This should be updated from the table in the V810 manual
+                (49, BusActivity::Standard)
+            }
+
+            _ => panic!("Invalid opcode {opcode:x}"),
         }
     }
 
-    fn fetch_instruction_word(&mut self, wram: &mut WRAM) -> u16 {
-        let instruction = wram.get_u16(self.pc);
+    fn fetch_instruction_word(&mut self, bus: &mut Bus) -> u16 {
+        let instruction = bus.get_u16(self.pc);
 
         // Increment PC by 2 bytes
         self.pc += 2;
@@ -884,7 +904,7 @@ impl CpuV810 {
 
     fn load_inst_16(
         &mut self,
-        wram: &mut WRAM,
+        bus: &mut Bus,
         instruction: u16,
         address_mask: u32,
         value_mask: u16,
@@ -892,13 +912,13 @@ impl CpuV810 {
     ) -> (u32, BusActivity) {
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-        let disp = self.fetch_instruction_word(wram) as u32;
+        let disp = self.fetch_instruction_word(bus) as u32;
         let disp = sign_extend(disp, 16);
 
         let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
         let address = address & address_mask;
 
-        let mut value = wram.get_u16(address);
+        let mut value = bus.get_u16(address);
 
         if address & 1 != 0 {
             // High byte in word
@@ -1031,9 +1051,9 @@ impl CpuV810 {
         }
     }
 
-    fn jump(&mut self, wram: &mut WRAM, instruction: u16, save_pc: bool) -> (u32, BusActivity) {
+    fn jump(&mut self, bus: &mut Bus, instruction: u16, save_pc: bool) -> (u32, BusActivity) {
         let upper_disp = (instruction & 0x3FF) as u32;
-        let disp = self.fetch_instruction_word(wram) as u32;
+        let disp = self.fetch_instruction_word(bus) as u32;
 
         let disp = disp | (upper_disp << 16);
 
@@ -1044,6 +1064,63 @@ impl CpuV810 {
         self.pc = self.pc + disp;
 
         (3, BusActivity::Standard)
+    }
+
+    fn bit_string_process_upwards(&mut self, bus: &mut Bus, func: impl Fn(bool, &mut bool)) {
+        let mut dest_offset = self.general_purpose_reg[26] & 0x3F;
+        self.set_gen_purpose_reg(26, dest_offset);
+
+        let mut source_offset = self.general_purpose_reg[27] & 0x3F;
+        self.set_gen_purpose_reg(27, source_offset);
+
+        let mut length = self.general_purpose_reg[28];
+
+        let mut dest_addr = self.general_purpose_reg[29] & 0xFFFF_FFFC;
+        self.set_gen_purpose_reg(29, dest_addr);
+
+        let mut source_addr = self.general_purpose_reg[30] & 0xFFFF_FFFC;
+        self.set_gen_purpose_reg(30, source_addr);
+
+        while length > 0 {
+            // TODO: This fetches way more often. Unsure how costly this will be
+            let source_word = BitArray::<_, Lsb0>::new(bus.get_u32(source_addr));
+            let mut dest_word = BitArray::<_, Lsb0>::new(bus.get_u32(dest_addr));
+
+            let source_bit = source_word.get(source_offset as usize).unwrap();
+            let mut dest_bit = dest_word.get_mut(dest_offset as usize).unwrap();
+
+            let func = |source: bool, dest: &mut bool| *dest = source & *dest;
+
+            func(*source_bit, &mut dest_bit);
+
+            // Make sure we can access borrowed data
+            drop(dest_bit);
+            bus.set_u32(dest_addr, dest_word.data);
+
+            if source_offset >= 31 {
+                source_offset = 0;
+                // Increase by a word
+                source_addr += 4;
+            } else {
+                source_offset += 1;
+            }
+
+            if dest_offset >= 31 {
+                dest_offset = 0;
+                // Increase by a word
+                dest_addr += 4;
+            } else {
+                dest_offset += 1;
+            }
+
+            length -= 1;
+        }
+
+        // TODO: Do these need to be updated constantly and are interrupts allowed to interrupt this?
+        self.set_gen_purpose_reg(26, dest_offset);
+        self.set_gen_purpose_reg(27, source_offset);
+        self.set_gen_purpose_reg(29, dest_addr);
+        self.set_gen_purpose_reg(30, source_addr);
     }
 
     fn load_inst_cycle_count(&self) -> u32 {
