@@ -6,12 +6,18 @@ pub struct ProgramStatusWord {
     pub overflow: bool,
     pub carry: bool,
 
-    float_precision: bool,
-    float_underflow: bool,
-    float_overflow: bool,
-    float_zero_divide: bool,
-    float_invalid: bool,
-    float_reserved: bool,
+    /// FPR - Set when the result of a floating-point operation is subjected to rounding and suffers precision degradation.
+    pub float_precision: bool,
+    /// FUD - Set when the result of a floating-point operation is too small to be represented as a normal floating short value.
+    pub float_underflow: bool,
+    /// FOV - Set when the result of a floating-point operation is too large to be represented by the floating short data type.
+    pub float_overflow: bool,
+    /// FZD - Set when the DIVF.S instruction is executed with a divisor of zero.
+    pub float_zero_divide: bool,
+    /// FIV - Set when an invalid floating-point operation attempted.
+    pub float_invalid: bool,
+    /// FRO - Set when a floating-point operation is attempted with a reserved operand.
+    pub float_reserved: bool,
 
     interrupt_disable: bool,
     pub nmi_pending: bool,
@@ -89,5 +95,37 @@ impl ProgramStatusWord {
         if let Some(carry) = carry {
             self.carry = carry;
         }
+    }
+
+    pub fn update_float_flags(
+        &mut self,
+        value: f32,
+        set_fro: bool,
+        set_fiv: bool,
+        set_fzd: bool,
+        set_fov: bool,
+        set_fud: bool,
+        set_fpr: bool,
+    ) {
+        // https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#numeric-cast
+        if set_fro && value == f32::NAN {
+            self.float_reserved = true;
+        }
+
+        if set_fov && value == f32::INFINITY {
+            self.float_overflow = true;
+        }
+
+        if set_fud && value == f32::NEG_INFINITY {
+            self.float_underflow = true;
+        }
+
+        // TODO: I don't know how to detect this in Rust
+        // self.float_precision = false;
+
+        self.zero = value == 0.0;
+        self.sign = value.is_sign_negative();
+        self.overflow = false;
+        self.carry = value.is_sign_negative();
     }
 }

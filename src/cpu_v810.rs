@@ -693,6 +693,7 @@ impl CpuV810 {
                     29 => self.unknown_29 = reg2,
                     30 => self.unknown_30 = reg2,
                     31 => self.unknown_31 = reg2,
+                    _ => {}
                 }
 
                 // TODO: Are flags supposed to be set here?
@@ -744,6 +745,121 @@ impl CpuV810 {
             }
             0b11_1110 => {
                 // Floating point operations
+                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+                let second_instruction = self.fetch_instruction_word(wram);
+                let sub_opcode = second_instruction >> 10;
+
+                let reg1_int = self.general_purpose_reg[reg1_index];
+                let reg1 = f32::from_bits(reg1_int);
+                let reg2 = f32::from_bits(self.general_purpose_reg[reg2_index]);
+
+                match sub_opcode {
+                    0b00_0100 => {
+                        // ADDF.S Add
+                        let result = reg2 + reg1;
+
+                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                        self.psw
+                            .update_float_flags(result, true, false, false, true, true, true);
+
+                        // TODO: This is a range of 9-28 cycles
+                        (28, BusActivity::Standard)
+                    }
+                    0b00_0000 => {
+                        // CMPF.S Compare
+                        let result = reg2 - reg1;
+
+                        self.psw
+                            .update_float_flags(result, true, false, false, false, false, false);
+
+                        // TODO: This is a range of 7-10 cycles
+                        (10, BusActivity::Standard)
+                    }
+                    0b00_0011 => {
+                        // CVT.SW Convert float to int
+                        let result = reg1.round() as i32;
+
+                        self.set_gen_purpose_reg(reg2_index, result as u32);
+                        self.psw.update_float_flags(
+                            result as f32,
+                            true,
+                            true,
+                            false,
+                            false,
+                            false,
+                            true,
+                        );
+                        self.psw.update_alu_flags_u32(result as u32, false, None);
+
+                        // TODO: This is a range of 9-14 cycles
+                        (14, BusActivity::Standard)
+                    }
+                    0b00_0010 => {
+                        // CVT.WS Convert int to float
+                        let result = (reg1_int as i32) as f32;
+
+                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                        self.psw
+                            .update_float_flags(result, false, false, false, false, false, true);
+
+                        // TODO: This is a range of 5-16 cycles
+                        (16, BusActivity::Standard)
+                    }
+                    0b00_0111 => {
+                        // DIVF.S Divide
+                        let result = reg2 / reg1;
+
+                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                        self.psw
+                            .update_float_flags(result, true, true, true, true, true, true);
+
+                        (44, BusActivity::Standard)
+                    }
+                    0b00_0110 => {
+                        // MULF.S Multiply
+                        let result = reg2 * reg1;
+
+                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                        self.psw
+                            .update_float_flags(result, true, false, false, true, true, true);
+
+                        // TODO: This is a range of 8-30 cycles
+                        (30, BusActivity::Standard)
+                    }
+                    0b00_0101 => {
+                        // SUBF.S Subtract
+                        let result = reg2 - reg1;
+
+                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                        self.psw
+                            .update_float_flags(result, true, false, false, true, true, true);
+
+                        // TODO: This is a range of 12-28 cycles
+                        (28, BusActivity::Standard)
+                    }
+                    0b00_1011 => {
+                        // TRNC.SW Truncate float to int
+                        let result = reg1.trunc() as i32;
+
+                        self.set_gen_purpose_reg(reg2_index, result as u32);
+                        self.psw.update_float_flags(
+                            result as f32,
+                            true,
+                            true,
+                            false,
+                            false,
+                            false,
+                            true,
+                        );
+
+                        // TODO: This is a range of 9-14 cycles
+                        (14, BusActivity::Standard)
+                    }
+                    _ => {
+                        todo!()
+                    }
+                }
             }
         }
     }
