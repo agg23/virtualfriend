@@ -1,10 +1,10 @@
 use bitvec::prelude::*;
 
 pub struct ProgramStatusWord {
-    zero: bool,
-    sign: bool,
-    overflow: bool,
-    carry: bool,
+    pub zero: bool,
+    pub sign: bool,
+    pub overflow: bool,
+    pub carry: bool,
 
     float_precision: bool,
     float_underflow: bool,
@@ -14,7 +14,7 @@ pub struct ProgramStatusWord {
     float_reserved: bool,
 
     interrupt_disable: bool,
-    nmi_pending: bool,
+    pub nmi_pending: bool,
     interrupt_level: u8,
 
     address_trap_enable: bool,
@@ -44,7 +44,7 @@ impl ProgramStatusWord {
     }
 
     pub fn get(&self) -> u32 {
-        let mut value = bitvec![u32, Lsb0;];
+        let mut value = bitarr![u32, Lsb0;];
         value.set(0, self.zero);
         value.set(1, self.sign);
         value.set(2, self.overflow);
@@ -71,9 +71,19 @@ impl ProgramStatusWord {
         todo!("Implement");
     }
 
-    pub fn update_alu_flags(&mut self, alu_value: u32, overflow: bool, carry: Option<bool>) {
+    pub fn update_alu_flags_u32(&mut self, alu_value: u32, overflow: bool, carry: Option<bool>) {
         self.zero = alu_value == 0;
         self.sign = (alu_value & 0x8000_0000) != 0;
+        self.overflow = overflow;
+
+        if let Some(carry) = carry {
+            self.carry = carry;
+        }
+    }
+
+    pub fn update_alu_flags_u64(&mut self, alu_value: u64, overflow: bool, carry: Option<bool>) {
+        self.zero = alu_value == 0;
+        self.sign = (alu_value & 0x8000_0000_0000_0000) != 0;
         self.overflow = overflow;
 
         if let Some(carry) = carry {
