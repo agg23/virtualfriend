@@ -1,12 +1,15 @@
+use std::fs::File;
+use std::io::Write;
+
+use bitvec::array::BitArray;
 use bitvec::prelude::Lsb0;
-use bitvec::{array::BitArray, order::LocalBits};
 
 use crate::{bus::Bus, cpu_internals::ProgramStatusWord};
 
 ///
 /// Tracks the most recent activity of the bus for the purposes of timing
 ///
-enum BusActivity {
+pub enum BusActivity {
     Standard,
     Long,
     Load,
@@ -109,7 +112,7 @@ pub struct CpuV810 {
     /// ID 31: Unknown register
     unknown_31: u32,
 
-    bus_activity: BusActivity,
+    last_bus_activity: BusActivity,
 }
 
 impl CpuV810 {
@@ -131,7 +134,67 @@ impl CpuV810 {
             unknown_30: 0,
             unknown_31: 0,
 
-            bus_activity: BusActivity::Standard,
+            last_bus_activity: BusActivity::Standard,
+        }
+    }
+
+    /// TODO: This is debug init to match with Mednafen
+    pub fn debug_init(&mut self) {
+        self.ecr = 0xFFF0;
+        self.psw.set(0x8000);
+        self.pir = 0x5346;
+        self.tkcw = 0xE0;
+    }
+
+    pub fn log_instruction(&self, log_file: Option<&mut File>, cycle_count: u32) {
+        let mut tuples = vec![
+            ("PC".to_string(), self.pc),
+            ("R1".to_string(), self.general_purpose_reg[1]),
+            ("FP".to_string(), self.general_purpose_reg[2]),
+            ("SP".to_string(), self.general_purpose_reg[3]),
+            ("GP".to_string(), self.general_purpose_reg[4]),
+            ("TP".to_string(), self.general_purpose_reg[5]),
+        ];
+
+        for i in 6..31 {
+            tuples.push((format!("R{i}"), self.general_purpose_reg[i]));
+        }
+
+        let mut after_tuples = vec![
+            ("LP".to_string(), self.general_purpose_reg[30]),
+            ("EIPC".to_string(), self.eipc),
+            ("EIPSW".to_string(), self.eipsw),
+            ("FEPC".to_string(), self.fepc),
+            ("FEPSW".to_string(), self.fepsw),
+            ("ECR".to_string(), self.ecr),
+            ("PSW".to_string(), self.psw.get()),
+            ("PIR".to_string(), self.pir),
+            ("TKCW".to_string(), self.tkcw),
+            ("CHCW".to_string(), self.chcw),
+            ("ADTRE".to_string(), self.adtre),
+        ];
+
+        tuples.append(&mut after_tuples);
+
+        let mut string = String::new();
+        let mut first = true;
+
+        for (name, value) in tuples {
+            if !first {
+                string += " ";
+            }
+
+            string += &format!("{name}={value:08X}");
+
+            first = false;
+        }
+
+        string += &format!(" TStamp={cycle_count:06}");
+
+        if let Some(log_file) = log_file {
+            writeln!(log_file, "{string}").unwrap();
+        } else {
+            println!("{string}");
         }
     }
 
@@ -140,10 +203,18 @@ impl CpuV810 {
     ///
     /// Returns the number of cycles consumed
     ///
-    pub fn step(&mut self, bus: &mut Bus) -> (u32, BusActivity) {
+    pub fn step(&mut self, bus: &mut Bus) -> u32 {
         let instruction = self.fetch_instruction_word(bus);
 
-        let opcode = (instruction >> 11) & 0x1F;
+        let (cycles, bus_activity) = self.perform_instruction(bus, instruction);
+
+        self.last_bus_activity = bus_activity;
+
+        cycles
+    }
+
+    pub fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
+        let opcode = instruction >> 10;
 
         match opcode {
             // Register transfer
@@ -172,13 +243,14 @@ impl CpuV810 {
                 // Don't modify flags
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
+                let reg1 = self.general_purpose_reg[reg1_index];
+
                 let immediate = self.fetch_instruction_word(bus);
                 let immediate = sign_extend(immediate as u32, 16);
 
-                self.set_gen_purpose_reg(
-                    reg2_index,
-                    self.general_purpose_reg[reg1_index].wrapping_add(immediate),
-                );
+                let result = reg1.wrapping_add(immediate);
+
+                self.set_gen_purpose_reg(reg2_index, result);
 
                 (1, BusActivity::Standard)
             }
@@ -187,12 +259,13 @@ impl CpuV810 {
                 // Don't modify flags
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
+                let reg1 = self.general_purpose_reg[reg1_index];
+
                 let immediate = self.fetch_instruction_word(bus);
 
-                self.set_gen_purpose_reg(
-                    reg2_index,
-                    self.general_purpose_reg[reg1_index].wrapping_add((immediate as u32) << 16),
-                );
+                let result = reg1.wrapping_add((immediate as u32) << 16);
+
+                self.set_gen_purpose_reg(reg2_index, result);
 
                 (1, BusActivity::Standard)
             }
@@ -917,7 +990,7 @@ impl CpuV810 {
         let instruction = bus.get_u16(self.pc);
 
         // Increment PC by 2 bytes
-        self.pc += 2;
+        self.pc = self.pc.wrapping_add(2);
 
         instruction
     }
@@ -1346,7 +1419,7 @@ impl CpuV810 {
     }
 
     fn load_inst_cycle_count(&self) -> u32 {
-        match self.bus_activity {
+        match self.last_bus_activity {
             BusActivity::Long => 1,
             BusActivity::Load => 4,
             // TODO: Does store warm up the memory pipeline?
@@ -1355,7 +1428,7 @@ impl CpuV810 {
     }
 
     fn store_inst_cycle_count(&self) -> u32 {
-        match self.bus_activity {
+        match self.last_bus_activity {
             BusActivity::StoreAfter => 4,
             // First and second stores are 1 cycle
             BusActivity::StoreInitial | _ => 1,
@@ -1363,7 +1436,7 @@ impl CpuV810 {
     }
 
     fn incrementing_store_bus_activity(&self) -> BusActivity {
-        match self.bus_activity {
+        match self.last_bus_activity {
             BusActivity::StoreInitial => BusActivity::StoreAfter,
             BusActivity::StoreAfter => BusActivity::StoreAfter,
             _ => BusActivity::StoreInitial,
@@ -1372,7 +1445,13 @@ impl CpuV810 {
 }
 
 fn sign_extend(value: u32, size: u8) -> u32 {
-    (value << (32 - size)) >> (32 - size)
+    // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
+    // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
+    // So we use a signed type
+    let value = value as i32;
+    let result = (value << (32 - size)) >> (32 - size);
+
+    result as u32
 }
 
 fn extract_reg1_2_index(instruction: u16) -> (usize, usize) {

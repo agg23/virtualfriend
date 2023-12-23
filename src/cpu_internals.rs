@@ -50,7 +50,7 @@ impl ProgramStatusWord {
     }
 
     pub fn get(&self) -> u32 {
-        let mut value = bitarr![u32, Lsb0;];
+        let mut value = bitarr![u32, Lsb0; 0; 32];
         value.set(0, self.zero);
         value.set(1, self.sign);
         value.set(2, self.overflow);
@@ -61,20 +61,40 @@ impl ProgramStatusWord {
         value.set(6, self.float_overflow);
         value.set(7, self.float_zero_divide);
         value.set(8, self.float_invalid);
+        value.set(9, self.float_reserved);
 
-        value.set(9, self.interrupt_disable);
-        value.set(10, self.address_trap_enable);
-        value.set(11, self.exception_pending);
-        value.set(12, self.nmi_pending);
+        value.set(12, self.interrupt_disable);
+        value.set(13, self.address_trap_enable);
+        value.set(14, self.exception_pending);
+        value.set(15, self.nmi_pending);
 
         let (_, interrupt_level) = value.split_at_mut(16);
-        interrupt_level.store(self.interrupt_level);
+        interrupt_level.store(self.interrupt_level as u16);
 
         value.load()
     }
 
     pub fn set(&mut self, value: u32) {
-        todo!("Implement");
+        let array = BitArray::<_, Lsb0>::new([value]);
+
+        self.zero = *array.get(0).unwrap();
+        self.sign = *array.get(1).unwrap();
+        self.overflow = *array.get(2).unwrap();
+        self.carry = *array.get(3).unwrap();
+
+        self.float_precision = *array.get(4).unwrap();
+        self.float_underflow = *array.get(5).unwrap();
+        self.float_overflow = *array.get(6).unwrap();
+        self.float_zero_divide = *array.get(7).unwrap();
+        self.float_invalid = *array.get(8).unwrap();
+        self.float_reserved = *array.get(9).unwrap();
+
+        self.interrupt_disable = *array.get(12).unwrap();
+        self.address_trap_enable = *array.get(13).unwrap();
+        self.exception_pending = *array.get(14).unwrap();
+        self.nmi_pending = *array.get(15).unwrap();
+
+        self.interrupt_level = ((value >> 16) & 0xF) as u8;
     }
 
     pub fn update_alu_flags_u32(&mut self, alu_value: u32, overflow: bool, carry: Option<bool>) {

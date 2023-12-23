@@ -1,11 +1,30 @@
+use rand::{thread_rng, Rng};
+
+use crate::rom::ROM;
+
 pub struct Bus {
-    wram: [u32; 0x1_0000],
+    wram: [u32; 0x1_0000 / 4],
+    rom: ROM,
 }
 
 impl Bus {
+    pub fn new(rom: ROM) -> Self {
+        let mut wram = [0; 0x1_0000 / 4];
+
+        // Randomize starting data
+        thread_rng().fill(&mut wram[..]);
+
+        Bus { wram, rom }
+    }
+
     pub fn get_u32(&self, address: u32) -> u32 {
-        // Mask top 5 bits to mirror bus, and bottom 2 to word addresses
-        let address = address & 0x07FF_FFFC;
+        // Mask top 5 bits to mirror bus
+        let address = address & 0x07FF_FFFF;
+
+        // Address for bus block
+        let local_address = (address as usize) & 0xFF_FFFF;
+        // Remove bottom 2 (shifted out) to make word addresses
+        let local_address = local_address >> 2;
 
         match address {
             0x0000_0000..=0x00FF_FFFF => {
@@ -20,13 +39,9 @@ impl Bus {
             0x0400_0000..=0x04FF_FFFF => {
                 todo!("Game Pak Expansion")
             }
-            0x0500_0000..=0x05FF_FFFF => self.wram[(address as usize) & 0xFF_FFFF],
-            0x0600_0000..=0x06FF_FFFF => {
-                todo!("Game Pak RAM")
-            }
-            0x0700_0000..=0x07FF_FFFF => {
-                todo!("Game Pak ROM")
-            }
+            0x0500_0000..=0x05FF_FFFF => self.wram[local_address],
+            0x0600_0000..=0x06FF_FFFF => self.rom.ram[local_address],
+            0x0700_0000..=0x07FF_FFFF => self.rom.get_rom(local_address),
             _ => 0,
         }
     }
@@ -34,7 +49,7 @@ impl Bus {
     pub fn get_u16(&self, address: u32) -> u16 {
         let word = self.get_u32(address);
 
-        let halfword = if address & 1 != 0 {
+        let halfword = if address & 0x2 != 0 {
             word >> 16
         } else {
             word & 0xFFFF
@@ -75,11 +90,10 @@ impl Bus {
                 todo!("Game Pak Expansion")
             }
             0x0500_0000..=0x05FF_FFFF => self.wram[(address as usize) & 0xFF_FFFF] = value,
-            0x0600_0000..=0x06FF_FFFF => {
-                todo!("Game Pak RAM")
-            }
+            0x0600_0000..=0x06FF_FFFF => self.rom.ram[address as usize] = value,
             0x0700_0000..=0x07FF_FFFF => {
-                todo!("Game Pak ROM")
+                // Game Pak ROM
+                // Do nothing
             }
             _ => {}
         }
