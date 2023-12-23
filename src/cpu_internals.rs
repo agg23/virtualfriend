@@ -19,13 +19,13 @@ pub struct ProgramStatusWord {
     /// FRO - Set when a floating-point operation is attempted with a reserved operand.
     pub float_reserved: bool,
 
-    interrupt_disable: bool,
+    pub interrupt_disable: bool,
     pub nmi_pending: bool,
-    interrupt_level: u8,
+    pub interrupt_level: u8,
 
-    address_trap_enable: bool,
+    pub address_trap_enable: bool,
 
-    exception_pending: bool,
+    pub exception_pending: bool,
 }
 
 impl ProgramStatusWord {

@@ -584,73 +584,7 @@ impl CpuV810 {
                 let condition = (instruction >> 9) & 0xF;
                 let disp = instruction & 0x1FF;
 
-                let condition = match condition {
-                    0 => {
-                        // BV Branch overflow
-                        self.psw.overflow
-                    }
-                    1 => {
-                        // BC, BL Branch carry/lower
-                        self.psw.carry
-                    }
-                    2 => {
-                        // BE, BZ Branch equal/zero
-                        self.psw.zero
-                    }
-                    3 => {
-                        // BNH Branch not higher
-                        self.psw.carry || self.psw.zero
-                    }
-                    4 => {
-                        // BN Branch negative
-                        self.psw.sign
-                    }
-                    5 => {
-                        // BR Branch always
-                        true
-                    }
-                    6 => {
-                        // BLT Branch less than
-                        self.psw.overflow ^ self.psw.sign
-                    }
-                    7 => {
-                        // BLE Branch less than or equal
-                        (self.psw.overflow ^ self.psw.sign) || self.psw.zero
-                    }
-                    8 => {
-                        // BNV Branch not overflow
-                        !self.psw.overflow
-                    }
-                    9 => {
-                        // BNC, BNL Branch not carry/lower
-                        !self.psw.carry
-                    }
-                    10 => {
-                        // BNE, BNZ Branch not equal/zero
-                        !self.psw.zero
-                    }
-                    11 => {
-                        // BH Branch higher
-                        !(self.psw.carry || self.psw.zero)
-                    }
-                    12 => {
-                        // BP Branch positive
-                        !self.psw.sign
-                    }
-                    13 => {
-                        // NOP
-                        false
-                    }
-                    14 => {
-                        // BGE Branch greater than or equal
-                        !(self.psw.overflow ^ self.psw.sign)
-                    }
-                    15 => {
-                        // BGT Branch greater than
-                        !((self.psw.overflow ^ self.psw.sign) || self.psw.zero)
-                    }
-                    _ => unreachable!(),
-                };
+                let condition = self.indexed_flag(condition);
 
                 self.conditional_jump(disp as u32, condition)
             }
@@ -748,20 +682,22 @@ impl CpuV810 {
             }
 
             0b11_1110 => {
-                // Floating point operations
+                // Floating point operations and Nintendo
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let second_instruction = self.fetch_instruction_word(bus);
                 let sub_opcode = second_instruction >> 10;
 
                 let reg1_int = self.general_purpose_reg[reg1_index];
-                let reg1 = f32::from_bits(reg1_int);
-                let reg2 = f32::from_bits(self.general_purpose_reg[reg2_index]);
+                let reg2_int = self.general_purpose_reg[reg2_index];
+                let reg1_float = f32::from_bits(reg1_int);
+                let reg2_float = f32::from_bits(reg2_int);
 
                 match sub_opcode {
+                    // Float
                     0b00_0100 => {
                         // ADDF.S Add
-                        let result = reg2 + reg1;
+                        let result = reg2_float + reg1_float;
 
                         self.set_gen_purpose_reg(reg2_index, result.to_bits());
                         self.psw
@@ -772,7 +708,7 @@ impl CpuV810 {
                     }
                     0b00_0000 => {
                         // CMPF.S Compare
-                        let result = reg2 - reg1;
+                        let result = reg2_float - reg1_float;
 
                         self.psw
                             .update_float_flags(result, true, false, false, false, false, false);
@@ -782,7 +718,7 @@ impl CpuV810 {
                     }
                     0b00_0011 => {
                         // CVT.SW Convert float to int
-                        let result = reg1.round() as i32;
+                        let result = reg1_float.round() as i32;
 
                         self.set_gen_purpose_reg(reg2_index, result as u32);
                         self.psw.update_float_flags(
@@ -812,7 +748,7 @@ impl CpuV810 {
                     }
                     0b00_0111 => {
                         // DIVF.S Divide
-                        let result = reg2 / reg1;
+                        let result = reg2_float / reg1_float;
 
                         self.set_gen_purpose_reg(reg2_index, result.to_bits());
                         self.psw
@@ -822,7 +758,7 @@ impl CpuV810 {
                     }
                     0b00_0110 => {
                         // MULF.S Multiply
-                        let result = reg2 * reg1;
+                        let result = reg2_float * reg1_float;
 
                         self.set_gen_purpose_reg(reg2_index, result.to_bits());
                         self.psw
@@ -833,7 +769,7 @@ impl CpuV810 {
                     }
                     0b00_0101 => {
                         // SUBF.S Subtract
-                        let result = reg2 - reg1;
+                        let result = reg2_float - reg1_float;
 
                         self.set_gen_purpose_reg(reg2_index, result.to_bits());
                         self.psw
@@ -844,7 +780,7 @@ impl CpuV810 {
                     }
                     0b00_1011 => {
                         // TRNC.SW Truncate float to int
-                        let result = reg1.trunc() as i32;
+                        let result = reg1_float.trunc() as i32;
 
                         self.set_gen_purpose_reg(reg2_index, result as u32);
                         self.psw.update_float_flags(
@@ -860,7 +796,49 @@ impl CpuV810 {
                         // TODO: This is a range of 9-14 cycles
                         (14, BusActivity::Standard)
                     }
-                    _ => panic!("Invalid float instruction {sub_opcode:x}"),
+
+                    // Nintendo
+                    0b00_1100 => {
+                        // MPYHW Multiply halfword
+                        let sign_extended_reg1 = ((reg1_int << 15) as i32) >> 15;
+                        let result = reg2_int * (sign_extended_reg1 as u32);
+
+                        self.set_gen_purpose_reg(reg2_index, result);
+
+                        (9, BusActivity::Standard)
+                    }
+                    0b00_1010 => {
+                        // REV Reverse bits in word
+                        let result = reg1_int.reverse_bits();
+
+                        self.set_gen_purpose_reg(reg2_index, result);
+
+                        (22, BusActivity::Standard)
+                    }
+                    0b00_1000 => {
+                        // XB Exchange byte
+                        // Swaps the bottom two bytes
+                        let upper = reg2_int & 0xFFFF_0000;
+                        let lower_high = (reg2_int << 8) & 0xFF00;
+                        let lower_low = (reg2_int >> 8) & 0xFF;
+
+                        let result = upper | lower_high | lower_low;
+
+                        self.set_gen_purpose_reg(reg2_index, result);
+
+                        (6, BusActivity::Standard)
+                    }
+                    0b00_1001 => {
+                        // XH Exchange halfword
+                        // Swap upper and lower halfwords
+                        let result = (reg2_int >> 16) | (reg2_int << 16);
+
+                        self.set_gen_purpose_reg(reg2_index, result);
+
+                        (1, BusActivity::Standard)
+                    }
+
+                    _ => panic!("Invalid float or Nintendo instruction {sub_opcode:x}"),
                 }
             }
 
@@ -868,18 +846,69 @@ impl CpuV810 {
                 // Bit string operations
                 let (sub_opcode, _) = extract_reg1_2_index(instruction);
 
-                match sub_opcode {
-                    0b0_1001 => {
-                        // ANDBSU AND bit string
-                        self.bit_string_process_upwards(bus, |source, dest| *dest = source & *dest);
-                    }
-                    _ => panic!("Invalid bit string instruction {sub_opcode:x}"),
+                if sub_opcode < 5 {
+                    // Search operation
+                    let (upwards_direction, match_1) = match sub_opcode {
+                        0b0_0001 => {
+                            // Search for 0, downward
+                            (false, false)
+                        }
+                        0b0_0000 => {
+                            // Search for 0, upward
+                            (true, false)
+                        }
+                        0b0_0011 => {
+                            // Search for 1, downward
+                            (false, true)
+                        }
+                        0b0_0010 => {
+                            // Search for 1, upward
+                            (true, true)
+                        }
+                        _ => unreachable!(),
+                    };
+
+                    self.bit_string_search(bus, upwards_direction, match_1)
+                } else {
+                    self.bit_string_process_upwards(bus, sub_opcode);
                 }
 
                 // TODO: This should be updated from the table in the V810 manual
+                // No one seems to emulate this correctly
                 (49, BusActivity::Standard)
             }
 
+            // Miscellaneous
+            0b11_1010 => {
+                // CAXI Compare and exchange interlocked
+                unimplemented!("CAXI doesn't really do anything on VB")
+            }
+            0b01_0010 => {
+                // SETF Set flag condition
+                let (_, reg2_index) = extract_reg1_2_index(instruction);
+
+                let condition = instruction & 0xF;
+
+                let value = if self.indexed_flag(condition) { 1 } else { 0 };
+
+                self.set_gen_purpose_reg(reg2_index, value);
+
+                (1, BusActivity::Standard)
+            }
+
+            // Nintendo
+            0b01_0110 => {
+                // CLI Clear interrupt disable flag
+                self.psw.interrupt_disable = false;
+
+                (12, BusActivity::Standard)
+            }
+            0b01_1110 => {
+                // SEI Set interrupt disable flag
+                self.psw.interrupt_disable = true;
+
+                (12, BusActivity::Standard)
+            }
             _ => panic!("Invalid opcode {opcode:x}"),
         }
     }
@@ -1039,6 +1068,76 @@ impl CpuV810 {
         (1, BusActivity::Standard)
     }
 
+    fn indexed_flag(&self, flag: u16) -> bool {
+        match flag {
+            0 => {
+                // BV Branch overflow
+                self.psw.overflow
+            }
+            1 => {
+                // BC, BL Branch carry/lower
+                self.psw.carry
+            }
+            2 => {
+                // BE, BZ Branch equal/zero
+                self.psw.zero
+            }
+            3 => {
+                // BNH Branch not higher
+                self.psw.carry || self.psw.zero
+            }
+            4 => {
+                // BN Branch negative
+                self.psw.sign
+            }
+            5 => {
+                // BR Branch always
+                true
+            }
+            6 => {
+                // BLT Branch less than
+                self.psw.overflow ^ self.psw.sign
+            }
+            7 => {
+                // BLE Branch less than or equal
+                (self.psw.overflow ^ self.psw.sign) || self.psw.zero
+            }
+            8 => {
+                // BNV Branch not overflow
+                !self.psw.overflow
+            }
+            9 => {
+                // BNC, BNL Branch not carry/lower
+                !self.psw.carry
+            }
+            10 => {
+                // BNE, BNZ Branch not equal/zero
+                !self.psw.zero
+            }
+            11 => {
+                // BH Branch higher
+                !(self.psw.carry || self.psw.zero)
+            }
+            12 => {
+                // BP Branch positive
+                !self.psw.sign
+            }
+            13 => {
+                // NOP
+                false
+            }
+            14 => {
+                // BGE Branch greater than or equal
+                !(self.psw.overflow ^ self.psw.sign)
+            }
+            15 => {
+                // BGT Branch greater than
+                !((self.psw.overflow ^ self.psw.sign) || self.psw.zero)
+            }
+            _ => unreachable!(),
+        }
+    }
+
     fn conditional_jump(&mut self, disp: u32, condition: bool) -> (u32, BusActivity) {
         if condition {
             // Jumping
@@ -1066,7 +1165,88 @@ impl CpuV810 {
         (3, BusActivity::Standard)
     }
 
-    fn bit_string_process_upwards(&mut self, bus: &mut Bus, func: impl Fn(bool, &mut bool)) {
+    fn bit_string_search(&mut self, bus: &mut Bus, upwards_direction: bool, match_1: bool) {
+        // Clear mask bits in registers
+        let source_offset = self.general_purpose_reg[27] & 0x3F;
+        self.set_gen_purpose_reg(27, source_offset);
+
+        let mut source_addr = self.general_purpose_reg[30] & 0xFFFF_FFFC;
+        self.set_gen_purpose_reg(30, source_addr);
+
+        let mut length = self.general_purpose_reg[28];
+
+        let mut source_word = bus.get_u32(source_addr);
+
+        // The position of the current bit we're examining
+        let mut word_offset = if upwards_direction { 0 } else { 31 };
+        let mut examined_bit_count = 0;
+
+        let mut found = false;
+
+        while length > 0 {
+            let source_bit = if upwards_direction {
+                source_word & 1 != 0
+            } else {
+                source_word & 0x8000_0000 != 0
+            };
+
+            if source_bit == match_1 {
+                // We've found our bit
+                found = true;
+            }
+
+            examined_bit_count += 1;
+
+            // Haven't found it, continue processing
+            if upwards_direction {
+                if word_offset == 31 {
+                    // Finished word
+                    // Reset value for reg setting below
+                    word_offset = 0;
+
+                    source_addr += 4;
+                    break;
+                } else {
+                    source_word = source_word << 1;
+
+                    word_offset += 1;
+                }
+            } else {
+                if word_offset == 0 {
+                    // Finished word
+                    word_offset = 31;
+
+                    source_addr -= 4;
+                    break;
+                } else {
+                    source_word = source_word >> 1;
+
+                    word_offset -= 1;
+                }
+            }
+
+            if found {
+                break;
+            }
+
+            length -= 1;
+        }
+
+        if !found && length != 0 {
+            // There's still more string to process
+            self.pc -= 2;
+        } else if found {
+            // examined_bit_count counted the matched bit, remove it
+            examined_bit_count -= 1;
+        }
+
+        self.set_gen_purpose_reg(27, source_offset);
+        self.set_gen_purpose_reg(28, word_offset);
+        self.set_gen_purpose_reg(29, self.general_purpose_reg[29] + examined_bit_count);
+        self.set_gen_purpose_reg(30, source_addr);
+    }
+
+    fn bit_string_process_upwards(&mut self, bus: &mut Bus, sub_opcode: usize) {
         let mut dest_offset = self.general_purpose_reg[26] & 0x3F;
         self.set_gen_purpose_reg(26, dest_offset);
 
@@ -1086,12 +1266,44 @@ impl CpuV810 {
             let source_word = BitArray::<_, Lsb0>::new(bus.get_u32(source_addr));
             let mut dest_word = BitArray::<_, Lsb0>::new(bus.get_u32(dest_addr));
 
-            let source_bit = source_word.get(source_offset as usize).unwrap();
+            let source_bit: &bool = &source_word.get(source_offset as usize).unwrap();
             let mut dest_bit = dest_word.get_mut(dest_offset as usize).unwrap();
 
-            let func = |source: bool, dest: &mut bool| *dest = source & *dest;
-
-            func(*source_bit, &mut dest_bit);
+            match sub_opcode {
+                0b0_1001 => {
+                    // ANDBSU AND bit string
+                    *dest_bit = *dest_bit & *source_bit;
+                }
+                0b0_1101 => {
+                    // ANDNBSU AND NOT bit string
+                    *dest_bit = *dest_bit & !*source_bit;
+                }
+                0b0_1011 => {
+                    // MOVBSU Move bit string
+                    *dest_bit = *source_bit;
+                }
+                0b0_1111 => {
+                    // NOTBSU NOT bit string
+                    *dest_bit = !*source_bit;
+                }
+                0b0_1000 => {
+                    // ORBSU OR bit string
+                    *dest_bit = *dest_bit | *source_bit;
+                }
+                0b0_1100 => {
+                    // ORNBSU OR NOT bit string
+                    *dest_bit = *dest_bit | !*source_bit;
+                }
+                0b0_1010 => {
+                    // XORBSU XOR bit string
+                    *dest_bit = *dest_bit ^ *source_bit;
+                }
+                0b0_1110 => {
+                    // XORNBSU XOR NOT bit string
+                    *dest_bit = *dest_bit ^ !*source_bit;
+                }
+                _ => panic!("Invalid bit string instruction {sub_opcode:x}"),
+            }
 
             // Make sure we can access borrowed data
             drop(dest_bit);
@@ -1101,6 +1313,8 @@ impl CpuV810 {
                 source_offset = 0;
                 // Increase by a word
                 source_addr += 4;
+
+                break;
             } else {
                 source_offset += 1;
             }
@@ -1109,6 +1323,8 @@ impl CpuV810 {
                 dest_offset = 0;
                 // Increase by a word
                 dest_addr += 4;
+
+                break;
             } else {
                 dest_offset += 1;
             }
@@ -1116,9 +1332,15 @@ impl CpuV810 {
             length -= 1;
         }
 
+        if length != 0 {
+            // We haven't finished this operation. Rewind PC
+            self.pc -= 2;
+        }
+
         // TODO: Do these need to be updated constantly and are interrupts allowed to interrupt this?
         self.set_gen_purpose_reg(26, dest_offset);
         self.set_gen_purpose_reg(27, source_offset);
+        self.set_gen_purpose_reg(28, 0);
         self.set_gen_purpose_reg(29, dest_addr);
         self.set_gen_purpose_reg(30, source_addr);
     }
