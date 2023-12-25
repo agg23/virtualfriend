@@ -161,7 +161,7 @@ impl CpuV810 {
         }
 
         let mut after_tuples = vec![
-            ("LP".to_string(), self.general_purpose_reg[30]),
+            ("LP".to_string(), self.general_purpose_reg[31]),
             ("EIPC".to_string(), self.eipc),
             ("EIPSW".to_string(), self.eipsw),
             ("FEPC".to_string(), self.fepc),
@@ -189,7 +189,9 @@ impl CpuV810 {
             first = false;
         }
 
-        string += &format!(" TStamp={cycle_count:06}");
+        // TODO: Mednafen seems to wrap cycle count at the arbitrary? value 0x061200
+        // let cycle_count = cycle_count % 0x061200;
+        // string += &format!(" TStamp={cycle_count:06X}");
 
         if let Some(log_file) = log_file {
             writeln!(log_file, "{string}").unwrap();
@@ -215,6 +217,10 @@ impl CpuV810 {
 
     pub fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
         let opcode = instruction >> 10;
+
+        if self.pc == 0xFFFBE99A + 2 {
+            println!("{:08X} {:02X}", self.pc, opcode);
+        }
 
         match opcode {
             // Register transfer
@@ -656,10 +662,11 @@ impl CpuV810 {
             0x20..=0x27 => {
                 let condition = (instruction >> 9) & 0xF;
                 let disp = instruction & 0x1FF;
+                let disp = sign_extend(disp as u32, 9);
 
                 let condition = self.indexed_flag(condition);
 
-                self.conditional_jump(disp as u32, condition)
+                self.conditional_jump(disp, condition)
             }
             0b01_1010 => {
                 // HALT
@@ -708,7 +715,10 @@ impl CpuV810 {
 
                 // TODO: Are flags supposed to be set here?
 
-                (8, BusActivity::Standard)
+                // TODO: Mednafen has this set to 1 cycle
+                // The V810 manual doesn't list a cycle count
+                // (8, BusActivity::Standard)
+                (1, BusActivity::Standard)
             }
             0b01_1001 => {
                 // RETI Return from trap or interrupt
@@ -974,13 +984,19 @@ impl CpuV810 {
                 // CLI Clear interrupt disable flag
                 self.psw.interrupt_disable = false;
 
-                (12, BusActivity::Standard)
+                // TODO: Mednafen has this set to 1 cycle
+                // The V810 manual doesn't list a cycle count
+                // (12, BusActivity::Standard)
+                (1, BusActivity::Standard)
             }
             0b01_1110 => {
                 // SEI Set interrupt disable flag
                 self.psw.interrupt_disable = true;
 
-                (12, BusActivity::Standard)
+                // TODO: Mednafen has this set to 1 cycle
+                // The V810 manual doesn't list a cycle count
+                // (12, BusActivity::Standard)
+                (1, BusActivity::Standard)
             }
             _ => panic!("Invalid opcode {opcode:x}"),
         }
@@ -1214,7 +1230,8 @@ impl CpuV810 {
     fn conditional_jump(&mut self, disp: u32, condition: bool) -> (u32, BusActivity) {
         if condition {
             // Jumping
-            self.pc = (self.pc + disp) & 0xFFFF_FFFE;
+            // PC was already incremented by 2, so we have to remove that
+            self.pc = ((self.pc - 2).wrapping_add(disp)) & 0xFFFF_FFFE;
 
             (3, BusActivity::Standard)
         } else {
@@ -1230,10 +1247,12 @@ impl CpuV810 {
         let disp = disp | (upper_disp << 16);
 
         if save_pc {
-            // PC has already been incremented by 2 by `fetch_instruction_word`
-            self.set_gen_purpose_reg(31, self.pc + 2);
+            // PC has already been incremented by 4 by 2x `fetch_instruction_word`
+            self.set_gen_purpose_reg(31, self.pc);
         }
-        self.pc = self.pc + disp;
+
+        // PC has already been incremented by 4 by 2x `fetch_instruction_word`
+        self.pc = self.pc - 4 + disp;
 
         (3, BusActivity::Standard)
     }
@@ -1419,20 +1438,34 @@ impl CpuV810 {
     }
 
     fn load_inst_cycle_count(&self) -> u32 {
+        // TODO: Mednafen for some reason has this as 1, 3
         match self.last_bus_activity {
             BusActivity::Long => 1,
-            BusActivity::Load => 4,
+            BusActivity::Load => 2,
             // TODO: Does store warm up the memory pipeline?
-            _ => 5,
+            _ => 3,
         }
+
+        // match self.last_bus_activity {
+        //     BusActivity::Long => 1,
+        //     BusActivity::Load => 4,
+        //     // TODO: Does store warm up the memory pipeline?
+        //     _ => 5,
+        // }
     }
 
     fn store_inst_cycle_count(&self) -> u32 {
+        // TODO: Mednafen for some reason has this as 1, 2
         match self.last_bus_activity {
-            BusActivity::StoreAfter => 4,
-            // First and second stores are 1 cycle
-            BusActivity::StoreInitial | _ => 1,
+            BusActivity::StoreInitial | BusActivity::StoreAfter => 2,
+            _ => 1,
         }
+
+        // match self.last_bus_activity {
+        //     BusActivity::StoreAfter => 4,
+        //     // First and second stores are 1 cycle
+        //     BusActivity::StoreInitial | _ => 1,
+        // }
     }
 
     fn incrementing_store_bus_activity(&self) -> BusActivity {
