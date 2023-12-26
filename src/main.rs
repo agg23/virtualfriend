@@ -10,11 +10,13 @@ use rom::ROM;
 use crate::{hardware::Hardware, timer::Timer};
 
 pub mod bus;
+pub mod constants;
 pub mod cpu_internals;
 mod cpu_v810;
 pub mod hardware;
 pub mod rom;
 pub mod timer;
+pub mod vip;
 mod virtualfriend;
 
 fn main() {
