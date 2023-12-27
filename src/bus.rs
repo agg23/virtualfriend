@@ -1,15 +1,16 @@
 use rand::{thread_rng, Rng};
 
-use crate::{hardware::Hardware, rom::ROM};
+use crate::{hardware::Hardware, rom::ROM, vip::VIP};
 
 pub struct Bus<'a> {
     wram: [u32; 0x1_0000 / 4],
     rom: ROM,
+    vip: &'a mut VIP,
     hardware: &'a mut Hardware<'a>,
 }
 
 impl<'a> Bus<'a> {
-    pub fn new(rom: ROM, hardware: &'a mut Hardware<'a>) -> Self {
+    pub fn new(rom: ROM, vip: &'a mut VIP, hardware: &'a mut Hardware<'a>) -> Self {
         let mut wram = [0; 0x1_0000 / 4];
 
         // Randomize starting data
@@ -18,6 +19,7 @@ impl<'a> Bus<'a> {
         Bus {
             wram,
             rom,
+            vip,
             hardware,
         }
     }
@@ -33,7 +35,13 @@ impl<'a> Bus<'a> {
 
         match address {
             0x0000_0000..=0x00FF_FFFF => {
-                todo!("VIP")
+                // TODO: Change to be words?
+                let low = self.vip.get_byte(address) as u32;
+                let midlow = self.vip.get_byte(address + 1) as u32;
+                let midhigh = self.vip.get_byte(address + 2) as u32;
+                let high = self.vip.get_byte(address + 3) as u32;
+
+                (high << 24) | (midhigh << 16) | (midlow << 8) | low
             }
             0x0100_0000..=0x01FF_FFFF => {
                 // todo!("VSU")
@@ -87,7 +95,11 @@ impl<'a> Bus<'a> {
 
         match address {
             0x0000_0000..=0x00FF_FFFF => {
-                // todo!("VIP")
+                // TODO: Change to be words?
+                self.vip.set_byte(address, value as u8);
+                self.vip.set_byte(address + 1, (value >> 8) as u8);
+                self.vip.set_byte(address + 2, (value >> 16) as u8);
+                self.vip.set_byte(address + 3, (value >> 24) as u8);
             }
             0x0100_0000..=0x01FF_FFFF => {
                 // todo!("VSU")

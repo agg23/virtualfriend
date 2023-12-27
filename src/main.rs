@@ -7,7 +7,7 @@ use bus::Bus;
 use cpu_v810::CpuV810;
 use rom::ROM;
 
-use crate::{hardware::Hardware, timer::Timer};
+use crate::{hardware::Hardware, timer::Timer, vip::VIP};
 
 pub mod bus;
 pub mod constants;
@@ -26,8 +26,9 @@ fn main() {
 
     let mut cpu = CpuV810::new();
     let mut timer = Timer::new();
+    let mut vip = VIP::new();
     let mut hardware = Hardware::new(&mut timer);
-    let mut bus = Bus::new(rom, &mut hardware);
+    let mut bus = Bus::new(rom, &mut vip, &mut hardware);
 
     let mut log_file = OpenOptions::new()
         .write(true)

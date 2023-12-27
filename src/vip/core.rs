@@ -1,4 +1,6 @@
-use std::f32::consts::E;
+use bitvec::field::BitField;
+use bitvec::prelude::Lsb0;
+use bitvec::{array::BitArray, bitarr};
 
 use crate::{
     constants::{
@@ -104,19 +106,57 @@ pub struct PaletteRegister {
 }
 
 impl VIP {
+    pub fn new() -> Self {
+        VIP {
+            current_display_clock_cycle: 0,
+            vram: [0; 0x4_0000],
+            left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
+            right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
+            interrupt: VIPInterrupt::new(),
+            fclk: false,
+            drawing_enabled: false,
+            display_enabled: false,
+            sync_enabled: false,
+            frmcyc: 0,
+            bkcol: 0,
+            last_bkcol: 0,
+            sbcount: 0,
+            brightness_control_reg_a: 0,
+            brightness_control_reg_b: 0,
+            brightness_control_reg_c: 0,
+            background_palette_control0: PaletteRegister::new(),
+            background_palette_control1: PaletteRegister::new(),
+            background_palette_control2: PaletteRegister::new(),
+            background_palette_control3: PaletteRegister::new(),
+            object_palette_control0: PaletteRegister::new(),
+            object_palette_control1: PaletteRegister::new(),
+            object_palette_control2: PaletteRegister::new(),
+            object_palette_control3: PaletteRegister::new(),
+            drawing_framebuffer_1: false,
+            in_drawing: false,
+            drawing_cycle_count: 0,
+            frame_count: 0,
+        }
+    }
+
     pub fn get_byte(&self, address: u32) -> u8 {
         let address = address as usize;
 
         match address {
             0x0..=0x4_0000 => self.vram[address],
-            0x5_F860 => self.background_palette_control0.get(),
-            0x5_F862 => self.background_palette_control1.get(),
-            0x5_F864 => self.background_palette_control2.get(),
-            0x5_F866 => self.background_palette_control3.get(),
-            0x5_F868 => self.object_palette_control0.get(),
-            0x5_F86A => self.object_palette_control0.get(),
-            0x5_F86C => self.object_palette_control0.get(),
-            0x5_F86E => self.object_palette_control0.get(),
+            0x5_F804..=0x5F807 => {
+                // INTCLEAR Interrupt clear
+                // Reading is undefined
+                0
+            }
+            0x5_F860..=0x5_F861 => self.background_palette_control0.get(),
+            0x5_F862..=0x5_F863 => self.background_palette_control1.get(),
+            0x5_F864..=0x5_F865 => self.background_palette_control2.get(),
+            0x5_F866..=0x5_F867 => self.background_palette_control3.get(),
+            0x5_F868..=0x5_F869 => self.object_palette_control0.get(),
+            0x5_F86A..=0x5_F86B => self.object_palette_control1.get(),
+            0x5_F86C..=0x5_F86D => self.object_palette_control2.get(),
+            0x5_F86E..=0x5_F86F => self.object_palette_control3.get(),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.vram[(address & 0x1FFF) + 0x6000]
@@ -133,22 +173,23 @@ impl VIP {
                 // Character table 4 remap
                 self.vram[(address & 0x1FFF) + 0x1_E000]
             }
+            _ => unimplemented!("Read address {:08X}", address),
         }
     }
 
-    pub fn set_byte(&self, address: u32, value: u8) {
+    pub fn set_byte(&mut self, address: u32, value: u8) {
         let address = address as usize;
 
         match address {
             0x0..=0x4_0000 => self.vram[address] = value,
-            0x5_F860 => self.background_palette_control0.set(value),
-            0x5_F862 => self.background_palette_control1.set(value),
-            0x5_F864 => self.background_palette_control2.set(value),
-            0x5_F866 => self.background_palette_control3.set(value),
-            0x5_F868 => self.object_palette_control0.set(value),
-            0x5_F86A => self.object_palette_control0.set(value),
-            0x5_F86C => self.object_palette_control0.set(value),
-            0x5_F86E => self.object_palette_control0.set(value),
+            0x5_F860..=0x5_F861 => self.background_palette_control0.set(value),
+            0x5_F862..=0x5_F863 => self.background_palette_control1.set(value),
+            0x5_F864..=0x5_F865 => self.background_palette_control2.set(value),
+            0x5_F866..=0x5_F867 => self.background_palette_control3.set(value),
+            0x5_F868..=0x5_F869 => self.object_palette_control0.set(value),
+            0x5_F86A..=0x5_F86B => self.object_palette_control1.set(value),
+            0x5_F86C..=0x5_F86D => self.object_palette_control2.set(value),
+            0x5_F86E..=0x5_F86F => self.object_palette_control3.set(value),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.vram[(address & 0x1FFF) + 0x6000] = value;
@@ -165,6 +206,7 @@ impl VIP {
                 // Character table 4 remap
                 self.vram[(address & 0x1FFF) + 0x1_E000] = value;
             }
+            _ => unimplemented!("Write address {:08X}", address),
         }
     }
 
@@ -599,9 +641,80 @@ impl VIP {
             self.vram[framebuffer_address] = byte;
         }
     }
+
+    fn write_intclear(&mut self, value: u32) {
+        let mut new_interrupt = VIPInterrupt::new();
+        new_interrupt.set(value as u16);
+
+        // Clear any interrupts that are set in `value`
+        self.interrupt.scanerr &= new_interrupt.scanerr;
+        self.interrupt.lfbend &= new_interrupt.lfbend;
+        self.interrupt.rfbend &= new_interrupt.rfbend;
+        self.interrupt.gamestart &= new_interrupt.gamestart;
+
+        self.interrupt.framestart &= new_interrupt.framestart;
+
+        self.interrupt.sbhit &= new_interrupt.sbhit;
+        self.interrupt.xpend &= new_interrupt.xpend;
+        self.interrupt.timeerr &= new_interrupt.timeerr;
+    }
+}
+
+impl VIPInterrupt {
+    fn new() -> Self {
+        VIPInterrupt {
+            scanerr: false,
+            lfbend: false,
+            rfbend: false,
+            gamestart: false,
+            framestart: false,
+            sbhit: false,
+            xpend: false,
+            timeerr: false,
+        }
+    }
+
+    fn get(&self) -> u16 {
+        let mut value = bitarr![u16, Lsb0; 0; 16];
+        value.set(0, self.scanerr);
+        value.set(1, self.lfbend);
+        value.set(2, self.rfbend);
+        value.set(3, self.gamestart);
+
+        value.set(4, self.framestart);
+
+        value.set(13, self.sbhit);
+        value.set(14, self.xpend);
+        value.set(15, self.timeerr);
+
+        value.load()
+    }
+
+    fn set(&mut self, value: u16) {
+        let array = BitArray::<_, Lsb0>::new([value]);
+
+        self.scanerr = *array.get(0).unwrap();
+        self.lfbend = *array.get(1).unwrap();
+        self.rfbend = *array.get(2).unwrap();
+        self.gamestart = *array.get(3).unwrap();
+
+        self.framestart = *array.get(4).unwrap();
+
+        self.sbhit = *array.get(13).unwrap();
+        self.xpend = *array.get(14).unwrap();
+        self.timeerr = *array.get(15).unwrap();
+    }
 }
 
 impl PaletteRegister {
+    fn new() -> Self {
+        PaletteRegister {
+            character1: 0,
+            character2: 0,
+            character3: 0,
+        }
+    }
+
     fn get(&self) -> u8 {
         (self.character3 << 6) | (self.character2 << 4) | (self.character1 << 2)
     }
