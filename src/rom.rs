@@ -1,7 +1,7 @@
 use std::{
     fs::{self},
     path::Path,
-    slice::{from_raw_parts, from_raw_parts_mut},
+    slice::from_raw_parts,
 };
 
 const MAX_ROM_SIZE: usize = 0x100_0000;
@@ -13,8 +13,8 @@ pub struct ROM {
 
     /// ROM address mask for word addresses
     rom_address_mask: usize,
-    pub rom: &'static [u32],
-    pub ram: Box<[u32]>,
+    pub rom: &'static [u16],
+    pub ram: Box<[u16]>,
 }
 
 impl ROM {
@@ -28,11 +28,11 @@ impl ROM {
         }
 
         let rom =
-            unsafe { from_raw_parts(rom_buffer.as_ptr() as *const u32, rom_buffer.len() / 4) };
+            unsafe { from_raw_parts(rom_buffer.as_ptr() as *const u16, rom_buffer.len() / 2) };
 
-        let rom_address_mask = (rom_buffer.len() / 4) - 1;
+        let rom_address_mask = (rom_buffer.len() / 2) - 1;
 
-        let ram: Box<[u32]> = vec![0; MAX_ROM_SIZE / 4].into_boxed_slice();
+        let ram = vec![0; MAX_ROM_SIZE / 2].into_boxed_slice();
 
         ROM {
             rom_buffer,
@@ -43,7 +43,7 @@ impl ROM {
         }
     }
 
-    pub fn get_rom(&self, address: usize) -> u32 {
+    pub fn get_rom(&self, address: usize) -> u16 {
         let address = address & self.rom_address_mask;
 
         self.rom[address]

@@ -26,7 +26,7 @@ pub struct VIP {
 
     // We map the entirety of VRAM due to overlapping sections
     // (upper background maps overlap with OAM and properties).
-    vram: [u8; 0x40000],
+    vram: [u16; 0x4_0000 / 2],
 
     left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
     right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
@@ -109,7 +109,7 @@ impl VIP {
     pub fn new() -> Self {
         VIP {
             current_display_clock_cycle: 0,
-            vram: [0; 0x4_0000],
+            vram: [0; 0x4_0000 / 2],
             left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             interrupt: VIPInterrupt::new(),
@@ -139,49 +139,56 @@ impl VIP {
         }
     }
 
-    pub fn get_byte(&self, address: u32) -> u8 {
+    pub fn get_bus(&self, address: u32) -> u16 {
         let address = address as usize;
 
         match address {
-            0x0..=0x4_0000 => self.vram[address],
+            0x0..=0x4_0000 => self.get_vram(address),
             0x5_F804..=0x5F807 => {
                 // INTCLEAR Interrupt clear
                 // Reading is undefined
                 0
             }
-            0x5_F860..=0x5_F861 => self.background_palette_control0.get(),
-            0x5_F862..=0x5_F863 => self.background_palette_control1.get(),
-            0x5_F864..=0x5_F865 => self.background_palette_control2.get(),
-            0x5_F866..=0x5_F867 => self.background_palette_control3.get(),
-            0x5_F868..=0x5_F869 => self.object_palette_control0.get(),
-            0x5_F86A..=0x5_F86B => self.object_palette_control1.get(),
-            0x5_F86C..=0x5_F86D => self.object_palette_control2.get(),
-            0x5_F86E..=0x5_F86F => self.object_palette_control3.get(),
+            0x5_F860..=0x5_F861 => self.background_palette_control0.get() as u16,
+            0x5_F862..=0x5_F863 => self.background_palette_control1.get() as u16,
+            0x5_F864..=0x5_F865 => self.background_palette_control2.get() as u16,
+            0x5_F866..=0x5_F867 => self.background_palette_control3.get() as u16,
+            0x5_F868..=0x5_F869 => self.object_palette_control0.get() as u16,
+            0x5_F86A..=0x5_F86B => self.object_palette_control1.get() as u16,
+            0x5_F86C..=0x5_F86D => self.object_palette_control2.get() as u16,
+            0x5_F86E..=0x5_F86F => self.object_palette_control3.get() as u16,
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
-                self.vram[(address & 0x1FFF) + 0x6000]
+                self.get_vram((address & 0x1FFF) + 0x6000)
             }
             0x7_A000..=0x7_BFFF => {
                 // Character table 2 remap
-                self.vram[(address & 0x1FFF) + 0xE000]
+                self.get_vram((address & 0x1FFF) + 0xE000)
             }
             0x7_C000..=0x7_DFFF => {
                 // Character table 3 remap
-                self.vram[(address & 0x1FFF) + 0x1_6000]
+                self.get_vram((address & 0x1FFF) + 0x1_6000)
             }
             0x7_E000..=0x7_FFFF => {
                 // Character table 4 remap
-                self.vram[(address & 0x1FFF) + 0x1_E000]
+                self.get_vram((address & 0x1FFF) + 0x1_E000)
             }
             _ => unimplemented!("Read address {:08X}", address),
         }
     }
 
-    pub fn set_byte(&mut self, address: u32, value: u8) {
+    fn get_vram(&self, address: usize) -> u16 {
+        // Convert byte address to halfword address
+        let local_address = address >> 1;
+
+        self.vram[local_address]
+    }
+
+    pub fn set_bus(&mut self, address: u32, value: u16) {
         let address = address as usize;
 
         match address {
-            0x0..=0x4_0000 => self.vram[address] = value,
+            0x0..=0x4_0000 => self.set_vram(address, value),
             0x5_F860..=0x5_F861 => self.background_palette_control0.set(value),
             0x5_F862..=0x5_F863 => self.background_palette_control1.set(value),
             0x5_F864..=0x5_F865 => self.background_palette_control2.set(value),
@@ -192,22 +199,29 @@ impl VIP {
             0x5_F86E..=0x5_F86F => self.object_palette_control3.set(value),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
-                self.vram[(address & 0x1FFF) + 0x6000] = value;
+                self.set_vram((address & 0xFFF) + 0x6000 / 2, value);
             }
             0x7_A000..=0x7_BFFF => {
                 // Character table 2 remap
-                self.vram[(address & 0x1FFF) + 0xE000] = value;
+                self.set_vram((address & 0xFFF) + 0xE000 / 2, value);
             }
             0x7_C000..=0x7_DFFF => {
                 // Character table 3 remap
-                self.vram[(address & 0x1FFF) + 0x1_6000] = value;
+                self.set_vram((address & 0xFFF) + 0x1_6000 / 2, value);
             }
             0x7_E000..=0x7_FFFF => {
                 // Character table 4 remap
-                self.vram[(address & 0x1FFF) + 0x1_E000] = value;
+                self.set_vram((address & 0xFFF) + 0x1_E000 / 2, value);
             }
             _ => unimplemented!("Write address {:08X}", address),
         }
+    }
+
+    fn set_vram(&mut self, address: usize, value: u16) {
+        // Convert byte address to halfword address
+        let local_address = address >> 1;
+
+        self.vram[local_address] = value;
     }
 
     pub fn run_for_cycles(&mut self, cycles_to_run: usize) {
@@ -320,10 +334,11 @@ impl VIP {
             framebuffer_addresses(self.drawing_framebuffer_1);
 
         // Initialize all values to BKCOL
-        let clear_pixel = (self.last_bkcol << 6)
+        let clear_pixel = ((self.last_bkcol << 6)
             | (self.last_bkcol << 4)
             | (self.last_bkcol << 2)
-            | self.last_bkcol;
+            | self.last_bkcol) as u16;
+        let clear_pixel = (clear_pixel << 8) | clear_pixel;
 
         let y = self.sbcount as usize * 8;
 
@@ -333,22 +348,8 @@ impl VIP {
             let x_index = x * DISPLAY_HEIGHT;
             // This contains the bottom three bytes as the bit offset
             let pixel_byte_index = (x_index + y) >> 2;
-            self.set_byte(
-                (left_framebuffer_address + pixel_byte_index) as u32,
-                clear_pixel,
-            );
-            self.set_byte(
-                (left_framebuffer_address + pixel_byte_index + 1) as u32,
-                clear_pixel,
-            );
-            self.set_byte(
-                (right_framebuffer_address + pixel_byte_index) as u32,
-                clear_pixel,
-            );
-            self.set_byte(
-                (right_framebuffer_address + pixel_byte_index + 1) as u32,
-                clear_pixel,
-            );
+            self.set_vram(left_framebuffer_address + pixel_byte_index, clear_pixel);
+            self.set_vram(right_framebuffer_address + pixel_byte_index, clear_pixel);
         }
 
         // Counter for total object groups
@@ -357,7 +358,10 @@ impl VIP {
         for i in 31..=0 {
             // Process world
             let world_attribute_address = 0x3_D800 + 16 * i;
-            let bytes = &self.vram[world_attribute_address..world_attribute_address + 10 * 2];
+            // Convert byte address into halfword addresses so we can grab a slice of memory
+            let world_attribute_halfword_address = world_attribute_address >> 1;
+            let bytes =
+                &self.vram[world_attribute_halfword_address..world_attribute_halfword_address + 10];
 
             let world = World::parse(bytes);
 
@@ -424,16 +428,12 @@ impl VIP {
                 let base_address = world.param_base + 10 * 2;
 
                 if left_eye {
-                    let slice = &self.vram[base_address..base_address + 2];
-
-                    sign_extend_16(((slice[1] as u16) << 8) | (slice[0] as u16), 13)
+                    sign_extend_16(self.get_vram(base_address), 13)
                 } else {
                     // "The VIP appears to determine the address of HOFSTR by OR'ing the address of HOFSTL with 2.
                     // If the Param Base attribute in the world is not divisibe by 2, this will result in HOFSTL being
                     // used for both the left and right images, and HOFSTR will not be accessed."
-                    let base_address = base_address | 0x2;
-                    let slice = &self.vram[base_address..base_address + 2];
-                    sign_extend_16(((slice[1] as u16) << 8) | (slice[1] as u16), 13)
+                    sign_extend_16(self.get_vram(base_address), 13)
                 }
             } else {
                 0
@@ -496,14 +496,12 @@ impl VIP {
                 let bit_index = y & 0x6;
 
                 // TODO: Cache these pixels instead of refetching
-                // Could mask this with 0x3, but the match below makes that unnecessary
-                let left_pixel = self
-                    .get_byte((left_framebuffer_address + pixel_byte_index) as u32)
-                    >> bit_index;
+                let left_pixel =
+                    (self.get_vram(left_framebuffer_address + pixel_byte_index) >> bit_index) & 0x3;
 
-                let right_pixel = self
-                    .get_byte((right_framebuffer_address + pixel_byte_index) as u32)
-                    >> bit_index;
+                let right_pixel = (self.get_vram(right_framebuffer_address + pixel_byte_index)
+                    >> bit_index)
+                    & 0x3;
 
                 let left_pixel = match left_pixel {
                     0 => 0,
@@ -578,8 +576,7 @@ impl VIP {
                 background_offset_address + (character_y * 64 + character_x) * 2;
 
             // Get character block info
-            let character_halfword = ((self.vram[character_address + 1] as u16) << 8)
-                | (self.vram[character_address] as u16);
+            let character_halfword = self.get_vram(character_address);
 
             let character_index = character_halfword & 0x7FF;
             let horizontal_flip = character_halfword & 0x1000 != 0;
@@ -606,8 +603,7 @@ impl VIP {
             let character_address = character_address + background_pixel_offset_y * 2;
 
             // TODO: This can be optimized
-            let row_halfword = ((self.vram[character_address + 1] as u16) << 8)
-                | (self.vram[character_address] as u16);
+            let row_halfword = self.get_vram(character_address);
 
             // Extract pixel
             let pixel_palette_index = (row_halfword >> (background_pixel_offset_x * 2)) & 0x3;
@@ -636,9 +632,9 @@ impl VIP {
 
             let removal_mask = !(0x3 << pixel_shift);
 
-            let existing_byte = self.vram[framebuffer_address];
-            let byte = (existing_byte & removal_mask) | (pixel << pixel_shift);
-            self.vram[framebuffer_address] = byte;
+            let existing_halfword = self.get_vram(framebuffer_address);
+            let halfword = (existing_halfword & removal_mask) | ((pixel as u16) << pixel_shift);
+            self.set_vram(framebuffer_address, halfword);
         }
     }
 
@@ -715,14 +711,14 @@ impl PaletteRegister {
         }
     }
 
-    fn get(&self) -> u8 {
-        (self.character3 << 6) | (self.character2 << 4) | (self.character1 << 2)
+    fn get(&self) -> u16 {
+        ((self.character3 << 6) | (self.character2 << 4) | (self.character1 << 2)) as u16
     }
 
-    fn set(&mut self, value: u8) {
-        self.character1 = (value >> 2) & 0x3;
-        self.character2 = (value >> 4) & 0x3;
-        self.character3 = (value >> 6) & 0x3;
+    fn set(&mut self, value: u16) {
+        self.character1 = ((value >> 2) & 0x3) as u8;
+        self.character2 = ((value >> 4) & 0x3) as u8;
+        self.character3 = ((value >> 6) & 0x3) as u8;
     }
 }
 

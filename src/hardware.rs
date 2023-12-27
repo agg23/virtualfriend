@@ -22,7 +22,7 @@ impl<'a> Hardware<'a> {
         }
     }
 
-    pub fn get(&self, address: u8) -> u32 {
+    pub fn get(&self, address: u8) -> u16 {
         let address = address & 0x3F;
 
         match address {
@@ -67,15 +67,15 @@ impl<'a> Hardware<'a> {
             }
             0x18..=0x1B => {
                 // TLR Timer counter low register
-                (self.timer.get_counter() & 0xFF) as u32
+                (self.timer.get_counter() & 0xFF) as u16
             }
             0x1C..=0x1F => {
                 // THR Timer counter high register
-                (self.timer.get_counter() >> 8) as u32
+                (self.timer.get_counter() >> 8) as u16
             }
             0x20..=0x23 => {
                 // TCR Timer control register
-                self.timer.get_config() as u32
+                self.timer.get_config() as u16
             }
             0x24..=0x27 => {
                 // WCR Wait control register
@@ -91,7 +91,7 @@ impl<'a> Hardware<'a> {
         }
     }
 
-    pub fn set(&mut self, address: u8, value: u32) {
+    pub fn set(&mut self, address: u8, value: u16) {
         let address = address & 0x3F;
 
         match address {

@@ -76,24 +76,22 @@ pub enum BackgroundType {
 }
 
 impl World {
-    pub fn parse(bytes: &[u8]) -> Self {
-        assert!(bytes.len() == 10);
+    pub fn parse(halfwords: &[u16]) -> Self {
+        assert!(halfwords.len() == 10);
 
-        let value = bytes[0];
+        let value = halfwords[0];
         let array = BitArray::<_, Lsb0>::new([value]);
 
-        let map_base_index = value & 0xF;
+        let map_base_index = (value & 0xF) as u8;
         let end = *array.get(6).unwrap();
         let overplane = *array.get(7).unwrap();
 
-        let value = bytes[1];
+        let screen_y_size = ((value >> 8) & 0x3) as u8;
+        let screen_x_size = ((value >> 10) & 0x3) as u8;
+        let background_type = (value >> 12) & 0x3;
 
-        let screen_y_size = value & 0x3;
-        let screen_x_size = (value >> 2) & 0x3;
-        let background_type = (value >> 4) & 0x3;
-
-        let left_display_on = value & 0x40 != 0;
-        let right_display_on = value & 0x80 != 0;
+        let left_display_on = value & 0x4000 != 0;
+        let right_display_on = value & 0x8000 != 0;
 
         let display_state = match (left_display_on, right_display_on) {
             (true, true) => WorldDisplayState::Both,
@@ -110,29 +108,20 @@ impl World {
             _ => unreachable!(),
         };
 
-        let value = ((bytes[3] as u16) << 8) | (bytes[2] as u16);
         // Masking is not required as it is shifted out by the sign extension
-        let background_x_destination = sign_extend_16(value, 10);
+        let background_x_destination = sign_extend_16(halfwords[1], 10);
+        let background_parallax_destination = sign_extend_16(halfwords[2], 10);
+        let background_y_destination = halfwords[3] as i16;
 
-        let value = ((bytes[5] as u16) << 8) | (bytes[4] as u16);
-        let background_parallax_destination = sign_extend_16(value, 10);
+        let background_x_source = sign_extend_16(halfwords[4], 13);
+        let background_parallax_source = sign_extend_16(halfwords[5], 15);
+        let background_y_source = sign_extend_16(halfwords[6], 13);
 
-        let background_y_destination = (((bytes[7] as u16) << 8) | (bytes[6] as u16)) as i16;
+        let window_width = halfwords[7] & 0x1FFF;
+        let window_height = halfwords[8];
 
-        let value = ((bytes[7] as u16) << 8) | (bytes[6] as u16);
-        let background_x_source = sign_extend_16(value, 13);
-
-        let value = ((bytes[9] as u16) << 8) | (bytes[8] as u16);
-        let background_parallax_source = sign_extend_16(value, 15);
-
-        let value = ((bytes[11] as u16) << 8) | (bytes[10] as u16);
-        let background_y_source = sign_extend_16(value, 13);
-
-        let window_width = (((bytes[13] as u16) << 8) | (bytes[12] as u16)) & 0x1FFF;
-        let window_height = ((bytes[15] as u16) << 8) | (bytes[14] as u16);
-
-        let param_base = (((bytes[17] as u16) << 8) | (bytes[16] as u16)) as usize;
-        let overplane_character_index = ((bytes[19] as u16) << 8) | (bytes[18] as u16);
+        let param_base = halfwords[9] as usize;
+        let overplane_character_index = halfwords[10];
 
         World {
             display_state,
