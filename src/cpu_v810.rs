@@ -4,7 +4,7 @@ use std::io::Write;
 use bitvec::array::BitArray;
 use bitvec::prelude::Lsb0;
 
-use crate::{bus::Bus, cpu_internals::ProgramStatusWord};
+use crate::{bus::Bus, cpu_internals::ProgramStatusWord, util::sign_extend};
 
 ///
 /// Tracks the most recent activity of the bus for the purposes of timing
@@ -1475,16 +1475,6 @@ impl CpuV810 {
             _ => BusActivity::StoreInitial,
         }
     }
-}
-
-fn sign_extend(value: u32, size: u8) -> u32 {
-    // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
-    // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
-    // So we use a signed type
-    let value = value as i32;
-    let result = (value << (32 - size)) >> (32 - size);
-
-    result as u32
 }
 
 fn extract_reg1_2_index(instruction: u16) -> (usize, usize) {

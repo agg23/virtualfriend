@@ -16,6 +16,7 @@ mod cpu_v810;
 pub mod hardware;
 pub mod rom;
 pub mod timer;
+pub mod util;
 pub mod vip;
 mod virtualfriend;
 
