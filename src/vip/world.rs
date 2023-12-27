@@ -4,34 +4,59 @@ use bitvec::prelude::Lsb0;
 use crate::util::sign_extend_16;
 
 pub struct World {
+    /// Encapsulates LON and RON (left/right display on)
     pub display_state: WorldDisplayState,
 
     /// BGM Background modification
     pub background_type: BackgroundType,
 
+    /// SCX Screen X size
+    ///
+    /// Raise 2 to this power to get the width of the world's background in the background maps.
     pub screen_x_size: u8,
+    /// SCY Screen Y size
+    ///
+    /// Raise 2 to this power to get the height of the world's background in the background maps.
     pub screen_y_size: u8,
 
+    /// If set, characters outside of the background bounds will use the `overplane_character_index`.
+    /// If unset, the background will repeat infinitely.
     pub overplane: bool,
 
-    /// Marks the previous world as the final world
+    /// Marks the previous world as the final world.
     pub end: bool,
 
+    /// BG The index of the first background map used in the background.
     pub map_base_index: u8,
 
+    /// GX The signed horizontal coordinate of the left edge of the world relative to the left of the image
     pub background_x_destination: i16,
+    /// GP The signed horizontal parallax offset applied to the world's horizontal coordinate
     pub background_parallax_destination: i16,
+    /// GY The signed vertical coordinate of the top edge of the world relative to the top of the image
     pub background_y_destination: i16,
+    /// MX The signed horizontal source coordinate of the pixel in the world's background, to be displayed in the
+    /// top left corner of the world, relative to the top left corner of the background.
     pub background_x_source: i16,
+    /// MP The signed horizontal parallax offset applied to the background's source coordinate.
     pub background_parallax_source: i16,
+    /// MY The signed vertical source coordinate of the pixel in the world's background, to be displayed in the
+    /// top left corner of the world, relative to the top left corner of the background.
     pub background_y_source: i16,
 
+    /// W The width (in pixels) of the world, minus 1.
+    ///
+    /// The `background_type` changes the interpretation of this value.
     pub window_width: u16,
+    /// H The height (in pixels) of the world, minus 1.
     pub window_height: u16,
 
     /// Offset into memory for additional parameters based on `BackgroundType`
-    pub param_base: u16,
+    pub param_base: usize,
 
+    /// When `overplane` is set, this character is used for overflow characters.
+    ///
+    /// The address will be 0x2_0000 + `overplane_character_index` * 2
     pub overplane_character_index: u16,
 }
 
@@ -106,7 +131,7 @@ impl World {
         let window_width = (((bytes[13] as u16) << 8) | (bytes[12] as u16)) & 0x1FFF;
         let window_height = ((bytes[15] as u16) << 8) | (bytes[14] as u16);
 
-        let param_base = ((bytes[17] as u16) << 8) | (bytes[16] as u16);
+        let param_base = (((bytes[17] as u16) << 8) | (bytes[16] as u16)) as usize;
         let overplane_character_index = ((bytes[19] as u16) << 8) | (bytes[18] as u16);
 
         World {

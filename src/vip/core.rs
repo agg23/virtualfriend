@@ -1,10 +1,13 @@
 use std::f32::consts::E;
 
-use crate::constants::{
-    DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
-    DRAWING_BLOCK_CYCLE_COUNT, FCLK_LOW_CYCLE_OFFSET, FRAME_COMPLETE_CYCLE_OFFSET,
-    LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, LEFT_FRAME_BUFFER_CYCLE_OFFSET,
-    RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, RIGHT_FRAME_BUFFER_CYCLE_OFFSET,
+use crate::{
+    constants::{
+        DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
+        DRAWING_BLOCK_CYCLE_COUNT, FCLK_LOW_CYCLE_OFFSET, FRAME_COMPLETE_CYCLE_OFFSET,
+        LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, LEFT_FRAME_BUFFER_CYCLE_OFFSET,
+        RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, RIGHT_FRAME_BUFFER_CYCLE_OFFSET,
+    },
+    util::sign_extend_16,
 };
 
 use super::world::{BackgroundType, World, WorldDisplayState};
@@ -55,6 +58,16 @@ pub struct VIP {
     brightness_control_reg_b: u8,
     brightness_control_reg_c: u8,
 
+    background_palette_control0: PaletteRegister,
+    background_palette_control1: PaletteRegister,
+    background_palette_control2: PaletteRegister,
+    background_palette_control3: PaletteRegister,
+
+    object_palette_control0: PaletteRegister,
+    object_palette_control1: PaletteRegister,
+    object_palette_control2: PaletteRegister,
+    object_palette_control3: PaletteRegister,
+
     // Internal
     /// High if drawing from framebuffer 1. Otherwise drawing from framebuffer 0.
     drawing_framebuffer_1: bool,
@@ -84,12 +97,26 @@ pub struct VIPInterrupt {
     timeerr: bool,
 }
 
+pub struct PaletteRegister {
+    character1: u8,
+    character2: u8,
+    character3: u8,
+}
+
 impl VIP {
     pub fn get_byte(&self, address: u32) -> u8 {
         let address = address as usize;
 
         match address {
             0x0..=0x4_0000 => self.vram[address],
+            0x5_F860 => self.background_palette_control0.get(),
+            0x5_F862 => self.background_palette_control1.get(),
+            0x5_F864 => self.background_palette_control2.get(),
+            0x5_F866 => self.background_palette_control3.get(),
+            0x5_F868 => self.object_palette_control0.get(),
+            0x5_F86A => self.object_palette_control0.get(),
+            0x5_F86C => self.object_palette_control0.get(),
+            0x5_F86E => self.object_palette_control0.get(),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.vram[(address & 0x1FFF) + 0x6000]
@@ -114,6 +141,14 @@ impl VIP {
 
         match address {
             0x0..=0x4_0000 => self.vram[address] = value,
+            0x5_F860 => self.background_palette_control0.set(value),
+            0x5_F862 => self.background_palette_control1.set(value),
+            0x5_F864 => self.background_palette_control2.set(value),
+            0x5_F866 => self.background_palette_control3.set(value),
+            0x5_F868 => self.object_palette_control0.set(value),
+            0x5_F86A => self.object_palette_control0.set(value),
+            0x5_F86C => self.object_palette_control0.set(value),
+            0x5_F86E => self.object_palette_control0.set(value),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.vram[(address & 0x1FFF) + 0x6000] = value;
@@ -235,6 +270,8 @@ impl VIP {
     ///
     /// Draws a block (1x8), but for an entire row. This represents 1 value of `SBCOUNT`.
     ///
+    /// The actual hardware does not draw entire rows at a time, but due to lack of "racing the beam", there's no
+    /// real reason to break up the drawing.
     fn draw_block_row(&mut self) {
         // Get drawing framebuffer
         let (left_framebuffer_address, right_framebuffer_address) =
@@ -292,8 +329,8 @@ impl VIP {
 
             match world.background_type {
                 BackgroundType::Normal => {
-                    self.render_normal_background(&world, true);
-                    self.render_normal_background(&world, false);
+                    self.render_normal_or_hbias_background(&world, true, false, y);
+                    self.render_normal_or_hbias_background(&world, false, false, y);
                 }
                 BackgroundType::HBias => todo!(),
                 BackgroundType::Affine => todo!(),
@@ -302,7 +339,13 @@ impl VIP {
         }
     }
 
-    fn render_normal_background(&mut self, world: &World, left_eye: bool) {
+    fn render_normal_or_hbias_background(
+        &mut self,
+        world: &World,
+        left_eye: bool,
+        is_hbias: bool,
+        block_start_y: usize,
+    ) {
         let (left_framebuffer_address, right_framebuffer_address) =
             framebuffer_addresses(self.drawing_framebuffer_1);
 
@@ -325,7 +368,64 @@ impl VIP {
 
         let world_height = world.window_height + 1;
 
-        // TODO: Loop over y pixels in range of this block
+        // Loop over y pixels in range of this block
+        let lower_bound = block_start_y as i16 + world.background_y_destination;
+
+        for y in lower_bound..lower_bound + 8 {
+            // For each row in the block
+            // Get window start Y position
+            let window_y = y.wrapping_sub(world.background_y_destination);
+
+            // TODO: Implement HBias
+            let line_offset = if is_hbias {
+                // HBias has two additional parameters
+                let base_address = world.param_base + 10 * 2;
+
+                if left_eye {
+                    let slice = &self.vram[base_address..base_address + 2];
+
+                    sign_extend_16(((slice[1] as u16) << 8) | (slice[0] as u16), 13)
+                } else {
+                    // "The VIP appears to determine the address of HOFSTR by OR'ing the address of HOFSTL with 2.
+                    // If the Param Base attribute in the world is not divisibe by 2, this will result in HOFSTL being
+                    // used for both the left and right images, and HOFSTR will not be accessed."
+                    let base_address = base_address | 0x2;
+                    let slice = &self.vram[base_address..base_address + 2];
+                    sign_extend_16(((slice[1] as u16) << 8) | (slice[1] as u16), 13)
+                }
+            } else {
+                0
+            };
+
+            let lower_bound = 0 + parallax_x;
+
+            for x in lower_bound..lower_bound + world.window_width as i16 + 1 {
+                // Loop over all columns in the row
+                if x >= DISPLAY_WIDTH as i16 {
+                    continue;
+                }
+                let window_x = x - parallax_x;
+
+                let background_x = window_x.wrapping_add(world.background_x_destination);
+
+                let background_x = if left_eye {
+                    background_x.wrapping_sub(world.background_parallax_source)
+                } else {
+                    background_x.wrapping_add(world.background_parallax_source)
+                };
+
+                let background_y = window_y.wrapping_add(world.background_y_source);
+
+                self.draw_background_pixel(
+                    world,
+                    left_eye,
+                    x,
+                    y,
+                    background_x as usize,
+                    background_y as usize,
+                );
+            }
+        }
     }
 
     fn display_framebuffer(&mut self) {
@@ -383,6 +483,134 @@ impl VIP {
             }
         }
     }
+
+    fn draw_background_pixel(
+        &mut self,
+        world: &World,
+        left_eye: bool,
+        x: i16,
+        y: i16,
+        background_x: usize,
+        background_y: usize,
+    ) {
+        // TODO: Move this out of pixel draw method. Unnecessary duplication of work
+        let screen_x_size = 1 << world.screen_x_size;
+        let screen_y_size = 1 << world.screen_y_size;
+
+        // Size of all of the background tiles together (they're 512x512 pixels)
+        let total_background_width = screen_x_size * 512;
+        let total_background_height = screen_y_size * 512;
+
+        if world.overplane
+            && (background_x >= total_background_height || background_y >= total_background_width)
+        {
+            // Overplane is enabled and our background tile is outside of the total background bounds
+            // Draw overplane character
+            todo!();
+        } else {
+            // Draw normal pixel
+            // Get active background map (AND to limit to the available range)
+            let active_background_map_x = (background_x / 512) & (total_background_width - 1);
+            let active_background_map_y = (background_y / 512) & (total_background_height - 1);
+
+            // Each background is 0x2000 bytes
+            let background_base_offset_address =
+                0x2_0000 + (world.map_base_index as usize) * 0x2000;
+            let background_offset_address = background_base_offset_address
+                + (active_background_map_y * screen_x_size + active_background_map_x) * 0x2000;
+
+            // Limit our pixel positions to be within the background
+            let background_x = background_x & 0x1FF;
+            let background_y = background_y & 0x1FF;
+
+            // Get X/Y position of the character block
+            let character_x = background_x / 8;
+            let character_y = background_y / 8;
+
+            // Get pixel offset in the given block
+            let background_pixel_offset_x = background_x & 0x7;
+            let background_pixel_offset_y = background_y & 0x7;
+
+            // There are 512/8 = 64 blocks in a row in a background
+            let character_address =
+                background_offset_address + (character_y * 64 + character_x) * 2;
+
+            // Get character block info
+            let character_halfword = ((self.vram[character_address + 1] as u16) << 8)
+                | (self.vram[character_address] as u16);
+
+            let character_index = character_halfword & 0x7FF;
+            let horizontal_flip = character_halfword & 0x1000 != 0;
+            let vertical_flip = character_halfword & 0x2000 != 0;
+            let palette = character_halfword >> 14;
+
+            // TODO: Handle OBJ palettes
+            let palette = match palette {
+                0 => &self.background_palette_control0,
+                1 => &self.background_palette_control1,
+                2 => &self.background_palette_control2,
+                _ => &self.background_palette_control3,
+            };
+
+            // Flip pixel position, if necessary
+            let x = (if horizontal_flip { 7 - x } else { x }) as usize;
+            let y = (if vertical_flip { 7 - y } else { y }) as usize;
+
+            // Index into character blocks using the virtual addresses for ease of access
+            // 8 rows per block. 2 bytes per row = 16 per character
+            let character_address = 0x7_8000 + (character_index as usize) * 16;
+
+            // Index to the correct row
+            let character_address = character_address + background_pixel_offset_y * 2;
+
+            // TODO: This can be optimized
+            let row_halfword = ((self.vram[character_address + 1] as u16) << 8)
+                | (self.vram[character_address] as u16);
+
+            // Extract pixel
+            let pixel_palette_index = (row_halfword >> (background_pixel_offset_x * 2)) & 0x3;
+
+            if pixel_palette_index == 0 {
+                return;
+            }
+
+            let pixel = match pixel_palette_index {
+                // No need to draw. Background "blank" pixel has already been written to FB
+                0 => return,
+                1 => palette.character1,
+                2 => palette.character2,
+                _ => palette.character3,
+            };
+
+            // Write to framebuffer
+            let framebuffer_offset = y * DISPLAY_WIDTH + x;
+            // Each pixel is 2 bits, so find the right byte for this pixel
+            let framebuffer_byte_offset = framebuffer_offset / 4;
+            let pixel_shift = (y & 0x3) * 2;
+
+            let framebuffer_address =
+                framebuffer_address_at_side(left_eye, self.drawing_framebuffer_1)
+                    + framebuffer_byte_offset;
+
+            let removal_mask = !(0x3 << pixel_shift);
+
+            let existing_byte = self.vram[framebuffer_address];
+            let byte = (existing_byte & removal_mask) | (pixel << pixel_shift);
+            self.vram[framebuffer_address] = byte;
+        }
+    }
+}
+
+impl PaletteRegister {
+    fn get(&self) -> u8 {
+        (self.character3 << 6) | (self.character2 << 4) | (self.character1 << 2)
+    }
+
+    fn set(&mut self, value: u8) {
+        self.character1 = (value >> 2) & 0x3;
+        self.character2 = (value >> 4) & 0x3;
+        self.character3 = (value >> 6) & 0x3;
+    }
 }
 
 fn framebuffer_addresses(use_fb_1: bool) -> (usize, usize) {
@@ -390,4 +618,13 @@ fn framebuffer_addresses(use_fb_1: bool) -> (usize, usize) {
     let right_framebuffer_address = left_framebuffer_address + 0x1_0000;
 
     (left_framebuffer_address, right_framebuffer_address)
+}
+
+fn framebuffer_address_at_side(left_eye: bool, use_fb_1: bool) -> usize {
+    let (left_framebuffer_address, right_framebuffer_address) = framebuffer_addresses(use_fb_1);
+
+    match left_eye {
+        true => left_framebuffer_address,
+        false => right_framebuffer_address,
+    }
 }
