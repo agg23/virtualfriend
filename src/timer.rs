@@ -17,7 +17,7 @@ impl Timer {
     pub fn new() -> Self {
         Timer {
             reload: 0,
-            counter: 0,
+            counter: 0xFFFF,
             enabled: false,
             did_zero: false,
             interrupt_enabled: false,

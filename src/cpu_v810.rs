@@ -4,11 +4,11 @@ use std::io::Write;
 use bitvec::array::BitArray;
 use bitvec::prelude::Lsb0;
 
-use crate::{bus::Bus, cpu_internals::ProgramStatusWord, util::sign_extend};
+use crate::{
+    bus::Bus, cpu_internals::ProgramStatusWord, interrupt::InterruptRequest, util::sign_extend,
+};
 
-///
 /// Tracks the most recent activity of the bus for the purposes of timing
-///
 pub enum BusActivity {
     Standard,
     Long,
@@ -22,7 +22,9 @@ pub enum BusActivity {
 pub struct CpuV810 {
     pc: u32,
 
-    ///
+    /// Tracks whether the CPU has been halted with HALT
+    is_halted: bool,
+
     /// 31 general purpose registers, and r0 == 0.
     ///
     /// r0 should not be mutated.
@@ -50,7 +52,6 @@ pub struct CpuV810 {
     /// •	Bit string source word address.
     ///
     /// r31	Stores the return address of the JAL instruction.
-    ///
     general_purpose_reg: [u32; 32],
 
     /// ID 0: Exception/Interrupt PC
@@ -117,15 +118,20 @@ pub struct CpuV810 {
 
 impl CpuV810 {
     pub fn new() -> Self {
+        let mut psw = ProgramStatusWord::new();
+
+        psw.set(0x8000);
+
         CpuV810 {
             pc: 0xFFFF_FFF0,
+            is_halted: false,
             general_purpose_reg: [0; 32],
             eipc: 0,
             eipsw: 0,
             fepc: 0,
             fepsw: 0,
-            ecr: 0,
-            psw: ProgramStatusWord::new(),
+            ecr: 0xFFF0,
+            psw,
             pir: 0,
             tkcw: 0,
             chcw: 0,
@@ -140,13 +146,11 @@ impl CpuV810 {
 
     /// TODO: This is debug init to match with Mednafen
     pub fn debug_init(&mut self) {
-        self.ecr = 0xFFF0;
-        self.psw.set(0x8000);
         self.pir = 0x5346;
         self.tkcw = 0xE0;
     }
 
-    pub fn log_instruction(&self, log_file: Option<&mut File>, cycle_count: u32) {
+    pub fn log_instruction(&self, log_file: Option<&mut File>, cycle_count: usize) {
         let mut tuples = vec![
             ("PC".to_string(), self.pc),
             ("R1".to_string(), self.general_purpose_reg[1]),
@@ -200,22 +204,75 @@ impl CpuV810 {
         }
     }
 
-    ///
     /// Step one CPU instruction
     ///
     /// Returns the number of cycles consumed
-    ///
-    pub fn step(&mut self, bus: &mut Bus) -> u32 {
+    pub fn step(&mut self, bus: &mut Bus) -> usize {
+        if self.is_halted {
+            // Do nothing. 1 cycle consumed
+            return 1;
+        }
+
         let instruction = self.fetch_instruction_word(bus);
 
         let (cycles, bus_activity) = self.perform_instruction(bus, instruction);
 
         self.last_bus_activity = bus_activity;
 
-        cycles
+        cycles as usize
     }
 
-    pub fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
+    /// Performs the necessary operations to jump to an interrupt, if valid
+    pub fn request_interrupt(&mut self, request: InterruptRequest) {
+        if self.psw.interrupt_disable {
+            // Ignore
+            return;
+        }
+
+        if self.psw.nmi_pending {
+            todo!("Fatal exception")
+        }
+
+        if self.psw.exception_pending {
+            todo!("Duplexed exception")
+        }
+
+        let code = request.code();
+
+        // Second nibble is the same as interrupt level
+        let interrupt_level = ((code >> 4) & 0xF) as u8;
+
+        if interrupt_level < self.psw.interrupt_level {
+            // Level not high enough to perform interrupt. Skip
+            return;
+        }
+
+        if self.psw.interrupt_level < 15 {
+            // Increment interrupt mask level
+            self.psw.interrupt_level += 1;
+        }
+
+        self.perform_exception(code);
+    }
+
+    fn perform_exception(&mut self, code: usize) {
+        // Set interrupt code into cause code segment
+        self.ecr = code as u32;
+        // Backup PSW
+        self.eipsw = self.psw.get();
+        // Backup PC
+        self.eipc = self.pc;
+        self.psw.exception_pending = true;
+        self.psw.interrupt_disable = true;
+        self.psw.address_trap_enable = false;
+
+        self.pc = 0xFFFF_0000 | code as u32;
+
+        // Clear halt
+        self.is_halted = false;
+    }
+
+    fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
         let opcode = instruction >> 10;
 
         if self.pc == 0xFFFBE99A + 2 {
@@ -670,7 +727,9 @@ impl CpuV810 {
             }
             0b01_1010 => {
                 // HALT
-                todo!("Implement halt")
+                self.is_halted = true;
+
+                (1, BusActivity::Standard)
             }
             0b10_1011 => {
                 // JAL Jump and link

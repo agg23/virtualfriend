@@ -31,7 +31,8 @@ pub struct VIP {
     left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
     right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
 
-    interrupt: VIPInterrupt,
+    interrupt_pending: VIPInterrupt,
+    interrupt_enabled: VIPInterrupt,
 
     // Registers
     fclk: bool,
@@ -112,7 +113,8 @@ impl VIP {
             vram: [0; 0x4_0000 / 2],
             left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
-            interrupt: VIPInterrupt::new(),
+            interrupt_pending: VIPInterrupt::new(),
+            interrupt_enabled: VIPInterrupt::new(),
             fclk: false,
             drawing_enabled: false,
             display_enabled: false,
@@ -144,7 +146,15 @@ impl VIP {
 
         match address {
             0x0..=0x4_0000 => self.get_vram(address),
-            0x5_F804..=0x5F807 => {
+            0x5_F800..=0x5_F801 => {
+                // INTPND Interrupt pending
+                self.interrupt_pending.get()
+            }
+            0x5_F802..=0x5_F803 => {
+                // INTENB Interrupt enable
+                self.interrupt_enabled.get()
+            }
+            0x5_F804..=0x5F805 => {
                 // INTCLEAR Interrupt clear
                 // Reading is undefined
                 0
@@ -189,6 +199,18 @@ impl VIP {
 
         match address {
             0x0..=0x4_0000 => self.set_vram(address, value),
+            0x5_F800..=0x5_F801 => {
+                // INTPND Interrupt pending
+                // Writes have no effect
+            }
+            0x5_F802..=0x5_F803 => {
+                // INTENB Interrupt enable
+                self.interrupt_enabled.set(value)
+            }
+            0x5_F804..=0x5F805 => {
+                // INTCLEAR Interrupt clear
+                self.set_intclear(value);
+            }
             0x5_F860..=0x5_F861 => self.background_palette_control0.set(value),
             0x5_F862..=0x5_F863 => self.background_palette_control1.set(value),
             0x5_F864..=0x5_F865 => self.background_palette_control2.set(value),
@@ -224,7 +246,10 @@ impl VIP {
         self.vram[local_address] = value;
     }
 
-    pub fn run_for_cycles(&mut self, cycles_to_run: usize) {
+    /// Runs the VIP for `cycles_to_run`.
+    ///
+    /// Returns true if an interrupt is requested from the VIP
+    pub fn step(&mut self, cycles_to_run: usize) -> bool {
         for _ in 0..cycles_to_run {
             // Display process
             match self.current_display_clock_cycle {
@@ -240,7 +265,7 @@ impl VIP {
                 }
                 LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End left frame buffer
-                    self.interrupt.lfbend = true;
+                    self.interrupt_pending.lfbend = true;
                 }
                 FCLK_LOW_CYCLE_OFFSET => {
                     // Lower FCLK
@@ -251,7 +276,7 @@ impl VIP {
                 }
                 RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End right frame buffer
-                    self.interrupt.rfbend = true;
+                    self.interrupt_pending.rfbend = true;
                 }
                 FRAME_COMPLETE_CYCLE_OFFSET => {
                     // End frame
@@ -278,7 +303,7 @@ impl VIP {
                         self.sbcount += 1;
                     } else {
                         self.sbcount = 0;
-                        self.interrupt.xpend = true;
+                        self.interrupt_pending.xpend = true;
                     }
                 } else {
                     self.drawing_cycle_count += 1;
@@ -291,12 +316,15 @@ impl VIP {
                 self.current_display_clock_cycle += 1;
             }
         }
+
+        self.interrupt_pending
+            .check_intersection(&self.interrupt_enabled)
     }
 
     fn init_display_frame(&mut self) {
         self.fclk = true;
 
-        self.interrupt.framestart = true;
+        self.interrupt_pending.framestart = true;
 
         self.frame_count += 1;
 
@@ -308,7 +336,7 @@ impl VIP {
     }
 
     fn init_drawing_frame(&mut self) {
-        self.interrupt.gamestart = true;
+        self.interrupt_pending.gamestart = true;
 
         if self.drawing_enabled {
             // Flip framebuffers to start writing to the currently displayed ones
@@ -319,7 +347,7 @@ impl VIP {
         } else {
             // Immediately mark drawing as ended, as we're not drawing at all
             // TODO: This should actually be after 2.8ms
-            self.interrupt.xpend = true;
+            self.interrupt_pending.xpend = true;
         }
     }
 
@@ -638,21 +666,21 @@ impl VIP {
         }
     }
 
-    fn write_intclear(&mut self, value: u32) {
+    fn set_intclear(&mut self, value: u16) {
         let mut new_interrupt = VIPInterrupt::new();
-        new_interrupt.set(value as u16);
+        new_interrupt.set(value);
 
         // Clear any interrupts that are set in `value`
-        self.interrupt.scanerr &= new_interrupt.scanerr;
-        self.interrupt.lfbend &= new_interrupt.lfbend;
-        self.interrupt.rfbend &= new_interrupt.rfbend;
-        self.interrupt.gamestart &= new_interrupt.gamestart;
+        self.interrupt_pending.scanerr &= new_interrupt.scanerr;
+        self.interrupt_pending.lfbend &= new_interrupt.lfbend;
+        self.interrupt_pending.rfbend &= new_interrupt.rfbend;
+        self.interrupt_pending.gamestart &= new_interrupt.gamestart;
 
-        self.interrupt.framestart &= new_interrupt.framestart;
+        self.interrupt_pending.framestart &= new_interrupt.framestart;
 
-        self.interrupt.sbhit &= new_interrupt.sbhit;
-        self.interrupt.xpend &= new_interrupt.xpend;
-        self.interrupt.timeerr &= new_interrupt.timeerr;
+        self.interrupt_pending.sbhit &= new_interrupt.sbhit;
+        self.interrupt_pending.xpend &= new_interrupt.xpend;
+        self.interrupt_pending.timeerr &= new_interrupt.timeerr;
     }
 }
 
@@ -699,6 +727,20 @@ impl VIPInterrupt {
         self.sbhit = *array.get(13).unwrap();
         self.xpend = *array.get(14).unwrap();
         self.timeerr = *array.get(15).unwrap();
+    }
+
+    ///
+    /// Intersects two sets of interrupt values. If there is at least one intersection (both sides
+    /// have a true value), this method will return true.
+    fn check_intersection(&self, b: &VIPInterrupt) -> bool {
+        (self.scanerr && b.scanerr)
+            || (self.lfbend && b.lfbend)
+            || (self.rfbend && b.rfbend)
+            || (self.gamestart && b.gamestart)
+            || (self.framestart && b.framestart)
+            || (self.sbhit && b.sbhit)
+            || (self.xpend && b.xpend)
+            || (self.timeerr && b.timeerr)
     }
 }
 

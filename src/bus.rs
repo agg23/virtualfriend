@@ -1,6 +1,6 @@
 use rand::{thread_rng, Rng};
 
-use crate::{hardware::Hardware, rom::ROM, vip::VIP};
+use crate::{hardware::Hardware, interrupt::InterruptRequest, rom::ROM, vip::VIP};
 
 pub struct Bus<'a> {
     wram: [u16; 0x1_0000 / 2],
@@ -22,6 +22,18 @@ impl<'a> Bus<'a> {
             vip,
             hardware,
         }
+    }
+
+    pub fn step(&mut self, cycles_to_run: usize) -> Option<InterruptRequest> {
+        let mut request = None;
+
+        // Highest priority
+        if self.vip.step(cycles_to_run) {
+            request = Some(InterruptRequest::VIP);
+        }
+
+        // TODO: Tick timer
+        request
     }
 
     pub fn get_u16(&self, address: u32) -> u16 {
