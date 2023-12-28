@@ -2,6 +2,7 @@ use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::{array::BitArray, bitarr};
 
+use crate::constants::SBOUT_HIGH_CYCLE_COUNT;
 use crate::{
     constants::{
         DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
@@ -35,18 +36,31 @@ pub struct VIP {
     interrupt_enabled: VIPInterrupt,
 
     // Registers
+    // DPSTTS/DPCTRL
+    display_enabled: bool,
+    /// Simple R/W register in emulator.
+    ///
+    /// Would normally allow you to disable sending memory refreshes to VRAM
+    refresh_ram: bool,
+
     fclk: bool,
+    /// Sync signals are being sent to the displays, preventing images from being displayed.
+    sync_enabled: bool,
+    /// When set, column table read start address will not change
+    lock_column_table: bool,
 
     /// XPEN
     drawing_enabled: bool,
-    display_enabled: bool,
-    /// Sync signals are being sent to the displays, preventing images from being displayed.
-    sync_enabled: bool,
 
     /// Game frame control register
     ///
     /// This value +1 is the number of display frames per rendered frame
     frmcyc: u8,
+
+    /// The most recent (or locked value, if `lock_column_table`) index of the start of the column table entry
+    // TODO: Unimplemented
+    last_left_column_table_index: u8,
+    last_right_column_table_index: u8,
 
     /// BG color palette control register
     ///
@@ -54,12 +68,27 @@ pub struct VIP {
     bkcol: u8,
     last_bkcol: u8,
 
+    // SB Allows user to watch for the render of a set of 8 rows
     /// The current group of 8 rows of pixels, relative to the top of the image, currently being drawn.
     sbcount: u8,
+    /// The group of 8 rows of pixels, relative to the top of the image, to compare with while drawing.
+    sbcmp: u8,
+    sbout: bool,
+
+    /// Tracks the number of cycles `SBOUT` is high. Brings it low after 56us
+    sbout_cycle_high_count: u32,
+
+    object_control0: u16,
+    object_control1: u16,
+    object_control2: u16,
+    object_control3: u16,
 
     brightness_control_reg_a: u8,
     brightness_control_reg_b: u8,
     brightness_control_reg_c: u8,
+
+    // TODO: Implement
+    led_rest_duration: u8,
 
     background_palette_control0: PaletteRegister,
     background_palette_control1: PaletteRegister,
@@ -74,11 +103,19 @@ pub struct VIP {
     // Internal
     /// High if drawing from framebuffer 1. Otherwise drawing from framebuffer 0.
     drawing_framebuffer_1: bool,
+    current_displaying: DisplayState,
 
     in_drawing: bool,
     drawing_cycle_count: u32,
 
     frame_count: u8,
+}
+
+#[derive(PartialEq)]
+pub enum DisplayState {
+    Left,
+    Right,
+    None,
 }
 
 pub struct VIPInterrupt {
@@ -115,17 +152,29 @@ impl VIP {
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             interrupt_pending: VIPInterrupt::new(),
             interrupt_enabled: VIPInterrupt::new(),
-            fclk: false,
-            drawing_enabled: false,
             display_enabled: false,
+            refresh_ram: true,
+            fclk: false,
             sync_enabled: false,
+            lock_column_table: false,
+            drawing_enabled: false,
             frmcyc: 0,
+            last_left_column_table_index: 0,
+            last_right_column_table_index: 0,
             bkcol: 0,
             last_bkcol: 0,
             sbcount: 0,
+            sbcmp: 0,
+            sbout: false,
+            sbout_cycle_high_count: 0,
+            object_control0: 0,
+            object_control1: 0,
+            object_control2: 0,
+            object_control3: 0,
             brightness_control_reg_a: 0,
             brightness_control_reg_b: 0,
             brightness_control_reg_c: 0,
+            led_rest_duration: 0,
             background_palette_control0: PaletteRegister::new(),
             background_palette_control1: PaletteRegister::new(),
             background_palette_control2: PaletteRegister::new(),
@@ -135,6 +184,7 @@ impl VIP {
             object_palette_control2: PaletteRegister::new(),
             object_palette_control3: PaletteRegister::new(),
             drawing_framebuffer_1: false,
+            current_displaying: DisplayState::None,
             in_drawing: false,
             drawing_cycle_count: 0,
             frame_count: 0,
@@ -159,6 +209,75 @@ impl VIP {
                 // Reading is undefined
                 0
             }
+            0x5_F820..=0x5_F821 => {
+                // DPSTTS Display control read register
+                let mut value = bitarr![u16, Lsb0; 0; 16];
+
+                value.set(1, self.display_enabled);
+                // Displaying left framebuffer 0
+                value.set(
+                    2,
+                    self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Left,
+                );
+                value.set(
+                    3,
+                    self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Right,
+                );
+                // Displaying left framebuffer 1
+                value.set(
+                    4,
+                    !self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Left,
+                );
+                value.set(
+                    5,
+                    !self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Right,
+                );
+
+                // Scan ready
+                // TODO: This should probably only be set after a delay?
+                value.set(6, true);
+
+                value.set(7, self.fclk);
+                value.set(8, self.refresh_ram);
+                value.set(9, self.sync_enabled);
+                value.set(10, self.lock_column_table);
+
+                value.load()
+            }
+            0x5_F824..=0x5_F825 => self.brightness_control_reg_a as u16,
+            0x5_F826..=0x5_F827 => self.brightness_control_reg_b as u16,
+            0x5_F828..=0x5_F829 => self.brightness_control_reg_c as u16,
+            0x5_F82A..=0x5_F82B => self.led_rest_duration as u16,
+            0x5_F82E..=0x5_F82F => self.frmcyc as u16,
+            0x5_F830..=0x5_F831 => {
+                ((self.last_right_column_table_index as u16) << 8)
+                    | (self.last_left_column_table_index as u16)
+            }
+            0x5_F840..=0x5_F841 => {
+                // XPSTTS Drawing control read register
+                let mut value = bitarr![u16, Lsb0; 0; 16];
+
+                value.set(1, self.drawing_enabled);
+                // Drawing to framebuffer 0
+                value.set(2, self.in_drawing && !self.drawing_framebuffer_1);
+                value.set(3, self.in_drawing && self.drawing_framebuffer_1);
+                // TODO: Detect when drawing would overrun. OVERTIME
+                value.set(4, false);
+                value.set(15, self.sbout);
+
+                let value: u16 = value.load();
+
+                value | ((self.sbcount as u16) << 8)
+            }
+            0x5_F844..=0x5_F845 => {
+                // VIP Version
+                // Only one version, always 2
+                2
+            }
+            0x5_F848..=0x5_F849 => self.object_control0,
+            0x5_F84A..=0x5_F84B => self.object_control1,
+            0x5_F84C..=0x5_F84D => self.object_control2,
+            0x5_F84E..=0x5_F84F => self.object_control3,
             0x5_F860..=0x5_F861 => self.background_palette_control0.get() as u16,
             0x5_F862..=0x5_F863 => self.background_palette_control1.get() as u16,
             0x5_F864..=0x5_F865 => self.background_palette_control2.get() as u16,
@@ -167,6 +286,7 @@ impl VIP {
             0x5_F86A..=0x5_F86B => self.object_palette_control1.get() as u16,
             0x5_F86C..=0x5_F86D => self.object_palette_control2.get() as u16,
             0x5_F86E..=0x5_F86F => self.object_palette_control3.get() as u16,
+            0x5_F870..=0x5_F871 => self.bkcol as u16,
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.get_vram((address & 0x1FFF) + 0x6000)
@@ -211,6 +331,37 @@ impl VIP {
                 // INTCLEAR Interrupt clear
                 self.set_intclear(value);
             }
+            0x5_F822..=0x5F823 => {
+                // DPCTRL Display control write register
+                let array = BitArray::<_, Lsb0>::new([value]);
+
+                // TODO: Handle
+                let reset_display = *array.get(0).unwrap();
+
+                self.display_enabled = *array.get(1).unwrap();
+                self.refresh_ram = *array.get(8).unwrap();
+                self.sync_enabled = *array.get(9).unwrap();
+                self.lock_column_table = *array.get(10).unwrap();
+            }
+            0x5_F824..=0x5_F825 => self.brightness_control_reg_a = value as u8,
+            0x5_F826..=0x5_F827 => self.brightness_control_reg_b = value as u8,
+            0x5_F828..=0x5_F829 => self.brightness_control_reg_c = value as u8,
+            0x5_F82A..=0x5_F82B => self.led_rest_duration = value as u8,
+            0x5_F82E..=0x5_F82F => self.frmcyc = (value & 0xF) as u8,
+            0x5_F842..=0x5_F843 => {
+                // XPCTRL Drawing control write register
+                let array = BitArray::<_, Lsb0>::new([value]);
+
+                // TODO: Handle
+                let reset_drawing = *array.get(0).unwrap();
+                self.drawing_enabled = *array.get(1).unwrap();
+
+                self.sbcmp = ((value >> 8) & 0xF) as u8;
+            }
+            0x5_F848..=0x5_F849 => self.object_control0 = value & 0x3FF,
+            0x5_F84A..=0x5_F84B => self.object_control1 = value & 0x3FF,
+            0x5_F84C..=0x5_F84D => self.object_control2 = value & 0x3FF,
+            0x5_F84E..=0x5_F84F => self.object_control3 = value & 0x3FF,
             0x5_F860..=0x5_F861 => self.background_palette_control0.set(value),
             0x5_F862..=0x5_F863 => self.background_palette_control1.set(value),
             0x5_F864..=0x5_F865 => self.background_palette_control2.set(value),
@@ -219,6 +370,7 @@ impl VIP {
             0x5_F86A..=0x5_F86B => self.object_palette_control1.set(value),
             0x5_F86C..=0x5_F86D => self.object_palette_control2.set(value),
             0x5_F86E..=0x5_F86F => self.object_palette_control3.set(value),
+            0x5_F870..=0x5_F871 => self.bkcol = (value & 0x3) as u8,
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.set_vram((address & 0xFFF) + 0x6000 / 2, value);
@@ -262,10 +414,14 @@ impl VIP {
                     // Column table stuff is ignored as it's not relevant to software emulation.
                     // TODO: Do we need to update CTA?
                     self.display_framebuffer();
+
+                    self.current_displaying = DisplayState::Left;
                 }
                 LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End left frame buffer
                     self.interrupt_pending.lfbend = true;
+
+                    self.current_displaying = DisplayState::None;
                 }
                 FCLK_LOW_CYCLE_OFFSET => {
                     // Lower FCLK
@@ -273,10 +429,14 @@ impl VIP {
                 }
                 RIGHT_FRAME_BUFFER_CYCLE_OFFSET => {
                     // Render right frame buffer
+                    // TODO: Render other eye
+                    self.current_displaying = DisplayState::Right;
                 }
                 RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End right frame buffer
                     self.interrupt_pending.rfbend = true;
+
+                    self.current_displaying = DisplayState::None;
                 }
                 FRAME_COMPLETE_CYCLE_OFFSET => {
                     // End frame
@@ -299,6 +459,15 @@ impl VIP {
                             self.last_bkcol = self.bkcol;
                         }
 
+                        if self.sbcount == self.sbcmp {
+                            // Found rows
+                            self.sbout = true;
+                            self.sbout_cycle_high_count = 0;
+
+                            // Fire interrupt
+                            self.interrupt_pending.sbhit = true;
+                        }
+
                         // TODO: Set and clear SBOUT
                         self.sbcount += 1;
                     } else {
@@ -314,6 +483,15 @@ impl VIP {
                 self.current_display_clock_cycle = 0;
             } else {
                 self.current_display_clock_cycle += 1;
+            }
+
+            if self.sbout {
+                // Run SBOUT timer
+                if self.sbout_cycle_high_count == SBOUT_HIGH_CYCLE_COUNT {
+                    self.sbout = false;
+                } else {
+                    self.sbout_cycle_high_count += 1;
+                }
             }
         }
 
