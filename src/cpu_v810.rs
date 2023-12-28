@@ -633,10 +633,9 @@ impl CpuV810 {
             }
             0b01_0111 => {
                 // SAR Shift arthmetic right by immediate
-                let (_, reg2_index) = extract_reg1_2_index(instruction);
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(bus);
 
                 self.sar_inst(reg2, immediate as u32, reg2_index)
             }
@@ -651,10 +650,9 @@ impl CpuV810 {
             }
             0b01_0100 => {
                 // SHL Shift logical left by immediate
-                let (_, reg2_index) = extract_reg1_2_index(instruction);
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(bus);
 
                 self.shl_inst(reg2, immediate as u32, reg2_index)
             }
@@ -669,10 +667,9 @@ impl CpuV810 {
             }
             0b01_0101 => {
                 // SHR Shift logical right by immediate
-                let (_, reg2_index) = extract_reg1_2_index(instruction);
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
 
                 let reg2 = self.general_purpose_reg[reg2_index];
-                let immediate = self.fetch_instruction_word(bus);
 
                 self.shr_inst(reg2, immediate as u32, reg2_index)
             }
