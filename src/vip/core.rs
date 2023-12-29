@@ -29,7 +29,7 @@ pub struct VIP {
     // (upper background maps overlap with OAM and properties).
     vram: [u16; 0x4_0000 / 2],
 
-    left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
+    pub left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
     right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
 
     interrupt_pending: VIPInterrupt,
@@ -37,7 +37,7 @@ pub struct VIP {
 
     // Registers
     // DPSTTS/DPCTRL
-    display_enabled: bool,
+    pub display_enabled: bool,
     /// Simple R/W register in emulator.
     ///
     /// Would normally allow you to disable sending memory refreshes to VRAM
@@ -50,7 +50,7 @@ pub struct VIP {
     lock_column_table: bool,
 
     /// XPEN
-    drawing_enabled: bool,
+    pub drawing_enabled: bool,
 
     /// Game frame control register
     ///
@@ -413,6 +413,7 @@ impl VIP {
                     // Render left frame buffer
                     // Column table stuff is ignored as it's not relevant to software emulation.
                     // TODO: Do we need to update CTA?
+                    println!("Displaying framebuffer");
                     self.display_framebuffer();
 
                     self.current_displaying = DisplayState::Left;
@@ -561,13 +562,13 @@ impl VIP {
         // Counter for total object groups
         let mut object_group_counter = 3;
 
-        for i in 31..=0 {
+        for i in (0..=31).rev() {
             // Process world
-            let world_attribute_address = 0x3_D800 + 16 * i;
+            let world_attribute_address = 0x3_D800 + 16 * 2 * i;
             // Convert byte address into halfword addresses so we can grab a slice of memory
             let world_attribute_halfword_address = world_attribute_address >> 1;
             let bytes =
-                &self.vram[world_attribute_halfword_address..world_attribute_halfword_address + 10];
+                &self.vram[world_attribute_halfword_address..world_attribute_halfword_address + 11];
 
             let world = World::parse(bytes);
 
@@ -598,15 +599,6 @@ impl VIP {
         is_hbias: bool,
         block_start_y: usize,
     ) {
-        let (left_framebuffer_address, right_framebuffer_address) =
-            framebuffer_addresses(self.drawing_framebuffer_1);
-
-        let framebuffer_address = if left_eye {
-            left_framebuffer_address
-        } else {
-            right_framebuffer_address
-        };
-
         // Calculate start coordinate offset using world parallax
         let parallax_x = if left_eye {
             world

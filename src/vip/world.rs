@@ -77,7 +77,7 @@ pub enum BackgroundType {
 
 impl World {
     pub fn parse(halfwords: &[u16]) -> Self {
-        assert!(halfwords.len() == 10);
+        assert!(halfwords.len() == 11);
 
         let value = halfwords[0];
         let array = BitArray::<_, Lsb0>::new([value]);

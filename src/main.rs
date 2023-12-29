@@ -2,6 +2,7 @@ use std::{fs::OpenOptions, path::Path, rc::Rc, sync::Mutex};
 
 use bus::Bus;
 use cpu_v810::CpuV810;
+use image::{ImageBuffer, Luma};
 use rom::ROM;
 
 use crate::{hardware::Hardware, interrupt::InterruptRequest, timer::Timer, vip::VIP};
@@ -78,6 +79,30 @@ fn main() {
 
         cycle_count += step_cycle_count;
         if cycle_count >= 10_000_000 {
+            // Dump image
+            let mut image = ImageBuffer::<Luma<u8>, _>::new(384, 224);
+
+            let mut pixel_count = 0;
+
+            for x in 0..384 {
+                for y in 0..224 {
+                    let pixel = vip.left_rendered_framebuffer[(y * 384 + x) as usize];
+
+                    if pixel > 0 {
+                        pixel_count += 1;
+                    }
+
+                    image.put_pixel(x, y, Luma([pixel]));
+                }
+            }
+
+            println!(
+                "Render enabled: {} {}, pixel count: {pixel_count}",
+                vip.drawing_enabled, vip.display_enabled
+            );
+
+            image.save("output.png").unwrap();
+
             break;
         }
     }
