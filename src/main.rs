@@ -40,6 +40,7 @@ fn main() {
 
     // TODO: Remove
     cpu.debug_init();
+    bus.debug_init();
 
     let mut line_number = 0;
 
@@ -79,6 +80,8 @@ fn main() {
 
         cycle_count += step_cycle_count;
         if cycle_count >= 10_000_000 {
+            bus.debug_dump();
+
             // Dump image
             let mut image = ImageBuffer::<Luma<u8>, _>::new(384, 224);
 

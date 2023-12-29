@@ -3,6 +3,13 @@ pub const CLOCK_SPEED: usize = 20_000_000;
 const CYCLES_PER_MS: usize = CLOCK_SPEED / 1_000;
 const CYCLES_PER_US: usize = CLOCK_SPEED / 1_000_000;
 
+// ROM
+/// Max ROM size is 16MB
+pub const MAX_ROM_SIZE: usize = 16 * 1024 * 1024;
+pub const MIN_ROM_RAM_SIZE: usize = 1024;
+/// Max SRAM size is 16MB
+pub const MAX_ROM_RAM_SIZE: usize = 16 * 1024 * 1024;
+
 // Framebuffer
 pub const LEFT_FRAME_BUFFER_CYCLE_OFFSET: usize = CYCLES_PER_MS * 3;
 pub const LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET: usize = CYCLES_PER_MS * 8;

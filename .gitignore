@@ -1,5 +1,6 @@
 /target
 
 *.log
-.DS_Store
+*.dump
 *.png
+.DS_Store

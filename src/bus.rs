@@ -25,6 +25,15 @@ impl<'a> Bus<'a> {
         }
     }
 
+    /// TODO: This is debug init to match with Mednafen
+    pub fn debug_init(&mut self) {
+        self.rom.debug_init();
+    }
+
+    pub fn debug_dump(&self) {
+        self.rom.debug_dump();
+    }
+
     pub fn step(&mut self, cycles_to_run: usize) -> Option<InterruptRequest> {
         let mut request = None;
 
@@ -42,7 +51,11 @@ impl<'a> Bus<'a> {
         request
     }
 
-    pub fn get_u16(&self, address: u32) -> u16 {
+    pub fn get_u16(&mut self, address: u32) -> u16 {
+        if address == 0x0600012C {
+            println!("Hit address");
+        }
+
         // Mask top 5 bits to mirror bus
         let address = address & 0x07FF_FFFF;
 
@@ -62,20 +75,20 @@ impl<'a> Bus<'a> {
                 todo!("Game Pak Expansion")
             }
             0x0500_0000..=0x05FF_FFFF => self.wram[local_address],
-            0x0600_0000..=0x06FF_FFFF => self.rom.ram[local_address],
+            0x0600_0000..=0x06FF_FFFF => self.rom.get_ram(local_address),
             0x0700_0000..=0x07FF_FFFF => self.rom.get_rom(local_address),
             _ => 0,
         }
     }
 
-    pub fn get_u32(&self, address: u32) -> u32 {
+    pub fn get_u32(&mut self, address: u32) -> u32 {
         let lower = self.get_u16(address) as u32;
         let upper = self.get_u16(address + 2) as u32;
 
         (upper << 16) | lower
     }
 
-    pub fn get_u8(&self, address: u32) -> u8 {
+    pub fn get_u8(&mut self, address: u32) -> u8 {
         let word = self.get_u16(address);
 
         let byte = match address & 0x1 {
@@ -88,6 +101,10 @@ impl<'a> Bus<'a> {
     }
 
     pub fn set_u16(&mut self, address: u32, value: u16) {
+        if address == 0x0600012C {
+            println!("Hit address");
+        }
+
         // Mask top 5 bits to mirror bus
         let address = address & 0x07FF_FFFF;
 
@@ -106,7 +123,7 @@ impl<'a> Bus<'a> {
                 todo!("Game Pak Expansion")
             }
             0x0500_0000..=0x05FF_FFFF => self.wram[local_address] = value,
-            0x0600_0000..=0x06FF_FFFF => self.rom.ram[local_address] = value,
+            0x0600_0000..=0x06FF_FFFF => self.rom.set_ram(local_address, value),
             0x0700_0000..=0x07FF_FFFF => {
                 // Game Pak ROM
                 // Do nothing
