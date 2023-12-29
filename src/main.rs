@@ -11,6 +11,7 @@ pub mod bus;
 pub mod constants;
 pub mod cpu_internals;
 mod cpu_v810;
+pub mod gamepad;
 pub mod hardware;
 pub mod interrupt;
 pub mod rom;
@@ -24,11 +25,10 @@ fn main() {
     let rom = ROM::load_from_file(Path::new("/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb"));
 
     let mut cpu = CpuV810::new();
-    let mut timer = Timer::new();
 
     let mut vip = VIP::new();
 
-    let mut hardware = Hardware::new(&mut timer);
+    let mut hardware = Hardware::new();
     let mut bus = Bus::new(rom, &mut vip, &mut hardware);
 
     let mut log_file = OpenOptions::new()

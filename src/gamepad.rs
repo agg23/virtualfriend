@@ -1,0 +1,117 @@
+use bitvec::array::BitArray;
+use bitvec::bitarr;
+use bitvec::field::BitField;
+use bitvec::prelude::Lsb0;
+
+use crate::constants::GAMEPAD_HARDWARE_READ_CYCLE_COUNT;
+
+pub struct Gamepad {
+    /// K-Int-Inh When clear, key input interrupt is enabled.
+    ///
+    /// TODO: This is not implemented since it does nothing with the normal Gamepad.
+    interrupt_enable: bool,
+
+    /// Para/Si When set, reset read operation.
+    reset: bool,
+
+    /// Soft-Ck The current clock signal to the Gamepad.
+    soft_clk: bool,
+
+    /// SI-State Hardware read is in progress.
+    is_hardware_reading: bool,
+    hardware_read_counter: usize,
+    hardware_read_button_index: usize,
+
+    button_state: u16,
+}
+
+impl Gamepad {
+    pub fn new() -> Self {
+        Gamepad {
+            interrupt_enable: false,
+            reset: false,
+            soft_clk: false,
+            is_hardware_reading: false,
+            hardware_read_counter: 0,
+            hardware_read_button_index: 0,
+            button_state: 0,
+        }
+    }
+
+    pub fn step(&mut self, cycles_to_run: usize) {
+        for _ in 0..cycles_to_run {
+            if self.is_hardware_reading {
+                if self.hardware_read_counter == GAMEPAD_HARDWARE_READ_CYCLE_COUNT {
+                    // Read next button
+                    self.hardware_read_counter = 0;
+
+                    if self.hardware_read_button_index == 13 {
+                        self.hardware_read_button_index = 0;
+                        self.is_hardware_reading = false;
+                    } else {
+                        self.hardware_read_button_index += 1;
+                    }
+
+                    // TODO: Read actual button
+                } else {
+                    self.hardware_read_counter += 1;
+                }
+            }
+        }
+    }
+
+    /// SDLR/SDHR Serial data register
+    ///
+    /// Controler data
+    pub fn get_serial_data(&self) -> u16 {
+        // Low two bits are low battery, and signature (always set), respectively
+        (self.button_state << 2) | 0x2
+    }
+
+    /// SCR Serial control register
+    pub fn get_control(&self) -> u16 {
+        let mut value = bitarr![u16, Lsb0; 0; 16];
+
+        // TODO: I don't know what this read value should be
+        // Mednafen sets it low
+        value.set(0, false);
+        value.set(1, self.is_hardware_reading);
+        value.set(2, true);
+        value.set(3, true);
+        value.set(4, self.soft_clk);
+        value.set(5, self.reset);
+        value.set(6, true);
+        value.set(7, !self.interrupt_enable);
+
+        value.load()
+    }
+
+    /// SCR Serial control register
+    pub fn set_control(&mut self, value: u16) {
+        let array = BitArray::<_, Lsb0>::new([value]);
+
+        if *array.get(0).unwrap() {
+            // Abort hardware read
+            self.is_hardware_reading = false;
+            self.hardware_read_counter = 0;
+            self.hardware_read_button_index = 0;
+        }
+
+        if *array.get(2).unwrap() {
+            // Start hardware read
+            self.is_hardware_reading = true;
+        }
+
+        if *array.get(4).unwrap() {
+            // Invert soft_clk
+            self.soft_clk = !self.soft_clk;
+
+            if self.soft_clk {
+                // TODO: Read actual button
+            }
+        }
+        self.reset = *array.get(5).unwrap();
+
+        self.interrupt_enable = !*array.get(7).unwrap();
+    }
+}

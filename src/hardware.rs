@@ -2,21 +2,25 @@ use bitvec::array::BitArray;
 use bitvec::prelude::Lsb0;
 use bitvec::{bitarr, field::BitField};
 
+use crate::gamepad::Gamepad;
 use crate::timer::Timer;
 
-pub struct Hardware<'a> {
+pub struct Hardware {
+    pub gamepad: Gamepad,
+
     // TODO: Remove pub
-    pub timer: &'a mut Timer,
+    pub timer: Timer,
 
     comm_interrupt_enable: bool,
     comm_external_clock: bool,
     comm_inprogress: bool,
 }
 
-impl<'a> Hardware<'a> {
-    pub fn new(timer: &'a mut Timer) -> Self {
+impl Hardware {
+    pub fn new() -> Self {
         Hardware {
-            timer,
+            gamepad: Gamepad::new(),
+            timer: Timer::new(),
             comm_interrupt_enable: false,
             comm_external_clock: false,
             comm_inprogress: false,
@@ -58,13 +62,11 @@ impl<'a> Hardware<'a> {
             }
             0x10..=0x13 => {
                 // Serial data low register
-                // TODO: Implement
-                0
+                self.gamepad.get_control() & 0xFF
             }
             0x14..=0x17 => {
                 // Serial data high register
-                // TODO: Implement
-                0
+                self.gamepad.get_control() >> 8
             }
             0x18..=0x1B => {
                 // TLR Timer counter low register
@@ -85,8 +87,7 @@ impl<'a> Hardware<'a> {
             }
             0x28..=0x2B => {
                 // SCR Serial control register
-                // TODO: Implement
-                0
+                self.gamepad.get_control()
             }
             _ => unreachable!(),
         }
@@ -118,11 +119,9 @@ impl<'a> Hardware<'a> {
             }
             0x10..=0x13 => {
                 // Serial data low register
-                // TODO: Implement
             }
             0x14..=0x17 => {
                 // Serial data high register
-                // TODO: Implement
             }
             0x18..=0x1B => {
                 // TLR Timer counter low register
@@ -142,8 +141,9 @@ impl<'a> Hardware<'a> {
             }
             0x28..=0x2B => {
                 // SCR Serial control register
-                // TODO: Implement
+                self.gamepad.set_control(value);
             }
+
             _ => unreachable!(),
         }
     }

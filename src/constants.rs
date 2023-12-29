@@ -41,6 +41,9 @@ pub const DRAWING_BLOCK_CYCLE_COUNT: usize =
 /// Total time SBOUT remains high
 pub const SBOUT_HIGH_CYCLE_COUNT: usize = CYCLES_PER_US * 56;
 
+// Gamepad
+pub const GAMEPAD_HARDWARE_READ_CYCLE_COUNT: usize = CLOCK_SPEED / 31_250;
+
 // Timer
 /// Minimum timer interval is 20us, and max is 100us
 pub const TIMER_MIN_INTERVAL_CYCLE_COUNT: usize = CYCLES_PER_US * 20;

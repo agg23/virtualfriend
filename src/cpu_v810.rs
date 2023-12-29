@@ -581,7 +581,7 @@ impl CpuV810 {
                 let reg1 = self.general_purpose_reg[reg1_index];
                 let immediate = self.fetch_instruction_word(bus) as u32;
 
-                let result = reg1 & (immediate as u32);
+                let result = reg1 & immediate;
 
                 self.set_gen_purpose_reg(reg2_index, result);
                 self.psw.update_alu_flags_u32(result, false, None);

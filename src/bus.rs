@@ -7,11 +7,11 @@ pub struct Bus<'a> {
     rom: ROM,
     vip: &'a mut VIP,
     // TODO: Remove pub
-    pub hardware: &'a mut Hardware<'a>,
+    pub hardware: &'a mut Hardware,
 }
 
 impl<'a> Bus<'a> {
-    pub fn new(rom: ROM, vip: &'a mut VIP, hardware: &'a mut Hardware<'a>) -> Self {
+    pub fn new(rom: ROM, vip: &'a mut VIP, hardware: &'a mut Hardware) -> Self {
         let mut wram = [0; 0x1_0000 / 2];
 
         // Randomize starting data
@@ -36,6 +36,8 @@ impl<'a> Bus<'a> {
 
     pub fn step(&mut self, cycles_to_run: usize) -> Option<InterruptRequest> {
         let mut request = None;
+
+        self.hardware.gamepad.step(cycles_to_run);
 
         // Priority 1
         if self.hardware.timer.step(cycles_to_run) {
