@@ -4,7 +4,7 @@ use bus::Bus;
 use cpu_v810::CpuV810;
 use rom::ROM;
 
-use crate::{hardware::Hardware, timer::Timer, vip::VIP};
+use crate::{hardware::Hardware, interrupt::InterruptRequest, timer::Timer, vip::VIP};
 
 pub mod bus;
 pub mod constants;
@@ -40,16 +40,44 @@ fn main() {
     // TODO: Remove
     cpu.debug_init();
 
+    let mut line_number = 0;
+
+    let mut interrupt_request: Option<InterruptRequest> = None;
+
     loop {
         cpu.log_instruction(Some(&mut log_file), cycle_count);
+        line_number += 1;
 
-        let step_cycle_count = cpu.step(&mut bus);
-        if let Some(interrupt_request) = bus.step(step_cycle_count) {
-            cpu.request_interrupt(interrupt_request);
+        // TODO: Mednafen has a really weird log, execute, interrupt order. This weird arrangement allows matching logs
+        if let Some(request) = interrupt_request {
+            cpu.request_interrupt(request);
+            interrupt_request = None;
+            continue;
         }
 
+        let step_cycle_count = cpu.step(&mut bus);
+
+        let mut fake_interrupt: Option<InterruptRequest> = None;
+
+        if line_number == 705314 {
+            // TODO: Remove
+            // Force timer to fire to match Mednafen's timing
+            while !bus.hardware.timer.step(1) {
+                // Run until it fires
+            }
+
+            fake_interrupt = Some(InterruptRequest::TimerZero);
+        }
+
+        // TODO: Remove
+        interrupt_request = if let Some(interrupt_request) = bus.step(step_cycle_count) {
+            Some(interrupt_request)
+        } else {
+            fake_interrupt
+        };
+
         cycle_count += step_cycle_count;
-        if cycle_count >= 1_000_000 {
+        if cycle_count >= 10_000_000 {
             break;
         }
     }

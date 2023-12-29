@@ -5,7 +5,8 @@ use bitvec::{bitarr, field::BitField};
 use crate::timer::Timer;
 
 pub struct Hardware<'a> {
-    timer: &'a mut Timer,
+    // TODO: Remove pub
+    pub timer: &'a mut Timer,
 
     comm_interrupt_enable: bool,
     comm_external_clock: bool,

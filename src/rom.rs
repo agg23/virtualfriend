@@ -32,7 +32,8 @@ impl ROM {
 
         let rom_address_mask = (rom_buffer.len() / 2) - 1;
 
-        let ram = vec![0; MAX_ROM_SIZE / 2].into_boxed_slice();
+        // Initialize RAM to 0xFF
+        let ram = vec![0xFF; MAX_ROM_SIZE / 2].into_boxed_slice();
 
         ROM {
             rom_buffer,

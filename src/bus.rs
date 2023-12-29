@@ -6,7 +6,8 @@ pub struct Bus<'a> {
     wram: [u16; 0x1_0000 / 2],
     rom: ROM,
     vip: &'a mut VIP,
-    hardware: &'a mut Hardware<'a>,
+    // TODO: Remove pub
+    pub hardware: &'a mut Hardware<'a>,
 }
 
 impl<'a> Bus<'a> {
@@ -27,7 +28,12 @@ impl<'a> Bus<'a> {
     pub fn step(&mut self, cycles_to_run: usize) -> Option<InterruptRequest> {
         let mut request = None;
 
-        // Highest priority
+        // Priority 1
+        if self.hardware.timer.step(cycles_to_run) {
+            request = Some(InterruptRequest::TimerZero);
+        }
+
+        // 4: Highest priority
         if self.vip.step(cycles_to_run) {
             request = Some(InterruptRequest::VIP);
         }

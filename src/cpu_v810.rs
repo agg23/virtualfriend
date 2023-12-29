@@ -247,12 +247,13 @@ impl CpuV810 {
             return;
         }
 
-        if self.psw.interrupt_level < 15 {
-            // Increment interrupt mask level
-            self.psw.interrupt_level += 1;
-        }
-
         self.perform_exception(code);
+
+        if self.psw.interrupt_level < 15 {
+            // Mask interrupts at this level or lower
+            // Update interrupt mask level _after_ exception PSW copy
+            self.psw.interrupt_level = interrupt_level + 1;
+        }
     }
 
     fn perform_exception(&mut self, code: usize) {
@@ -275,7 +276,7 @@ impl CpuV810 {
     fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
         let opcode = instruction >> 10;
 
-        if self.pc == 0xFFFBE99A + 2 {
+        if self.pc == 0xFFFCB5C8 + 2 {
             println!("{:08X} {:02X}", self.pc, opcode);
         }
 
@@ -713,7 +714,9 @@ impl CpuV810 {
 
             // CPU Control
             // 0b10_0 + 4 bits
-            0x20..=0x27 => {
+            // Opcode is 6 bits, whereas this needs 7, so we just grab the relevant opcode
+            // ranges, then extract the condition from the instruction inside
+            0b10_0000..=0b10_0111 => {
                 let condition = (instruction >> 9) & 0xF;
                 let disp = instruction & 0x1FF;
                 let disp = sign_extend(disp as u32, 9);
@@ -1300,7 +1303,7 @@ impl CpuV810 {
         let upper_disp = (instruction & 0x3FF) as u32;
         let disp = self.fetch_instruction_word(bus) as u32;
 
-        let disp = disp | (upper_disp << 16);
+        let disp = sign_extend((upper_disp << 16) | disp, 26);
 
         if save_pc {
             // PC has already been incremented by 4 by 2x `fetch_instruction_word`
@@ -1308,7 +1311,7 @@ impl CpuV810 {
         }
 
         // PC has already been incremented by 4 by 2x `fetch_instruction_word`
-        self.pc = self.pc - 4 + disp;
+        self.pc = (self.pc - 4).wrapping_add(disp);
 
         (3, BusActivity::Standard)
     }

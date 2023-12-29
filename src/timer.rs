@@ -3,6 +3,8 @@ use bitvec::bitarr;
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 
+use crate::constants::TIMER_MIN_INTERVAL_CYCLE_COUNT;
+
 pub struct Timer {
     reload: u16,
     counter: u16,
@@ -10,7 +12,10 @@ pub struct Timer {
     enabled: bool,
     did_zero: bool,
     interrupt_enabled: bool,
+    /// If true, 20us timer. If false, 100us timer
     timer_interval: bool,
+
+    tick_interval_counter: usize,
 }
 
 impl Timer {
@@ -22,6 +27,7 @@ impl Timer {
             did_zero: false,
             interrupt_enabled: false,
             timer_interval: false,
+            tick_interval_counter: 0,
         }
     }
 
@@ -35,6 +41,12 @@ impl Timer {
         } else {
             self.reload = (self.reload & 0xFF00) | (reload_half as u16);
         }
+
+        // Reset counter to current reload
+        self.counter = self.reload;
+        // TODO: Unsure if this is correct
+        // Reset timer tick count
+        self.tick_interval_counter = 0;
     }
 
     pub fn get_config(&self) -> u8 {
@@ -62,14 +74,53 @@ impl Timer {
         self.timer_interval = *array.get(4).unwrap();
     }
 
-    pub fn tick(&mut self) {
+    /// Run the timer for 1 cycle.
+    ///
+    /// Timer does not tick every cycle, so this will run every so often.
+    pub fn step(&mut self, cycles_to_run: usize) -> bool {
+        if !self.enabled {
+            // Do nothing
+            return false;
+        }
+
+        let mut request_interrupt = false;
+
+        for _ in 0..cycles_to_run {
+            let required_cycle_count = if self.timer_interval {
+                TIMER_MIN_INTERVAL_CYCLE_COUNT
+            } else {
+                TIMER_MIN_INTERVAL_CYCLE_COUNT * 5
+            };
+
+            if self.tick_interval_counter == required_cycle_count {
+                // Fire timer tick
+                self.tick_interval_counter = 0;
+
+                if self.tick() {
+                    // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
+                    request_interrupt = true;
+                }
+            } else {
+                self.tick_interval_counter += 1;
+            }
+        }
+
+        request_interrupt
+    }
+
+    /// Tick the timer.
+    ///
+    /// Returns true if an interrupt should fire
+    fn tick(&mut self) -> bool {
         if self.counter == 0 {
             self.counter = self.reload;
             self.did_zero = true;
 
-            // TODO: Fire interrupt
+            true
         } else {
             self.counter -= 1;
+
+            false
         }
     }
 }

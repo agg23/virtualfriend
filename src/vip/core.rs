@@ -23,7 +23,7 @@ pub struct VIP {
     // oam: [u32; 1024 * 2],
 
     // background_map_and_params: [u32; 0x7600],
-    current_display_clock_cycle: u32,
+    current_display_clock_cycle: usize,
 
     // We map the entirety of VRAM due to overlapping sections
     // (upper background maps overlap with OAM and properties).
@@ -76,7 +76,7 @@ pub struct VIP {
     sbout: bool,
 
     /// Tracks the number of cycles `SBOUT` is high. Brings it low after 56us
-    sbout_cycle_high_count: u32,
+    sbout_cycle_high_count: usize,
 
     object_control0: u16,
     object_control1: u16,
@@ -106,7 +106,7 @@ pub struct VIP {
     current_displaying: DisplayState,
 
     in_drawing: bool,
-    drawing_cycle_count: u32,
+    drawing_cycle_count: usize,
 
     frame_count: u8,
 }
