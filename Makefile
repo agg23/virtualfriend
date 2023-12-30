@@ -1,2 +1,4 @@
 run:
-	rm instructions.log && cargo run --release
+	rm -f instructions.log && cargo run --release
+profile:
+	cargo flamegraph --dev --root

@@ -61,7 +61,7 @@ fn main() {
 
         let mut fake_interrupt: Option<InterruptRequest> = None;
 
-        if line_number == 705314 {
+        if line_number == 705314 || line_number == 952618 + 8 {
             // TODO: Remove
             // Force timer to fire to match Mednafen's timing
             while !bus.hardware.timer.step(1) {

@@ -1153,20 +1153,22 @@ impl CpuV810 {
         // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
         // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
         // So we use a signed type
-        let carry_result = if shift > 0 {
-            (value as i32) >> (shift - 1)
+        let (result, carry) = if shift > 0 {
+            let carry_result = (value as i32) >> (shift - 1);
+
+            // One last shift to finish it
+            let result = (carry_result >> 1) as u32;
+
+            // Carry is the last bit that's shifted out
+            let carry = value != 0 && carry_result & 1 != 0;
+
+            (result, carry)
         } else {
-            value as i32
+            (value, false)
         };
 
-        // One last shift to finish it
-        let result = (carry_result >> 1) as u32;
-
-        let carry = value != 0 && carry_result & 1 != 0;
-
-        self.set_gen_purpose_reg(store_reg_index, result as u32);
-        self.psw
-            .update_alu_flags_u32(result as u32, false, Some(carry));
+        self.set_gen_purpose_reg(store_reg_index, result);
+        self.psw.update_alu_flags_u32(result, false, Some(carry));
 
         (1, BusActivity::Standard)
     }
@@ -1178,16 +1180,19 @@ impl CpuV810 {
         // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
         // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
         // So we use a signed type
-        let carry_result = if shift > 0 {
-            value >> (shift - 1)
+        let (result, carry) = if shift > 0 {
+            let carry_result = value >> (shift - 1);
+
+            // One last shift to finish it
+            let result = carry_result >> 1;
+
+            // Carry is the last bit that's shifted out
+            let carry = value != 0 && carry_result & 1 != 0;
+
+            (result, carry)
         } else {
-            value
+            (value, false)
         };
-
-        // One last shift to finish it
-        let result = carry_result >> 1;
-
-        let carry = value != 0 && carry_result & 1 != 0;
 
         self.set_gen_purpose_reg(store_reg_index, result);
         self.psw.update_alu_flags_u32(result, false, Some(carry));
@@ -1199,16 +1204,19 @@ impl CpuV810 {
         // Limit to shift by 32
         let shift = shift & 0x1F;
 
-        let carry_result = if shift > 0 {
-            value << (shift - 1)
+        let (result, carry) = if shift > 0 {
+            let carry_result = value << (shift - 1);
+
+            // One last shift to finish it
+            let result = carry_result << 1;
+
+            // Carry is the last bit that's shifted out
+            let carry = value != 0 && carry_result & 1 != 0;
+
+            (result, carry)
         } else {
-            value
+            (value, false)
         };
-
-        // One last shift to finish it
-        let result = carry_result << 1;
-
-        let carry = value != 0 && carry_result & 1 != 0;
 
         self.set_gen_purpose_reg(store_reg_index, result);
         self.psw.update_alu_flags_u32(result, false, Some(carry));

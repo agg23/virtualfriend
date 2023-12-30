@@ -62,11 +62,11 @@ impl Hardware {
             }
             0x10..=0x13 => {
                 // Serial data low register
-                self.gamepad.get_control() & 0xFF
+                self.gamepad.get_serial_data() & 0xFF
             }
             0x14..=0x17 => {
                 // Serial data high register
-                self.gamepad.get_control() >> 8
+                self.gamepad.get_serial_data() >> 8
             }
             0x18..=0x1B => {
                 // TLR Timer counter low register
