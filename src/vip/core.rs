@@ -1,3 +1,6 @@
+use std::fs;
+use std::slice::from_raw_parts;
+
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::{array::BitArray, bitarr};
@@ -102,10 +105,10 @@ pub struct VIP {
 
     // Internal
     /// High if drawing from framebuffer 1. Otherwise drawing from framebuffer 0.
-    drawing_framebuffer_1: bool,
+    pub drawing_framebuffer_1: bool,
     current_displaying: DisplayState,
 
-    in_drawing: bool,
+    pub in_drawing: bool,
     drawing_cycle_count: usize,
 
     frame_count: u8,
@@ -189,6 +192,12 @@ impl VIP {
             drawing_cycle_count: 0,
             frame_count: 0,
         }
+    }
+
+    pub fn debug_dump(&self) {
+        let array = unsafe { from_raw_parts(self.vram.as_ptr() as *const u8, self.vram.len()) };
+
+        fs::write("vram.dump", array).unwrap();
     }
 
     pub fn get_bus(&self, address: u32) -> u16 {
@@ -319,6 +328,7 @@ impl VIP {
 
         match address {
             0x0..=0x4_0000 => self.set_vram(address, value),
+            0x4_0000..=0x5_DFFF => panic!("Invalid VIP address"),
             0x5_F800..=0x5_F801 => {
                 // INTPND Interrupt pending
                 // Writes have no effect
@@ -371,21 +381,22 @@ impl VIP {
             0x5_F86C..=0x5_F86D => self.object_palette_control2.set(value),
             0x5_F86E..=0x5_F86F => self.object_palette_control3.set(value),
             0x5_F870..=0x5_F871 => self.bkcol = (value & 0x3) as u8,
+            0x6_0000..=0x7_7FFF => panic!("Invalid VIP address"),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
-                self.set_vram((address & 0xFFF) + 0x6000 / 2, value);
+                self.set_vram((address & 0x1FFF) + 0x6000, value);
             }
             0x7_A000..=0x7_BFFF => {
                 // Character table 2 remap
-                self.set_vram((address & 0xFFF) + 0xE000 / 2, value);
+                self.set_vram((address & 0x1FFF) + 0xE000, value);
             }
             0x7_C000..=0x7_DFFF => {
                 // Character table 3 remap
-                self.set_vram((address & 0xFFF) + 0x1_6000 / 2, value);
+                self.set_vram((address & 0x1FFF) + 0x1_6000, value);
             }
             0x7_E000..=0x7_FFFF => {
                 // Character table 4 remap
-                self.set_vram((address & 0xFFF) + 0x1_E000 / 2, value);
+                self.set_vram((address & 0x1FFF) + 0x1_E000, value);
             }
             _ => unimplemented!("Write address {:08X}", address),
         }
@@ -441,6 +452,7 @@ impl VIP {
                 }
                 FRAME_COMPLETE_CYCLE_OFFSET => {
                     // End frame
+                    println!("End of frame");
                 }
                 _ => {}
             }
@@ -461,17 +473,21 @@ impl VIP {
                         }
 
                         if self.sbcount == self.sbcmp {
-                            // Found rows
-                            self.sbout = true;
-                            self.sbout_cycle_high_count = 0;
-
+                            // Found rows. Fire SBHit
                             // Fire interrupt
                             self.interrupt_pending.sbhit = true;
                         }
 
-                        // TODO: Set and clear SBOUT
+                        self.sbout = true;
+                        self.sbout_cycle_high_count = 0;
+
                         self.sbcount += 1;
                     } else {
+                        // Finished drawing
+                        self.in_drawing = false;
+
+                        println!("Ended drawing");
+
                         self.sbcount = 0;
                         self.interrupt_pending.xpend = true;
                     }
@@ -520,6 +536,10 @@ impl VIP {
         if self.drawing_enabled {
             // Flip framebuffers to start writing to the currently displayed ones
             self.drawing_framebuffer_1 = !self.drawing_framebuffer_1;
+            println!(
+                "Starting draw. Flipped framebuffer to {}",
+                self.drawing_framebuffer_1
+            );
 
             // Enter render mode
             self.in_drawing = true;
@@ -527,6 +547,7 @@ impl VIP {
             // Immediately mark drawing as ended, as we're not drawing at all
             // TODO: This should actually be after 2.8ms
             self.interrupt_pending.xpend = true;
+            self.in_drawing = false;
         }
     }
 
@@ -659,8 +680,8 @@ impl VIP {
                 self.draw_background_pixel(
                     world,
                     left_eye,
-                    x,
-                    y,
+                    x as usize,
+                    y as usize,
                     background_x as usize,
                     background_y as usize,
                 );
@@ -726,8 +747,8 @@ impl VIP {
         &mut self,
         world: &World,
         left_eye: bool,
-        x: i16,
-        y: i16,
+        x: usize,
+        y: usize,
         background_x: usize,
         background_y: usize,
     ) {
@@ -790,8 +811,16 @@ impl VIP {
             };
 
             // Flip pixel position, if necessary
-            let x = (if horizontal_flip { 7 - x } else { x }) as usize;
-            let y = (if vertical_flip { 7 - y } else { y }) as usize;
+            let background_pixel_offset_x = (if horizontal_flip {
+                7 - background_pixel_offset_x
+            } else {
+                background_pixel_offset_x
+            }) as usize;
+            let background_pixel_offset_y = (if vertical_flip {
+                7 - background_pixel_offset_y
+            } else {
+                background_pixel_offset_y
+            }) as usize;
 
             // Index into character blocks using the virtual addresses for ease of access
             // 8 rows per block. 2 bytes per row = 16 per character
@@ -801,7 +830,7 @@ impl VIP {
             let character_address = character_address + background_pixel_offset_y * 2;
 
             // TODO: This can be optimized
-            let row_halfword = self.get_vram(character_address);
+            let row_halfword = self.get_bus(character_address as u32);
 
             // Extract pixel
             let pixel_palette_index = (row_halfword >> (background_pixel_offset_x * 2)) & 0x3;

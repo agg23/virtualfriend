@@ -47,7 +47,8 @@ fn main() {
     let mut interrupt_request: Option<InterruptRequest> = None;
 
     loop {
-        cpu.log_instruction(Some(&mut log_file), cycle_count);
+        // let extra_log_info = bus.debug_log();
+        // cpu.log_instruction(Some(&mut log_file), cycle_count, None);
         line_number += 1;
 
         // TODO: Mednafen has a really weird log, execute, interrupt order. This weird arrangement allows matching logs

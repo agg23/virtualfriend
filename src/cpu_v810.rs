@@ -150,7 +150,12 @@ impl CpuV810 {
         self.tkcw = 0xE0;
     }
 
-    pub fn log_instruction(&self, log_file: Option<&mut File>, cycle_count: usize) {
+    pub fn log_instruction(
+        &self,
+        log_file: Option<&mut File>,
+        cycle_count: usize,
+        extra_log_info: Option<String>,
+    ) {
         let mut tuples = vec![
             ("PC".to_string(), self.pc),
             ("R1".to_string(), self.general_purpose_reg[1]),
@@ -191,6 +196,10 @@ impl CpuV810 {
             string += &format!("{name}={value:08X}");
 
             first = false;
+        }
+
+        if let Some(extra_log_info) = extra_log_info {
+            string += &format!(" {extra_log_info}");
         }
 
         // TODO: Mednafen seems to wrap cycle count at the arbitrary? value 0x061200
@@ -1211,7 +1220,7 @@ impl CpuV810 {
             let result = carry_result << 1;
 
             // Carry is the last bit that's shifted out
-            let carry = value != 0 && carry_result & 1 != 0;
+            let carry = value != 0 && carry_result & 0x8000_0000 != 0;
 
             (result, carry)
         } else {

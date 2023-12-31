@@ -69,7 +69,8 @@ impl<'a> Bus<'a> {
         match address {
             0x0000_0000..=0x00FF_FFFF => self.vip.get_bus(address),
             0x0100_0000..=0x01FF_FFFF => {
-                // todo!("VSU")
+                // VSU
+                // All reads are undefined
                 0
             }
             0x0200_0000..=0x02FF_FFFF => self.hardware.get(address as u8),
