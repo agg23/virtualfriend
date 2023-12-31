@@ -22,6 +22,7 @@ pub const DISPLAY_WIDTH: usize = 384;
 pub const DISPLAY_HEIGHT: usize = 224;
 pub const DISPLAY_PIXEL_LENGTH: usize = DISPLAY_WIDTH * DISPLAY_HEIGHT;
 
+/// Hardware framebuffers are 256 pixels high
 pub const FRAMEBUFFER_HEIGHT: usize = 256;
 
 // Rustual-boy assumes 5ms per draw frame (one side)
