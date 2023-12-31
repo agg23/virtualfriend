@@ -348,6 +348,21 @@ impl VIP {
                 // TODO: Handle
                 let reset_display = *array.get(0).unwrap();
 
+                if reset_display {
+                    self.current_display_clock_cycle = 0;
+                    self.current_displaying = DisplayState::None;
+
+                    self.interrupt_pending.gamestart = false;
+                    self.interrupt_pending.framestart = false;
+                    self.interrupt_pending.lfbend = false;
+                    self.interrupt_pending.rfbend = false;
+
+                    self.interrupt_enabled.gamestart = false;
+                    self.interrupt_enabled.framestart = false;
+                    self.interrupt_enabled.lfbend = false;
+                    self.interrupt_enabled.rfbend = false;
+                }
+
                 self.display_enabled = *array.get(1).unwrap();
                 self.refresh_ram = *array.get(8).unwrap();
                 self.sync_enabled = *array.get(9).unwrap();
@@ -362,11 +377,22 @@ impl VIP {
                 // XPCTRL Drawing control write register
                 let array = BitArray::<_, Lsb0>::new([value]);
 
-                // TODO: Handle
                 let reset_drawing = *array.get(0).unwrap();
+
+                if reset_drawing {
+                    self.in_drawing = false;
+                    self.drawing_cycle_count = 0;
+                    self.sbout_cycle_high_count = 0;
+                    self.sbout = false;
+                    self.sbcount = 0;
+
+                    self.interrupt_enabled.xpend = false;
+                    self.interrupt_pending.xpend = false;
+                }
+
                 self.drawing_enabled = *array.get(1).unwrap();
 
-                self.sbcmp = ((value >> 8) & 0xF) as u8;
+                self.sbcmp = ((value >> 8) & 0x1F) as u8;
             }
             0x5_F848..=0x5_F849 => self.object_control0 = value & 0x3FF,
             0x5_F84A..=0x5_F84B => self.object_control1 = value & 0x3FF,
@@ -427,13 +453,17 @@ impl VIP {
                     println!("Displaying framebuffer");
                     self.display_framebuffer();
 
+                    if self.display_enabled && self.sync_enabled {
                     self.current_displaying = DisplayState::Left;
+                    }
                 }
                 LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End left frame buffer
+                    if self.display_enabled {
                     self.interrupt_pending.lfbend = true;
 
                     self.current_displaying = DisplayState::None;
+                    }
                 }
                 FCLK_LOW_CYCLE_OFFSET => {
                     // Lower FCLK
@@ -442,11 +472,15 @@ impl VIP {
                 RIGHT_FRAME_BUFFER_CYCLE_OFFSET => {
                     // Render right frame buffer
                     // TODO: Render other eye
+                    if self.display_enabled && self.sync_enabled {
                     self.current_displaying = DisplayState::Right;
+                    }
                 }
                 RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End right frame buffer
+                    if self.display_enabled {
                     self.interrupt_pending.rfbend = true;
+                    }
 
                     self.current_displaying = DisplayState::None;
                 }
@@ -540,6 +574,9 @@ impl VIP {
                 "Starting draw. Flipped framebuffer to {}",
                 self.drawing_framebuffer_1
             );
+
+            self.sbcount = 0;
+            self.drawing_cycle_count = 0;
 
             // Enter render mode
             self.in_drawing = true;
@@ -711,8 +748,8 @@ impl VIP {
                 // This contains the bottom three bytes as the bit offset
                 let pixel_byte_index = (x_index + y) >> 2;
 
-                // Remove bottom bit, as we're getting every 2 bits
-                let bit_index = y & 0x6;
+                // 4 pixels per word, two bits per pixel, get shift offset in pixel
+                let bit_index = (y & 0x3) << 1;
 
                 // TODO: Cache these pixels instead of refetching
                 let left_pixel =
@@ -870,16 +907,16 @@ impl VIP {
         new_interrupt.set(value);
 
         // Clear any interrupts that are set in `value`
-        self.interrupt_pending.scanerr &= new_interrupt.scanerr;
-        self.interrupt_pending.lfbend &= new_interrupt.lfbend;
-        self.interrupt_pending.rfbend &= new_interrupt.rfbend;
-        self.interrupt_pending.gamestart &= new_interrupt.gamestart;
+        self.interrupt_pending.scanerr ^= new_interrupt.scanerr;
+        self.interrupt_pending.lfbend ^= new_interrupt.lfbend;
+        self.interrupt_pending.rfbend ^= new_interrupt.rfbend;
+        self.interrupt_pending.gamestart ^= new_interrupt.gamestart;
 
-        self.interrupt_pending.framestart &= new_interrupt.framestart;
+        self.interrupt_pending.framestart ^= new_interrupt.framestart;
 
-        self.interrupt_pending.sbhit &= new_interrupt.sbhit;
-        self.interrupt_pending.xpend &= new_interrupt.xpend;
-        self.interrupt_pending.timeerr &= new_interrupt.timeerr;
+        self.interrupt_pending.sbhit ^= new_interrupt.sbhit;
+        self.interrupt_pending.xpend ^= new_interrupt.xpend;
+        self.interrupt_pending.timeerr ^= new_interrupt.timeerr;
     }
 }
 
