@@ -1,4 +1,6 @@
-use std::{fs::OpenOptions, num::NonZeroU32, path::Path, rc::Rc, sync::Mutex, thread};
+use std::{
+    fs::OpenOptions, io::BufWriter, num::NonZeroU32, path::Path, rc::Rc, sync::Mutex, thread,
+};
 
 use bus::Bus;
 use cpu_v810::CpuV810;
@@ -160,8 +162,29 @@ fn create_emulator(
 
         let mut inputs = inputs_receiver.latest();
 
+        // let mut log_file = OpenOptions::new()
+        //     .write(true)
+        //     .create(true)
+        //     .open("instructions.log")
+        //     .unwrap();
+
+        let mut cycle_count = 0;
+
+        // let mut writer = BufWriter::new(log_file);
+        let mut line_count = 0;
+
         loop {
+            // cpu.log_instruction(Some(&mut writer), cycle_count, None);
+            line_count += 1;
+
+            // if line_count == 60_400_000 {
+            //     println!("Halting");
+            //     return;
+            // }
+
             let step_cycle_count = cpu.step(&mut bus);
+
+            cycle_count += step_cycle_count;
 
             if let Some(request) = bus.step(step_cycle_count, &inputs) {
                 cpu.request_interrupt(request);

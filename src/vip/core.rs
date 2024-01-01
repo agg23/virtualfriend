@@ -624,14 +624,14 @@ impl VIP {
             | self.last_bkcol) as u16;
         let clear_pixel = (clear_pixel << 8) | clear_pixel;
 
-        let y = self.sbcount as usize * 8;
+        let y = self.sbcount as u32 * 8;
 
         for x in 0..DISPLAY_WIDTH {
             // Overwrite every pixel in the 384x8 segment
             // Pixels are stored in the framebuffer in columns, rather than in rows
             let x_index = x * FRAMEBUFFER_HEIGHT;
             // This contains the bottom three bytes as the bit offset
-            let pixel_byte_index = (x_index + y) >> 2;
+            let pixel_byte_index = (x_index + y as usize) >> 2;
             self.set_vram_u16(left_framebuffer_address + pixel_byte_index, clear_pixel);
             self.set_vram_u16(right_framebuffer_address + pixel_byte_index, clear_pixel);
         }
@@ -719,7 +719,7 @@ impl VIP {
         world: &World,
         left_eye: bool,
         is_hbias: bool,
-        block_start_y: usize,
+        block_start_y: u32,
     ) {
         // Calculate start coordinate offset using world parallax
         let parallax_x = if left_eye {
@@ -781,16 +781,16 @@ impl VIP {
                 self.draw_background_pixel(
                     world,
                     left_eye,
-                    x as usize,
-                    y as usize,
-                    background_x as usize,
-                    background_y as usize,
+                    x as u32,
+                    y as u32,
+                    background_x as u32,
+                    background_y as u32,
                 );
             }
         }
     }
 
-    fn render_obj_world(&mut self, left_eye: bool, block_start_y: usize, object: &Object) {
+    fn render_obj_world(&mut self, left_eye: bool, block_start_y: u32, object: &Object) {
         if !(object.render_to_left_display && left_eye)
             || !(object.render_to_right_display && !left_eye)
         {
@@ -806,7 +806,7 @@ impl VIP {
         };
 
         for offset_y in 0..8 {
-            let pixel_y = object.display_pointer_y.wrapping_add(offset_y) as usize;
+            let pixel_y = (object.display_pointer_y as u32).wrapping_add(offset_y);
 
             if pixel_y < block_start_y || pixel_y >= block_start_y + 8 {
                 // This pixel is not currently being rendered, skip
@@ -814,14 +814,14 @@ impl VIP {
             }
 
             for offset_x in 0..8 {
-                let pixel_x = (object.display_pointer_x as usize).wrapping_add(offset_x);
+                let pixel_x = (object.display_pointer_x as u32).wrapping_add(offset_x);
                 let pixel_x = if left_eye {
-                    pixel_x.wrapping_sub(object.parallax as usize)
+                    pixel_x.wrapping_sub(object.parallax as u32)
                 } else {
-                    pixel_x.wrapping_add(object.parallax as usize)
+                    pixel_x.wrapping_add(object.parallax as u32)
                 };
 
-                if pixel_x >= DISPLAY_WIDTH {
+                if pixel_x >= DISPLAY_WIDTH as u32 {
                     // Out of bounds (positive or negative)
                     continue;
                 }
@@ -831,7 +831,7 @@ impl VIP {
                     pixel_x,
                     pixel_y,
                     offset_x,
-                    offset_y as usize,
+                    offset_y,
                     object.character_index,
                     palette,
                     object.horizontal_flip,
@@ -900,10 +900,10 @@ impl VIP {
         &mut self,
         world: &World,
         left_eye: bool,
-        x: usize,
-        y: usize,
-        background_x: usize,
-        background_y: usize,
+        x: u32,
+        y: u32,
+        background_x: u32,
+        background_y: u32,
     ) {
         // TODO: Move this out of pixel draw method. Unnecessary duplication of work
         let screen_x_size = 1 << world.screen_x_size;
@@ -922,12 +922,11 @@ impl VIP {
         } else {
             // Draw normal pixel
             // Get active background map (AND to limit to the available range)
-            let active_background_map_x = (background_x / 512) & (total_background_width - 1);
-            let active_background_map_y = (background_y / 512) & (total_background_height - 1);
+            let active_background_map_x = (background_x / 512) & (screen_x_size - 1);
+            let active_background_map_y = (background_y / 512) & (screen_y_size - 1);
 
             // Each background is 0x2000 bytes
-            let background_base_offset_address =
-                0x2_0000 + (world.map_base_index as usize) * 0x2000;
+            let background_base_offset_address = 0x2_0000 + (world.map_base_index as u32) * 0x2000;
             let background_offset_address = background_base_offset_address
                 + (active_background_map_y * screen_x_size + active_background_map_x) * 0x2000;
 
@@ -948,7 +947,7 @@ impl VIP {
                 background_offset_address + (character_y * 64 + character_x) * 2;
 
             // Get background map character block info
-            let character_halfword = self.get_vram_u16(character_address);
+            let character_halfword = self.get_vram_u16(character_address as usize);
 
             let character_index = character_halfword & 0x7FF;
             let vertical_flip = character_halfword & 0x1000 != 0;
@@ -980,10 +979,10 @@ impl VIP {
     fn draw_character_pixel(
         &mut self,
         left_eye: bool,
-        x: usize,
-        y: usize,
-        character_offset_x: usize,
-        character_offset_y: usize,
+        x: u32,
+        y: u32,
+        character_offset_x: u32,
+        character_offset_y: u32,
         character_index: u16,
         palette: PaletteRegister,
         horizontal_flip: bool,
@@ -994,16 +993,16 @@ impl VIP {
             7 - character_offset_x
         } else {
             character_offset_x
-        }) as usize;
+        });
         let character_offset_y = (if vertical_flip {
             7 - character_offset_y
         } else {
             character_offset_y
-        }) as usize;
+        });
 
         // Index into character blocks using the virtual addresses for ease of access
         // 8 rows per block. 2 bytes per row = 16 per character
-        let character_address = 0x7_8000 + (character_index as usize) * 16;
+        let character_address = 0x7_8000 + (character_index as u32) * 16;
 
         // Index to the correct row
         let character_address = character_address + character_offset_y * 2;
@@ -1024,13 +1023,13 @@ impl VIP {
 
         // Write to framebuffer
         // Pixels are stored in the framebuffer in columns, rather than in rows
-        let framebuffer_offset = x * FRAMEBUFFER_HEIGHT + y;
+        let framebuffer_offset = x * FRAMEBUFFER_HEIGHT as u32 + y;
         // Each pixel is 2 bits, so find the right byte for this pixel
         let framebuffer_byte_offset = framebuffer_offset / 4;
         let pixel_shift = (y & 0x3) * 2;
 
         let framebuffer_address = framebuffer_address_at_side(left_eye, self.drawing_framebuffer_1)
-            + framebuffer_byte_offset;
+            + framebuffer_byte_offset as usize;
 
         let removal_mask = !(0x3 << pixel_shift);
 

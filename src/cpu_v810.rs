@@ -1,5 +1,5 @@
-use std::fs::File;
 use std::io::Write;
+use std::{fs::File, io::BufWriter};
 
 use bitvec::array::BitArray;
 use bitvec::prelude::Lsb0;
@@ -152,64 +152,64 @@ impl CpuV810 {
 
     pub fn log_instruction(
         &self,
-        log_file: Option<&mut File>,
+        log_file: Option<&mut BufWriter<File>>,
         cycle_count: usize,
         extra_log_info: Option<String>,
     ) {
-        let mut tuples = vec![
-            ("PC".to_string(), self.pc),
-            ("R1".to_string(), self.general_purpose_reg[1]),
-            ("FP".to_string(), self.general_purpose_reg[2]),
-            ("SP".to_string(), self.general_purpose_reg[3]),
-            ("GP".to_string(), self.general_purpose_reg[4]),
-            ("TP".to_string(), self.general_purpose_reg[5]),
-        ];
+        // let mut tuples = vec![
+        //     ("PC".to_string(), self.pc),
+        //     ("R1".to_string(), self.general_purpose_reg[1]),
+        //     ("FP".to_string(), self.general_purpose_reg[2]),
+        //     ("SP".to_string(), self.general_purpose_reg[3]),
+        //     ("GP".to_string(), self.general_purpose_reg[4]),
+        //     ("TP".to_string(), self.general_purpose_reg[5]),
+        // ];
 
-        for i in 6..31 {
-            tuples.push((format!("R{i}"), self.general_purpose_reg[i]));
-        }
+        // for i in 6..31 {
+        //     tuples.push((format!("R{i}"), self.general_purpose_reg[i]));
+        // }
 
-        let mut after_tuples = vec![
-            ("LP".to_string(), self.general_purpose_reg[31]),
-            ("EIPC".to_string(), self.eipc),
-            ("EIPSW".to_string(), self.eipsw),
-            ("FEPC".to_string(), self.fepc),
-            ("FEPSW".to_string(), self.fepsw),
-            ("ECR".to_string(), self.ecr),
-            ("PSW".to_string(), self.psw.get()),
-            ("PIR".to_string(), self.pir),
-            ("TKCW".to_string(), self.tkcw),
-            ("CHCW".to_string(), self.chcw),
-            ("ADTRE".to_string(), self.adtre),
-        ];
+        // let mut after_tuples = vec![
+        //     ("LP".to_string(), self.general_purpose_reg[31]),
+        //     ("EIPC".to_string(), self.eipc),
+        //     ("EIPSW".to_string(), self.eipsw),
+        //     ("FEPC".to_string(), self.fepc),
+        //     ("FEPSW".to_string(), self.fepsw),
+        //     ("ECR".to_string(), self.ecr),
+        //     ("PSW".to_string(), self.psw.get()),
+        //     ("PIR".to_string(), self.pir),
+        //     ("TKCW".to_string(), self.tkcw),
+        //     ("CHCW".to_string(), self.chcw),
+        //     ("ADTRE".to_string(), self.adtre),
+        // ];
 
-        tuples.append(&mut after_tuples);
+        // tuples.append(&mut after_tuples);
 
-        let mut string = String::new();
-        let mut first = true;
+        // let mut string = String::new();
+        // let mut first = true;
 
-        for (name, value) in tuples {
-            if !first {
-                string += " ";
-            }
+        // for (name, value) in tuples {
+        //     if !first {
+        //         string += " ";
+        //     }
 
-            string += &format!("{name}={value:08X}");
+        //     string += &format!("{name}={value:08X}");
 
-            first = false;
-        }
+        //     first = false;
+        // }
 
-        if let Some(extra_log_info) = extra_log_info {
-            string += &format!(" {extra_log_info}");
-        }
+        // if let Some(extra_log_info) = extra_log_info {
+        //     string += &format!(" {extra_log_info}");
+        // }
 
         // TODO: Mednafen seems to wrap cycle count at the arbitrary? value 0x061200
         // let cycle_count = cycle_count % 0x061200;
         // string += &format!(" TStamp={cycle_count:06X}");
 
         if let Some(log_file) = log_file {
-            writeln!(log_file, "{string}").unwrap();
-        } else {
-            println!("{string}");
+            writeln!(log_file, "PC={:08X}", self.pc).unwrap();
+            // writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR={:08X} TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
+            // self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.pir, self.tkcw, self.chcw, self.adtre).unwrap();
         }
     }
 
