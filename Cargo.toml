@@ -8,3 +8,7 @@ rand = "0.8.5"
 bitvec = "1.0.1"
 
 image = "0.24"
+
+softbuffer = "0.4"
+winit = "0.29"
+single_value_channel = "1.2.2"

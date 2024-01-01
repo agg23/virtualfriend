@@ -19,14 +19,7 @@ use crate::{
 use super::world::{BackgroundType, World, WorldDisplayState};
 
 pub struct VIP {
-    /// Four sets of 512 characters (16 bytes each)
-    // character_tables: [[u32; 512 * 4]; 4],
-
-    // /// 1024 objects of 8 bytes each
-    // oam: [u32; 1024 * 2],
-
-    // background_map_and_params: [u32; 0x7600],
-    current_display_clock_cycle: usize,
+    pub current_display_clock_cycle: usize,
 
     // We map the entirety of VRAM due to overlapping sections
     // (upper background maps overlap with OAM and properties).

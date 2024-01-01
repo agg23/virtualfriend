@@ -1,11 +1,13 @@
 use rand::{thread_rng, Rng};
 
-use crate::{hardware::Hardware, interrupt::InterruptRequest, rom::ROM, vip::VIP};
+use crate::{
+    gamepad::GamepadInputs, hardware::Hardware, interrupt::InterruptRequest, rom::ROM, vip::VIP,
+};
 
 pub struct Bus<'a> {
     wram: [u16; 0x1_0000 / 2],
     rom: ROM,
-    vip: &'a mut VIP,
+    pub vip: &'a mut VIP,
     // TODO: Remove pub
     pub hardware: &'a mut Hardware,
 }
@@ -34,10 +36,14 @@ impl<'a> Bus<'a> {
         self.rom.debug_dump();
     }
 
-    pub fn step(&mut self, cycles_to_run: usize) -> Option<InterruptRequest> {
+    pub fn step(
+        &mut self,
+        cycles_to_run: usize,
+        inputs: &GamepadInputs,
+    ) -> Option<InterruptRequest> {
         let mut request = None;
 
-        self.hardware.gamepad.step(cycles_to_run);
+        self.hardware.gamepad.step(cycles_to_run, inputs);
 
         // Priority 1
         if self.hardware.timer.step(cycles_to_run) {

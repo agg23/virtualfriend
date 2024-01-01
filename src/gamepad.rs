@@ -25,6 +25,11 @@ pub struct Gamepad {
     button_state: u16,
 }
 
+pub struct GamepadInputs {
+    pub a_button: bool,
+    pub b_button: bool,
+}
+
 impl Gamepad {
     pub fn new() -> Self {
         Gamepad {
@@ -38,12 +43,21 @@ impl Gamepad {
         }
     }
 
-    pub fn step(&mut self, cycles_to_run: usize) {
+    pub fn step(&mut self, cycles_to_run: usize, inputs: &GamepadInputs) {
         for _ in 0..cycles_to_run {
             if self.is_hardware_reading {
                 if self.hardware_read_counter == GAMEPAD_HARDWARE_READ_CYCLE_COUNT {
                     // Read next button
                     self.hardware_read_counter = 0;
+
+                    let button_value = match self.hardware_read_button_index {
+                        12 => inputs.b_button,
+                        13 => inputs.a_button,
+                        _ => false,
+                    };
+                    let button_value = if button_value { 1 } else { 0 };
+
+                    self.button_state = (self.button_state << 1) | button_value;
 
                     // Reads at 31.25kHz, taking a total of 512us = 16 read operations of 640 cycles
                     if self.hardware_read_button_index == 15 {
@@ -66,7 +80,8 @@ impl Gamepad {
     /// Controler data
     pub fn get_serial_data(&self) -> u16 {
         // Low two bits are low battery, and signature (always set), respectively
-        (self.button_state << 2) | 0x2
+        // `button_state` shifted by 2 already by `hardware_read_button_index`
+        self.button_state | 0x2
     }
 
     /// SCR Serial control register
