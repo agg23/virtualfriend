@@ -128,7 +128,7 @@ impl ProgramStatusWord {
         set_fpr: bool,
     ) {
         // https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#numeric-cast
-        if set_fro && value == f32::NAN {
+        if set_fro && value.is_nan() {
             self.float_reserved = true;
         }
 

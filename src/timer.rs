@@ -50,6 +50,8 @@ impl Timer {
     }
 
     pub fn get_config(&self) -> u8 {
+        // TCR Timer control register
+        // Default all bits to set
         let mut value = bitarr![u8, Lsb0; 0xFF; 8];
 
         value.set(0, self.enabled);
@@ -68,6 +70,8 @@ impl Timer {
         if *array.get(2).unwrap() {
             // Write to Z-Stat-Clr
             self.did_zero = false;
+
+            // TODO: Do we need to do something special to acknowledge the interrupt?
         }
 
         self.interrupt_enabled = *array.get(3).unwrap();
@@ -77,6 +81,8 @@ impl Timer {
     /// Run the timer for 1 cycle.
     ///
     /// Timer does not tick every cycle, so this will run every so often.
+    ///
+    /// Returns true if an interrupt should fire.
     pub fn step(&mut self, cycles_to_run: usize) -> bool {
         if !self.enabled {
             // Do nothing
@@ -113,7 +119,16 @@ impl Timer {
     /// Returns true if an interrupt should fire
     fn tick(&mut self) -> bool {
         if self.counter == 0 {
+            // Reset counter
+            // Separating this from the interrupt (1) case allows setting the timer to 0
+            // to not infinitely interrupt
             self.counter = self.reload;
+
+            false
+        } else if self.counter == 1 {
+            // Value will be 0 after this
+            // Fire interrupt and zero
+            self.counter -= 1;
             self.did_zero = true;
 
             true

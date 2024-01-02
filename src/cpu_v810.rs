@@ -84,11 +84,6 @@ pub struct CpuV810 {
     /// Contains status flags and the interrupt masking level.
     psw: ProgramStatusWord,
 
-    /// ID 6: Processor ID Register
-    ///
-    /// Indicates to the program what kind of processor it's being run on.
-    pir: u32,
-
     /// ID 7: Task Control Word
     ///
     /// Specifies the behavior of floating-point instructions.
@@ -97,7 +92,8 @@ pub struct CpuV810 {
     /// ID 24: Cache Control Word
     ///
     /// Configures the instruction cache.
-    chcw: u32,
+    // chcw: u32,
+    cache_enabled: bool,
 
     /// ID 25: Address Trap Register for Execution
     ///
@@ -132,9 +128,8 @@ impl CpuV810 {
             fepsw: 0,
             ecr: 0xFFF0,
             psw,
-            pir: 0,
             tkcw: 0,
-            chcw: 0,
+            cache_enabled: false,
             adtre: 0,
             unknown_29: 0,
             unknown_30: 0,
@@ -146,7 +141,6 @@ impl CpuV810 {
 
     /// TODO: This is debug init to match with Mednafen
     pub fn debug_init(&mut self) {
-        self.pir = 0x5346;
         self.tkcw = 0xE0;
     }
 
@@ -293,9 +287,7 @@ impl CpuV810 {
             // Register transfer
             0b01_0000 => {
                 // MOV Immediate
-                let reg2_index = extract_reg2_index(instruction);
-
-                let immediate = extract_reg1_index(instruction);
+                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
 
                 self.set_gen_purpose_reg(reg2_index, sign_extend(immediate as u32, 5));
 
@@ -319,7 +311,7 @@ impl CpuV810 {
                 let reg1 = self.general_purpose_reg[reg1_index];
 
                 let immediate = self.fetch_instruction_word(bus);
-                let immediate = sign_extend(immediate as u32, 16);
+                let immediate = (immediate as i16) as u32;
 
                 let result = reg1.wrapping_add(immediate);
 
@@ -357,9 +349,9 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let disp = self.fetch_instruction_word(bus) as u32;
-                let disp = sign_extend(disp, 16);
+                let disp = (disp as i16) as u32;
 
-                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp) & 0xFFFF_FFFC;
 
                 let value = bus.get_u32(address);
 
@@ -372,7 +364,7 @@ impl CpuV810 {
                 self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 8)
             }
             0b11_0001 => {
-                // LD.B Load 16 bit word (sign extend)
+                // LD.H Load 16 bit word (sign extend)
                 self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
             }
 
@@ -382,7 +374,7 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let disp = self.fetch_instruction_word(bus) as u32;
-                let disp = sign_extend(disp, 16);
+                let disp = (disp as i16) as u32;
 
                 let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
 
@@ -398,9 +390,9 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let disp = self.fetch_instruction_word(bus) as u32;
-                let disp = sign_extend(disp, 16);
+                let disp = (disp as i16) as u32;
 
-                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp) & 0xFFFF_FFFE;
 
                 bus.set_u16(
                     address,
@@ -417,9 +409,9 @@ impl CpuV810 {
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
                 let disp = self.fetch_instruction_word(bus) as u32;
-                let disp = sign_extend(disp, 16);
+                let disp = (disp as i16) as u32;
 
-                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
+                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp) & 0xFFFF_FFFC;
 
                 bus.set_u32(address, self.general_purpose_reg[reg2_index]);
 
@@ -437,9 +429,7 @@ impl CpuV810 {
 
                 let reg2 = self.general_purpose_reg[reg2_index];
 
-                self.add_inst(reg2, immediate, reg2_index);
-
-                (1, BusActivity::Standard)
+                self.add_inst(reg2, immediate, reg2_index)
             }
             0b00_0001 => {
                 // ADD reg
@@ -453,7 +443,8 @@ impl CpuV810 {
             0b10_1001 => {
                 // ADD 16 bit immediate
                 let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-                let immediate = sign_extend(self.fetch_instruction_word(bus) as u32, 16);
+                let immediate = self.fetch_instruction_word(bus);
+                let immediate = (immediate as i16) as u32;
 
                 let reg1 = self.general_purpose_reg[reg1_index];
 
@@ -726,6 +717,7 @@ impl CpuV810 {
             // Opcode is 6 bits, whereas this needs 7, so we just grab the relevant opcode
             // ranges, then extract the condition from the instruction inside
             0b10_0000..=0b10_0111 => {
+                // BCOND
                 let condition = (instruction >> 9) & 0xF;
                 let disp = instruction & 0x1FF;
                 let disp = sign_extend(disp as u32, 9);
@@ -765,15 +757,23 @@ impl CpuV810 {
                 let reg2 = self.general_purpose_reg[reg2_index];
 
                 match reg_id {
-                    0 => self.eipc = reg2,
-                    1 => self.eipsw = reg2,
-                    2 => self.fepc = reg2,
-                    3 => self.fepsw = reg2,
-                    // 4 => ecr
+                    0 => self.eipc = reg2 & 0xFFFF_FFFE,
+                    1 => {
+                        // Don't write unused or reserved bits
+                        self.eipsw = reg2 & 0x000FF3FF
+                    }
+                    2 => self.fepc = reg2 & 0xFFFF_FFFE,
+                    3 => self.fepsw = reg2 & 0x000FF3FF,
+                    // 4 => ECR not setable
                     5 => self.psw.set(reg2),
                     // 6 => pir
                     // 7 => tkcw
-                    24 => self.chcw = reg2,
+                    24 => {
+                        println!("WARNING: Writing to cache control register");
+                        // TODO: Finish implementation
+                        // Cache enabled is stored here because it can be read
+                        self.cache_enabled = reg2 & 0x2 != 0;
+                    }
                     25 => self.adtre = reg2,
                     29 => self.unknown_29 = reg2,
                     30 => self.unknown_30 = reg2,
@@ -811,11 +811,22 @@ impl CpuV810 {
                     1 => self.eipsw,
                     2 => self.fepc,
                     3 => self.fepsw,
-                    // 4 => ecr
+                    4 => self.ecr,
                     5 => self.psw.get(),
-                    // 6 => pir
+                    6 => {
+                        // Processor ID register
+                        // Static value
+                        0x5346
+                    }
                     // 7 => tkcw
-                    24 => self.chcw,
+                    24 => {
+                        // CHCW
+                        if self.cache_enabled {
+                            2
+                        } else {
+                            0
+                        }
+                    }
                     25 => self.adtre,
                     29 => self.unknown_29,
                     30 => self.unknown_30,
@@ -951,10 +962,10 @@ impl CpuV810 {
                     // Nintendo
                     0b00_1100 => {
                         // MPYHW Multiply halfword
-                        let sign_extended_reg1 = ((reg1_int << 15) as i32) >> 15;
-                        let result = reg2_int * (sign_extended_reg1 as u32);
+                        let reg1_int = ((reg1_int << 15) as i32) >> 15;
+                        let result = (reg2_int as i32) * reg1_int;
 
-                        self.set_gen_purpose_reg(reg2_index, result);
+                        self.set_gen_purpose_reg(reg2_index, result as u32);
 
                         (9, BusActivity::Standard)
                     }
@@ -1053,18 +1064,14 @@ impl CpuV810 {
                 self.psw.interrupt_disable = false;
 
                 // TODO: Mednafen has this set to 1 cycle
-                // The V810 manual doesn't list a cycle count
-                // (12, BusActivity::Standard)
-                (1, BusActivity::Standard)
+                (12, BusActivity::Standard)
             }
             0b01_1110 => {
                 // SEI Set interrupt disable flag
                 self.psw.interrupt_disable = true;
 
                 // TODO: Mednafen has this set to 1 cycle
-                // The V810 manual doesn't list a cycle count
-                // (12, BusActivity::Standard)
-                (1, BusActivity::Standard)
+                (12, BusActivity::Standard)
             }
             _ => panic!("Invalid opcode {opcode:x}"),
         }
@@ -1082,6 +1089,7 @@ impl CpuV810 {
     fn set_gen_purpose_reg(&mut self, index: usize, value: u32) {
         if index == 0 {
             // Do not write to r0
+            println!("Attempted write to register 0");
             return;
         }
 
@@ -1098,8 +1106,8 @@ impl CpuV810 {
     ) -> (u32, BusActivity) {
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-        let disp = self.fetch_instruction_word(bus) as u32;
-        let disp = sign_extend(disp, 16);
+        let disp = self.fetch_instruction_word(bus);
+        let disp = (disp as i16) as u32;
 
         let address = self.general_purpose_reg[reg1_index].wrapping_add(disp);
         let address = address & address_mask;
@@ -1169,7 +1177,7 @@ impl CpuV810 {
             let result = (carry_result >> 1) as u32;
 
             // Carry is the last bit that's shifted out
-            let carry = value != 0 && carry_result & 1 != 0;
+            let carry = carry_result & 1 != 0;
 
             (result, carry)
         } else {
@@ -1196,7 +1204,7 @@ impl CpuV810 {
             let result = carry_result >> 1;
 
             // Carry is the last bit that's shifted out
-            let carry = value != 0 && carry_result & 1 != 0;
+            let carry = carry_result & 1 != 0;
 
             (result, carry)
         } else {
@@ -1307,7 +1315,7 @@ impl CpuV810 {
         if condition {
             // Jumping
             // PC was already incremented by 2, so we have to remove that
-            self.pc = ((self.pc - 2).wrapping_add(disp)) & 0xFFFF_FFFE;
+            self.pc = (self.pc - 2).wrapping_add(disp & 0xFFFF_FFFE);
 
             (3, BusActivity::Standard)
         } else {
@@ -1415,6 +1423,7 @@ impl CpuV810 {
     }
 
     fn bit_string_process_upwards(&mut self, bus: &mut Bus, sub_opcode: usize) {
+        println!("Running bit string. May have errors?");
         let mut dest_offset = self.general_purpose_reg[26] & 0x3F;
         self.set_gen_purpose_reg(26, dest_offset);
 
@@ -1514,6 +1523,8 @@ impl CpuV810 {
     }
 
     fn load_inst_cycle_count(&self) -> u32 {
+        // NOTE: For some reason changing these values from Mednafen
+        // causes Wario Land warning text to not animate
         // TODO: Mednafen for some reason has this as 1, 3
         match self.last_bus_activity {
             BusActivity::Long => 1,
@@ -1531,6 +1542,8 @@ impl CpuV810 {
     }
 
     fn store_inst_cycle_count(&self) -> u32 {
+        // NOTE: For some reason changing these values from Mednafen
+        // causes Wario Land warning text to not animate
         // TODO: Mednafen for some reason has this as 1, 2
         match self.last_bus_activity {
             BusActivity::StoreInitial | BusActivity::StoreAfter => 2,
