@@ -30,6 +30,9 @@ impl<'a> Bus<'a> {
     /// TODO: This is debug init to match with Mednafen
     pub fn debug_init(&mut self) {
         self.rom.debug_init();
+
+        // Don't randomize WRAM
+        self.wram = [0; 0x1_0000 / 2];
     }
 
     pub fn debug_dump(&self) {

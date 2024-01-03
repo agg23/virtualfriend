@@ -150,7 +150,8 @@ impl VIP {
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             interrupt_pending: VIPInterrupt::new(),
             interrupt_enabled: VIPInterrupt::new(),
-            display_enabled: false,
+            // Mednafen starts with display enabled
+            display_enabled: true,
             refresh_ram: true,
             fclk: false,
             sync_enabled: false,

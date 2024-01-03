@@ -200,10 +200,12 @@ impl CpuV810 {
         // let cycle_count = cycle_count % 0x061200;
         // string += &format!(" TStamp={cycle_count:06X}");
 
+        let chcw = if self.cache_enabled { 2 } else { 0 };
+
         if let Some(log_file) = log_file {
-            writeln!(log_file, "PC={:08X}", self.pc).unwrap();
-            // writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR={:08X} TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
-            // self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.pir, self.tkcw, self.chcw, self.adtre).unwrap();
+            // writeln!(log_file, "PC={:08X}", self.pc).unwrap();
+            writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005346 TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
+            self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre).unwrap();
         }
     }
 
@@ -814,7 +816,7 @@ impl CpuV810 {
                     4 => self.ecr,
                     5 => self.psw.get(),
                     6 => {
-                        // Processor ID register
+                        // PIR Processor ID register
                         // Static value
                         0x5346
                     }
@@ -1424,10 +1426,10 @@ impl CpuV810 {
 
     fn bit_string_process_upwards(&mut self, bus: &mut Bus, sub_opcode: usize) {
         println!("Running bit string. May have errors?");
-        let mut dest_offset = self.general_purpose_reg[26] & 0x3F;
+        let mut dest_offset = self.general_purpose_reg[26] & 0x1F;
         self.set_gen_purpose_reg(26, dest_offset);
 
-        let mut source_offset = self.general_purpose_reg[27] & 0x3F;
+        let mut source_offset = self.general_purpose_reg[27] & 0x1F;
         self.set_gen_purpose_reg(27, source_offset);
 
         let mut length = self.general_purpose_reg[28];
