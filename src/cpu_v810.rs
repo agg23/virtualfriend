@@ -87,6 +87,7 @@ pub struct CpuV810 {
     /// ID 7: Task Control Word
     ///
     /// Specifies the behavior of floating-point instructions.
+    // TODO: Add proper exception for float operations
     tkcw: u32,
 
     /// ID 24: Cache Control Word
@@ -769,7 +770,7 @@ impl CpuV810 {
                     // 4 => ECR not setable
                     5 => self.psw.set(reg2),
                     // 6 => pir
-                    // 7 => tkcw
+                    7 => self.tkcw = reg2,
                     24 => {
                         println!("WARNING: Writing to cache control register");
                         // TODO: Finish implementation

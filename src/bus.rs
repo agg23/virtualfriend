@@ -86,7 +86,7 @@ impl<'a> Bus<'a> {
             0x0400_0000..=0x04FF_FFFF => {
                 todo!("Game Pak Expansion")
             }
-            0x0500_0000..=0x05FF_FFFF => self.wram[local_address],
+            0x0500_0000..=0x05FF_FFFF => self.wram[local_address & 0x7FFF],
             0x0600_0000..=0x06FF_FFFF => self.rom.get_ram(local_address),
             0x0700_0000..=0x07FF_FFFF => self.rom.get_rom(local_address),
             _ => 0,
@@ -134,7 +134,7 @@ impl<'a> Bus<'a> {
             0x0400_0000..=0x04FF_FFFF => {
                 todo!("Game Pak Expansion")
             }
-            0x0500_0000..=0x05FF_FFFF => self.wram[local_address] = value,
+            0x0500_0000..=0x05FF_FFFF => self.wram[local_address & 0x7FFF] = value,
             0x0600_0000..=0x06FF_FFFF => self.rom.set_ram(local_address, value),
             0x0700_0000..=0x07FF_FFFF => {
                 // Game Pak ROM
