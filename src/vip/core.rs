@@ -796,7 +796,7 @@ impl VIP {
 
     fn render_obj_world(&mut self, left_eye: bool, block_start_y: u32, object: &Object) {
         if !(object.render_to_left_display && left_eye)
-            || !(object.render_to_right_display && !left_eye)
+            && !(object.render_to_right_display && !left_eye)
         {
             // Nothing to render for this eye
             return;
