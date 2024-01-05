@@ -1,36 +1,31 @@
-use std::fs;
-use std::slice::from_raw_parts;
-
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::{array::BitArray, bitarr};
 
-use crate::constants::{FRAMEBUFFER_HEIGHT, SBOUT_HIGH_CYCLE_COUNT};
-use crate::vip::object::Object;
-use crate::{
-    constants::{
-        DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
-        DRAWING_BLOCK_CYCLE_COUNT, FCLK_LOW_CYCLE_OFFSET, FRAME_COMPLETE_CYCLE_OFFSET,
-        LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, LEFT_FRAME_BUFFER_CYCLE_OFFSET,
-        RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, RIGHT_FRAME_BUFFER_CYCLE_OFFSET,
-    },
-    util::sign_extend_16,
+use crate::constants::{
+    DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
+    DRAWING_BLOCK_CYCLE_COUNT, FCLK_LOW_CYCLE_OFFSET, FRAME_COMPLETE_CYCLE_OFFSET,
+    LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, LEFT_FRAME_BUFFER_CYCLE_OFFSET,
+    RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET, RIGHT_FRAME_BUFFER_CYCLE_OFFSET,
 };
+use crate::constants::{FRAMEBUFFER_HEIGHT, SBOUT_HIGH_CYCLE_COUNT};
 
-use super::world::{BackgroundType, World, WorldDisplayState};
+use super::drawing::draw_block_row;
+use super::util::{framebuffer_addresses, RenderState};
+use super::vram::VRAM;
 
 pub struct VIP {
     pub current_display_clock_cycle: usize,
 
-    // We map the entirety of VRAM due to overlapping sections
-    // (upper background maps overlap with OAM and properties).
-    vram: [u16; 0x4_0000 / 2],
+    vram: VRAM,
 
     pub left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
     right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
 
     interrupt_pending: VIPInterrupt,
     interrupt_enabled: VIPInterrupt,
+
+    render_state: RenderState,
 
     // Registers
     // DPSTTS/DPCTRL
@@ -59,47 +54,10 @@ pub struct VIP {
     last_left_column_table_index: u8,
     last_right_column_table_index: u8,
 
-    /// BG color palette control register
-    ///
-    /// When set, new background color is not applied until the first 8 rows of the next frame are rendered.
-    bkcol: u8,
-    last_bkcol: u8,
-
-    // SB Allows user to watch for the render of a set of 8 rows
-    /// The current group of 8 rows of pixels, relative to the top of the image, currently being drawn.
-    sbcount: u8,
-    /// The group of 8 rows of pixels, relative to the top of the image, to compare with while drawing.
-    sbcmp: u8,
-    sbout: bool,
-
     /// Tracks the number of cycles `SBOUT` is high. Brings it low after 56us
     sbout_cycle_high_count: usize,
 
-    object_group_end0: u16,
-    object_group_end1: u16,
-    object_group_end2: u16,
-    object_group_end3: u16,
-
-    brightness_control_reg_a: u8,
-    brightness_control_reg_b: u8,
-    brightness_control_reg_c: u8,
-
-    // TODO: Implement
-    led_rest_duration: u8,
-
-    background_palette_control0: PaletteRegister,
-    background_palette_control1: PaletteRegister,
-    background_palette_control2: PaletteRegister,
-    background_palette_control3: PaletteRegister,
-
-    object_palette_control0: PaletteRegister,
-    object_palette_control1: PaletteRegister,
-    object_palette_control2: PaletteRegister,
-    object_palette_control3: PaletteRegister,
-
     // Internal
-    /// High if drawing from framebuffer 1. Otherwise drawing from framebuffer 0.
-    pub drawing_framebuffer_1: bool,
     current_displaying: DisplayState,
 
     pub in_drawing: bool,
@@ -134,22 +92,16 @@ pub struct VIPInterrupt {
     timeerr: bool,
 }
 
-#[derive(Copy, Clone)]
-pub struct PaletteRegister {
-    character1: u8,
-    character2: u8,
-    character3: u8,
-}
-
 impl VIP {
     pub fn new() -> Self {
         VIP {
             current_display_clock_cycle: 0,
-            vram: [0; 0x4_0000 / 2],
+            vram: VRAM::new(),
             left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             interrupt_pending: VIPInterrupt::new(),
             interrupt_enabled: VIPInterrupt::new(),
+            render_state: RenderState::new(),
             // Mednafen starts with display enabled
             display_enabled: true,
             refresh_ram: true,
@@ -160,29 +112,7 @@ impl VIP {
             frmcyc: 0,
             last_left_column_table_index: 0,
             last_right_column_table_index: 0,
-            bkcol: 0,
-            last_bkcol: 0,
-            sbcount: 0,
-            sbcmp: 0,
-            sbout: false,
             sbout_cycle_high_count: 0,
-            object_group_end0: 0,
-            object_group_end1: 0,
-            object_group_end2: 0,
-            object_group_end3: 0,
-            brightness_control_reg_a: 0,
-            brightness_control_reg_b: 0,
-            brightness_control_reg_c: 0,
-            led_rest_duration: 0,
-            background_palette_control0: PaletteRegister::new(),
-            background_palette_control1: PaletteRegister::new(),
-            background_palette_control2: PaletteRegister::new(),
-            background_palette_control3: PaletteRegister::new(),
-            object_palette_control0: PaletteRegister::new(),
-            object_palette_control1: PaletteRegister::new(),
-            object_palette_control2: PaletteRegister::new(),
-            object_palette_control3: PaletteRegister::new(),
-            drawing_framebuffer_1: false,
             current_displaying: DisplayState::None,
             in_drawing: false,
             drawing_cycle_count: 0,
@@ -190,17 +120,11 @@ impl VIP {
         }
     }
 
-    pub fn debug_dump(&self) {
-        let array = unsafe { from_raw_parts(self.vram.as_ptr() as *const u8, self.vram.len()) };
-
-        fs::write("vram.dump", array).unwrap();
-    }
-
     pub fn get_bus(&self, address: u32) -> u16 {
         let address = address as usize;
 
         match address {
-            0x0..=0x4_0000 => self.get_vram_u16(address),
+            0x0..=0x3_FFFF => self.vram.get_u16(address),
             0x5_F800..=0x5_F801 => {
                 // INTPND Interrupt pending
                 self.interrupt_pending.get()
@@ -222,20 +146,24 @@ impl VIP {
                 // Displaying left framebuffer 0
                 value.set(
                     2,
-                    self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Left,
+                    self.render_state.drawing_framebuffer_1
+                        && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     3,
-                    self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Right,
+                    self.render_state.drawing_framebuffer_1
+                        && self.current_displaying == DisplayState::Right,
                 );
                 // Displaying left framebuffer 1
                 value.set(
                     4,
-                    !self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Left,
+                    !self.render_state.drawing_framebuffer_1
+                        && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     5,
-                    !self.drawing_framebuffer_1 && self.current_displaying == DisplayState::Right,
+                    !self.render_state.drawing_framebuffer_1
+                        && self.current_displaying == DisplayState::Right,
                 );
 
                 // Scan ready
@@ -249,10 +177,10 @@ impl VIP {
 
                 value.load()
             }
-            0x5_F824..=0x5_F825 => self.brightness_control_reg_a as u16,
-            0x5_F826..=0x5_F827 => self.brightness_control_reg_b as u16,
-            0x5_F828..=0x5_F829 => self.brightness_control_reg_c as u16,
-            0x5_F82A..=0x5_F82B => self.led_rest_duration as u16,
+            0x5_F824..=0x5_F825 => self.render_state.brightness_control_reg_a as u16,
+            0x5_F826..=0x5_F827 => self.render_state.brightness_control_reg_b as u16,
+            0x5_F828..=0x5_F829 => self.render_state.brightness_control_reg_c as u16,
+            0x5_F82A..=0x5_F82B => self.render_state.led_rest_duration as u16,
             0x5_F82E..=0x5_F82F => self.frmcyc as u16,
             0x5_F830..=0x5_F831 => {
                 ((self.last_right_column_table_index as u16) << 8)
@@ -264,78 +192,65 @@ impl VIP {
 
                 value.set(1, self.drawing_enabled);
                 // Drawing to framebuffer 0
-                value.set(2, self.in_drawing && !self.drawing_framebuffer_1);
-                value.set(3, self.in_drawing && self.drawing_framebuffer_1);
+                value.set(
+                    2,
+                    self.in_drawing && !self.render_state.drawing_framebuffer_1,
+                );
+                value.set(
+                    3,
+                    self.in_drawing && self.render_state.drawing_framebuffer_1,
+                );
                 // TODO: Detect when drawing would overrun. OVERTIME
                 value.set(4, false);
-                value.set(15, self.sbout);
+                value.set(15, self.render_state.sbout);
 
                 let value: u16 = value.load();
 
-                value | ((self.sbcount as u16) << 8)
+                value | ((self.render_state.sbcount as u16) << 8)
             }
             0x5_F844..=0x5_F845 => {
                 // VIP Version
                 // Only one version, always 2
                 2
             }
-            0x5_F848..=0x5_F849 => self.object_group_end0,
-            0x5_F84A..=0x5_F84B => self.object_group_end1,
-            0x5_F84C..=0x5_F84D => self.object_group_end2,
-            0x5_F84E..=0x5_F84F => self.object_group_end3,
-            0x5_F860..=0x5_F861 => self.background_palette_control0.get() as u16,
-            0x5_F862..=0x5_F863 => self.background_palette_control1.get() as u16,
-            0x5_F864..=0x5_F865 => self.background_palette_control2.get() as u16,
-            0x5_F866..=0x5_F867 => self.background_palette_control3.get() as u16,
-            0x5_F868..=0x5_F869 => self.object_palette_control0.get() as u16,
-            0x5_F86A..=0x5_F86B => self.object_palette_control1.get() as u16,
-            0x5_F86C..=0x5_F86D => self.object_palette_control2.get() as u16,
-            0x5_F86E..=0x5_F86F => self.object_palette_control3.get() as u16,
-            0x5_F870..=0x5_F871 => self.bkcol as u16,
+            0x5_F848..=0x5_F849 => self.render_state.object_group_end0,
+            0x5_F84A..=0x5_F84B => self.render_state.object_group_end1,
+            0x5_F84C..=0x5_F84D => self.render_state.object_group_end2,
+            0x5_F84E..=0x5_F84F => self.render_state.object_group_end3,
+            0x5_F860..=0x5_F861 => self.render_state.background_palette_control0.get() as u16,
+            0x5_F862..=0x5_F863 => self.render_state.background_palette_control1.get() as u16,
+            0x5_F864..=0x5_F865 => self.render_state.background_palette_control2.get() as u16,
+            0x5_F866..=0x5_F867 => self.render_state.background_palette_control3.get() as u16,
+            0x5_F868..=0x5_F869 => self.render_state.object_palette_control0.get() as u16,
+            0x5_F86A..=0x5_F86B => self.render_state.object_palette_control1.get() as u16,
+            0x5_F86C..=0x5_F86D => self.render_state.object_palette_control2.get() as u16,
+            0x5_F86E..=0x5_F86F => self.render_state.object_palette_control3.get() as u16,
+            0x5_F870..=0x5_F871 => self.render_state.bkcol as u16,
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
-                self.get_vram_u16((address & 0x1FFF) + 0x6000)
+                self.vram.get_u16((address & 0x1FFF) + 0x6000)
             }
             0x7_A000..=0x7_BFFF => {
                 // Character table 2 remap
-                self.get_vram_u16((address & 0x1FFF) + 0xE000)
+                self.vram.get_u16((address & 0x1FFF) + 0xE000)
             }
             0x7_C000..=0x7_DFFF => {
                 // Character table 3 remap
-                self.get_vram_u16((address & 0x1FFF) + 0x1_6000)
+                self.vram.get_u16((address & 0x1FFF) + 0x1_6000)
             }
             0x7_E000..=0x7_FFFF => {
                 // Character table 4 remap
-                self.get_vram_u16((address & 0x1FFF) + 0x1_E000)
+                self.vram.get_u16((address & 0x1FFF) + 0x1_E000)
             }
             _ => unimplemented!("Read address {:08X}", address),
         }
-    }
-
-    fn get_vram_u16(&self, address: usize) -> u16 {
-        // Convert byte address to halfword address
-        let local_address = address >> 1;
-
-        self.vram[local_address]
-    }
-
-    fn get_vram_u8(&self, address: usize) -> u8 {
-        let word = self.get_vram_u16(address);
-
-        let byte = match address & 0x1 {
-            0 => word & 0xFF,
-            1 => (word >> 8) & 0xFF,
-            _ => unreachable!(),
-        };
-
-        byte as u8
     }
 
     pub fn set_bus(&mut self, address: u32, value: u16) {
         let address = address as usize;
 
         match address {
-            0x0..=0x4_0000 => self.set_vram_u16(address, value),
+            0x0..=0x3_FFFF => self.vram.set_u16(address, value),
             0x4_0000..=0x5_DFFF => panic!("Invalid VIP address"),
             0x5_F800..=0x5_F801 => {
                 // INTPND Interrupt pending
@@ -376,10 +291,10 @@ impl VIP {
                 self.sync_enabled = *array.get(9).unwrap();
                 self.lock_column_table = *array.get(10).unwrap();
             }
-            0x5_F824..=0x5_F825 => self.brightness_control_reg_a = value as u8,
-            0x5_F826..=0x5_F827 => self.brightness_control_reg_b = value as u8,
-            0x5_F828..=0x5_F829 => self.brightness_control_reg_c = value as u8,
-            0x5_F82A..=0x5_F82B => self.led_rest_duration = value as u8,
+            0x5_F824..=0x5_F825 => self.render_state.brightness_control_reg_a = value as u8,
+            0x5_F826..=0x5_F827 => self.render_state.brightness_control_reg_b = value as u8,
+            0x5_F828..=0x5_F829 => self.render_state.brightness_control_reg_c = value as u8,
+            0x5_F82A..=0x5_F82B => self.render_state.led_rest_duration = value as u8,
             0x5_F82E..=0x5_F82F => self.frmcyc = (value & 0xF) as u8,
             0x5_F842..=0x5_F843 => {
                 // XPCTRL Drawing control write register
@@ -391,8 +306,8 @@ impl VIP {
                     self.in_drawing = false;
                     self.drawing_cycle_count = 0;
                     self.sbout_cycle_high_count = 0;
-                    self.sbout = false;
-                    self.sbcount = 0;
+                    self.render_state.sbout = false;
+                    self.render_state.sbcount = 0;
 
                     self.interrupt_enabled.xpend = false;
                     self.interrupt_pending.xpend = false;
@@ -400,59 +315,40 @@ impl VIP {
 
                 self.drawing_enabled = *array.get(1).unwrap();
 
-                self.sbcmp = ((value >> 8) & 0x1F) as u8;
+                self.render_state.sbcmp = ((value >> 8) & 0x1F) as u8;
             }
-            0x5_F848..=0x5_F849 => self.object_group_end0 = value & 0x3FF,
-            0x5_F84A..=0x5_F84B => self.object_group_end1 = value & 0x3FF,
-            0x5_F84C..=0x5_F84D => self.object_group_end2 = value & 0x3FF,
-            0x5_F84E..=0x5_F84F => self.object_group_end3 = value & 0x3FF,
-            0x5_F860..=0x5_F861 => self.background_palette_control0.set(value),
-            0x5_F862..=0x5_F863 => self.background_palette_control1.set(value),
-            0x5_F864..=0x5_F865 => self.background_palette_control2.set(value),
-            0x5_F866..=0x5_F867 => self.background_palette_control3.set(value),
-            0x5_F868..=0x5_F869 => self.object_palette_control0.set(value),
-            0x5_F86A..=0x5_F86B => self.object_palette_control1.set(value),
-            0x5_F86C..=0x5_F86D => self.object_palette_control2.set(value),
-            0x5_F86E..=0x5_F86F => self.object_palette_control3.set(value),
-            0x5_F870..=0x5_F871 => self.bkcol = (value & 0x3) as u8,
+            0x5_F848..=0x5_F849 => self.render_state.object_group_end0 = value & 0x3FF,
+            0x5_F84A..=0x5_F84B => self.render_state.object_group_end1 = value & 0x3FF,
+            0x5_F84C..=0x5_F84D => self.render_state.object_group_end2 = value & 0x3FF,
+            0x5_F84E..=0x5_F84F => self.render_state.object_group_end3 = value & 0x3FF,
+            0x5_F860..=0x5_F861 => self.render_state.background_palette_control0.set(value),
+            0x5_F862..=0x5_F863 => self.render_state.background_palette_control1.set(value),
+            0x5_F864..=0x5_F865 => self.render_state.background_palette_control2.set(value),
+            0x5_F866..=0x5_F867 => self.render_state.background_palette_control3.set(value),
+            0x5_F868..=0x5_F869 => self.render_state.object_palette_control0.set(value),
+            0x5_F86A..=0x5_F86B => self.render_state.object_palette_control1.set(value),
+            0x5_F86C..=0x5_F86D => self.render_state.object_palette_control2.set(value),
+            0x5_F86E..=0x5_F86F => self.render_state.object_palette_control3.set(value),
+            0x5_F870..=0x5_F871 => self.render_state.bkcol = (value & 0x3) as u8,
             0x6_0000..=0x7_7FFF => panic!("Invalid VIP address"),
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
-                self.set_vram_u16((address & 0x1FFF) + 0x6000, value);
+                self.vram.set_u16((address & 0x1FFF) + 0x6000, value);
             }
             0x7_A000..=0x7_BFFF => {
                 // Character table 2 remap
-                self.set_vram_u16((address & 0x1FFF) + 0xE000, value);
+                self.vram.set_u16((address & 0x1FFF) + 0xE000, value);
             }
             0x7_C000..=0x7_DFFF => {
                 // Character table 3 remap
-                self.set_vram_u16((address & 0x1FFF) + 0x1_6000, value);
+                self.vram.set_u16((address & 0x1FFF) + 0x1_6000, value);
             }
             0x7_E000..=0x7_FFFF => {
                 // Character table 4 remap
-                self.set_vram_u16((address & 0x1FFF) + 0x1_E000, value);
+                self.vram.set_u16((address & 0x1FFF) + 0x1_E000, value);
             }
             _ => unimplemented!("Write address {:08X}", address),
         }
-    }
-
-    fn set_vram_u16(&mut self, address: usize, value: u16) {
-        // Convert byte address to halfword address
-        let local_address = address >> 1;
-
-        self.vram[local_address] = value;
-    }
-
-    fn set_vram_u8(&mut self, address: usize, value: u8) {
-        let existing_word = self.get_vram_u16(address);
-
-        let output_word = match address & 0x1 {
-            0 => (existing_word & 0xFF00) | (value as u16),
-            1 => (existing_word & 0x00FF) | ((value as u16) << 8),
-            _ => unreachable!(),
-        };
-
-        self.set_vram_u16(address, output_word);
     }
 
     /// Runs the VIP for `cycles_to_run`.
@@ -517,32 +413,32 @@ impl VIP {
                 if self.drawing_cycle_count == DRAWING_BLOCK_CYCLE_COUNT {
                     self.drawing_cycle_count = 0;
 
-                    if self.sbcount < DRAWING_BLOCK_COUNT as u8 {
+                    if self.render_state.sbcount < DRAWING_BLOCK_COUNT as u8 {
                         // Within the frame still
-                        self.draw_block_row();
+                        draw_block_row(&mut self.vram, &self.render_state);
 
-                        if self.sbcount == 0 {
+                        if self.render_state.sbcount == 0 {
                             // First set of rows just rendered, copy over BKCOL
-                            self.last_bkcol = self.bkcol;
+                            self.render_state.last_bkcol = self.render_state.bkcol;
                         }
 
-                        if self.sbcount == self.sbcmp {
+                        if self.render_state.sbcount == self.render_state.sbcmp {
                             // Found rows. Fire SBHit
                             // Fire interrupt
                             self.interrupt_pending.sbhit = true;
                         }
 
-                        self.sbout = true;
+                        self.render_state.sbout = true;
                         self.sbout_cycle_high_count = 0;
 
-                        self.sbcount += 1;
+                        self.render_state.sbcount += 1;
                     } else {
                         // Finished drawing
                         self.in_drawing = false;
 
                         println!("Ended drawing");
 
-                        self.sbcount = 0;
+                        self.render_state.sbcount = 0;
                         self.interrupt_pending.xpend = true;
                     }
                 } else {
@@ -556,10 +452,10 @@ impl VIP {
                 self.current_display_clock_cycle += 1;
             }
 
-            if self.sbout {
+            if self.render_state.sbout {
                 // Run SBOUT timer
                 if self.sbout_cycle_high_count == SBOUT_HIGH_CYCLE_COUNT {
-                    self.sbout = false;
+                    self.render_state.sbout = false;
                 } else {
                     self.sbout_cycle_high_count += 1;
                 }
@@ -589,13 +485,13 @@ impl VIP {
 
         if self.drawing_enabled {
             // Flip framebuffers to start writing to the currently displayed ones
-            self.drawing_framebuffer_1 = !self.drawing_framebuffer_1;
+            self.render_state.drawing_framebuffer_1 = !self.render_state.drawing_framebuffer_1;
             println!(
                 "Starting draw. Flipped framebuffer to {}",
-                self.drawing_framebuffer_1
+                self.render_state.drawing_framebuffer_1
             );
 
-            self.sbcount = 0;
+            self.render_state.sbcount = 0;
             self.drawing_cycle_count = 0;
 
             // Enter render mode
@@ -608,243 +504,6 @@ impl VIP {
         }
     }
 
-    ///
-    /// Draws a block (1x8), but for an entire row. This represents 1 value of `SBCOUNT`.
-    ///
-    /// The actual hardware does not draw entire rows at a time, but due to lack of "racing the beam", there's no
-    /// real reason to break up the drawing.
-    fn draw_block_row(&mut self) {
-        // Get drawing framebuffer
-        let (left_framebuffer_address, right_framebuffer_address) =
-            framebuffer_addresses(self.drawing_framebuffer_1);
-
-        // Initialize all values to BKCOL
-        let clear_pixel = ((self.last_bkcol << 6)
-            | (self.last_bkcol << 4)
-            | (self.last_bkcol << 2)
-            | self.last_bkcol) as u16;
-        let clear_pixel = (clear_pixel << 8) | clear_pixel;
-
-        let y = self.sbcount as u32 * 8;
-
-        for x in 0..DISPLAY_WIDTH {
-            // Overwrite every pixel in the 384x8 segment
-            // Pixels are stored in the framebuffer in columns, rather than in rows
-            let x_index = x * FRAMEBUFFER_HEIGHT;
-            // This contains the bottom three bytes as the bit offset
-            let pixel_byte_index = (x_index + y as usize) >> 2;
-            self.set_vram_u16(left_framebuffer_address + pixel_byte_index, clear_pixel);
-            self.set_vram_u16(right_framebuffer_address + pixel_byte_index, clear_pixel);
-        }
-
-        // Counter for total object groups
-        let mut object_group_counter = 3;
-
-        for i in (0..=31).rev() {
-            // Process world
-            let world_attribute_address = 0x3_D800 + 16 * 2 * i;
-            // Convert byte address into halfword addresses so we can grab a slice of memory
-            let world_attribute_halfword_address = world_attribute_address >> 1;
-            let halfwords =
-                &self.vram[world_attribute_halfword_address..world_attribute_halfword_address + 11];
-
-            let world = World::parse(halfwords);
-
-            if world.end {
-                // We're done processing worlds
-                break;
-            } else if world.display_state == WorldDisplayState::Dummy {
-                // Dummy world, skip
-                continue;
-            }
-
-            match world.background_type {
-                BackgroundType::Normal | BackgroundType::HBias => {
-                    let hbias = world.background_type == BackgroundType::HBias;
-                    self.render_normal_or_hbias_background(&world, true, hbias, y);
-                    self.render_normal_or_hbias_background(&world, false, hbias, y);
-                }
-                BackgroundType::Affine => todo!(),
-                BackgroundType::Obj => {
-                    let (mut start_obj_index, end_obj_index) = match object_group_counter {
-                        // First group always starts at 0
-                        0 => (0, self.object_group_end0),
-                        // All other groups start at the end of the last group + 1
-                        1 => (self.object_group_end0 + 1, self.object_group_end1),
-                        2 => (self.object_group_end1 + 1, self.object_group_end2),
-                        _ => (self.object_group_end2 + 1, self.object_group_end3),
-                    };
-
-                    // TODO: Unsure if we should skip this or continue
-                    if start_obj_index > end_obj_index {
-                        start_obj_index = 0;
-                    }
-
-                    assert!(
-                        start_obj_index <= end_obj_index,
-                        "{start_obj_index} {end_obj_index}, {object_group_counter} {} {} {} {}",
-                        self.object_group_end0,
-                        self.object_group_end1,
-                        self.object_group_end2,
-                        self.object_group_end3
-                    );
-
-                    // Process objects in group in reverse order
-                    for i in (start_obj_index..end_obj_index + 1).rev() {
-                        // 8 bytes per object attribute
-                        let obj_group_address = 0x3_E000 + (i as usize) * 8;
-
-                        let obj_group_halfword_address = obj_group_address >> 1;
-                        let halfwords =
-                            &self.vram[obj_group_halfword_address..obj_group_halfword_address + 4];
-
-                        let object = Object::parse(halfwords);
-
-                        self.render_obj_world(true, y, &object);
-                        self.render_obj_world(false, y, &object);
-                    }
-
-                    if object_group_counter == 0 {
-                        // Object groups loop around
-                        object_group_counter = 3;
-                    } else {
-                        object_group_counter -= 1;
-                    }
-                }
-            }
-        }
-    }
-
-    fn render_normal_or_hbias_background(
-        &mut self,
-        world: &World,
-        left_eye: bool,
-        is_hbias: bool,
-        block_start_y: u32,
-    ) {
-        // Calculate start coordinate offset using world parallax
-        let parallax_x = if left_eye {
-            world
-                .background_x_destination
-                .wrapping_sub(world.background_parallax_destination)
-        } else {
-            world
-                .background_x_destination
-                .wrapping_add(world.background_parallax_destination)
-        };
-
-        let world_height = world.window_height + 1;
-
-        // Loop over y pixels in range of this block
-        let lower_bound = block_start_y as i16 + world.background_y_destination;
-
-        for y in lower_bound..lower_bound + 8 {
-            // For each row in the block
-            // Get window start Y position
-            let window_y = y.wrapping_sub(world.background_y_destination);
-
-            let line_offset = if is_hbias {
-                // HBias has two additional parameters of 16 bits per row
-                let base_address = 0x20000 + world.param_base * 2 + window_y as usize * 4;
-
-                let address = if left_eye {
-                    base_address
-                } else {
-                    // "The VIP appears to determine the address of HOFSTR by OR'ing the address of HOFSTL with 2.
-                    // If the Param Base attribute in the world is not divisibe by 2, this will result in HOFSTL being
-                    // used for both the left and right images, and HOFSTR will not be accessed."
-                    base_address | 2
-                };
-
-                sign_extend_16(self.get_vram_u16(address), 13)
-            } else {
-                0
-            };
-
-            let lower_bound = 0 + parallax_x;
-
-            for x in lower_bound..lower_bound + world.window_width as i16 + 1 {
-                // Loop over all columns in the row
-                if x >= DISPLAY_WIDTH as i16 {
-                    continue;
-                }
-                let window_x = x - parallax_x;
-
-                let background_x = window_x.wrapping_add(world.background_x_destination);
-                // Offset line from h-bias
-                let background_x = background_x.wrapping_add(line_offset);
-
-                let background_x = if left_eye {
-                    background_x.wrapping_sub(world.background_parallax_source)
-                } else {
-                    background_x.wrapping_add(world.background_parallax_source)
-                };
-
-                let background_y = window_y.wrapping_add(world.background_y_source);
-
-                self.draw_background_pixel(
-                    world,
-                    left_eye,
-                    x as u32,
-                    y as u32,
-                    background_x as u32,
-                    background_y as u32,
-                );
-            }
-        }
-    }
-
-    fn render_obj_world(&mut self, left_eye: bool, block_start_y: u32, object: &Object) {
-        if !(object.render_to_left_display && left_eye)
-            && !(object.render_to_right_display && !left_eye)
-        {
-            // Nothing to render for this eye
-            return;
-        }
-
-        let palette = match object.palette {
-            0 => self.object_palette_control0,
-            1 => self.object_palette_control1,
-            2 => self.object_palette_control2,
-            _ => self.object_palette_control3,
-        };
-
-        for offset_y in 0..8 {
-            let pixel_y = (object.display_pointer_y as u32).wrapping_add(offset_y);
-
-            if pixel_y < block_start_y || pixel_y >= block_start_y + 8 {
-                // This pixel is not currently being rendered, skip
-                continue;
-            }
-
-            for offset_x in 0..8 {
-                let pixel_x = (object.display_pointer_x as u32).wrapping_add(offset_x);
-                let pixel_x = if left_eye {
-                    pixel_x.wrapping_sub(object.parallax as u32)
-                } else {
-                    pixel_x.wrapping_add(object.parallax as u32)
-                };
-
-                if pixel_x >= DISPLAY_WIDTH as u32 {
-                    // Out of bounds (positive or negative)
-                    continue;
-                }
-
-                self.draw_character_pixel(
-                    left_eye,
-                    pixel_x,
-                    pixel_y,
-                    offset_x,
-                    offset_y,
-                    object.character_index,
-                    palette,
-                    object.horizontal_flip,
-                    object.vertical_flip,
-                );
-            }
-        }
-    }
-
     fn display_framebuffer(&mut self) {
         if !self.display_enabled || !self.sync_enabled {
             // Do not render
@@ -853,12 +512,13 @@ impl VIP {
 
         // Rendering is done with the opposite of the drawing framebuffer
         let (left_framebuffer_address, right_framebuffer_address) =
-            framebuffer_addresses(!self.drawing_framebuffer_1);
+            framebuffer_addresses(!self.render_state.drawing_framebuffer_1);
 
         let brightness_c = self
+            .render_state
             .brightness_control_reg_a
-            .wrapping_add(self.brightness_control_reg_b)
-            .wrapping_add(self.brightness_control_reg_c);
+            .wrapping_add(self.render_state.brightness_control_reg_b)
+            .wrapping_add(self.render_state.brightness_control_reg_c);
 
         for x in 0..DISPLAY_WIDTH {
             for y in 0..DISPLAY_HEIGHT {
@@ -871,25 +531,29 @@ impl VIP {
                 let bit_index = (y & 0x3) << 1;
 
                 // TODO: Cache these pixels instead of refetching
-                let left_pixel = (self.get_vram_u8(left_framebuffer_address + pixel_byte_index)
+                let left_pixel = (self
+                    .vram
+                    .get_u8(left_framebuffer_address + pixel_byte_index)
                     >> bit_index)
                     & 0x3;
 
-                let right_pixel = (self.get_vram_u8(right_framebuffer_address + pixel_byte_index)
+                let right_pixel = (self
+                    .vram
+                    .get_u8(right_framebuffer_address + pixel_byte_index)
                     >> bit_index)
                     & 0x3;
 
                 let left_pixel = match left_pixel {
                     0 => 0,
-                    1 => self.brightness_control_reg_a,
-                    2 => self.brightness_control_reg_b,
+                    1 => self.render_state.brightness_control_reg_a,
+                    2 => self.render_state.brightness_control_reg_b,
                     _ => brightness_c,
                 };
 
                 let right_pixel = match right_pixel {
                     0 => 0,
-                    1 => self.brightness_control_reg_a,
-                    2 => self.brightness_control_reg_b,
+                    1 => self.render_state.brightness_control_reg_a,
+                    2 => self.render_state.brightness_control_reg_b,
                     _ => brightness_c,
                 };
 
@@ -898,148 +562,6 @@ impl VIP {
                 self.right_rendered_framebuffer[output_framebuffer_index] = right_pixel;
             }
         }
-    }
-
-    fn draw_background_pixel(
-        &mut self,
-        world: &World,
-        left_eye: bool,
-        x: u32,
-        y: u32,
-        background_x: u32,
-        background_y: u32,
-    ) {
-        // TODO: Move this out of pixel draw method. Unnecessary duplication of work
-        let screen_x_size = 1 << world.screen_x_size;
-        let screen_y_size = 1 << world.screen_y_size;
-
-        // Size of all of the background tiles together (they're 512x512 pixels)
-        let total_background_width = screen_x_size * 512;
-        let total_background_height = screen_y_size * 512;
-
-        if world.overplane
-            && (background_x >= total_background_height || background_y >= total_background_width)
-        {
-            // Overplane is enabled and our background tile is outside of the total background bounds
-            // Draw overplane character
-            todo!();
-        } else {
-            // Draw normal pixel
-            // Get active background map (AND to limit to the available range)
-            let active_background_map_x = (background_x / 512) & (screen_x_size - 1);
-            let active_background_map_y = (background_y / 512) & (screen_y_size - 1);
-
-            // Each background is 0x2000 bytes
-            let background_base_offset_address = 0x2_0000 + (world.map_base_index as u32) * 0x2000;
-            let background_offset_address = background_base_offset_address
-                + (active_background_map_y * screen_x_size + active_background_map_x) * 0x2000;
-
-            // Limit our pixel positions to be within the background
-            let background_x = background_x & 0x1FF;
-            let background_y = background_y & 0x1FF;
-
-            // Get X/Y position of the character block
-            let character_x = background_x / 8;
-            let character_y = background_y / 8;
-
-            // Get pixel offset in the given block
-            let background_pixel_offset_x = background_x & 0x7;
-            let background_pixel_offset_y = background_y & 0x7;
-
-            // There are 512/8 = 64 blocks in a row in a background
-            let character_address =
-                background_offset_address + (character_y * 64 + character_x) * 2;
-
-            // Get background map character block info
-            let character_halfword = self.get_vram_u16(character_address as usize);
-
-            let character_index = character_halfword & 0x7FF;
-            let vertical_flip = character_halfword & 0x1000 != 0;
-            let horizontal_flip = character_halfword & 0x2000 != 0;
-            let palette = character_halfword >> 14;
-
-            // TODO: Handle OBJ palettes
-            let palette = match palette {
-                0 => self.background_palette_control0,
-                1 => self.background_palette_control1,
-                2 => self.background_palette_control2,
-                _ => self.background_palette_control3,
-            };
-
-            self.draw_character_pixel(
-                left_eye,
-                x,
-                y,
-                background_pixel_offset_x,
-                background_pixel_offset_y,
-                character_index,
-                palette,
-                horizontal_flip,
-                vertical_flip,
-            )
-        }
-    }
-
-    fn draw_character_pixel(
-        &mut self,
-        left_eye: bool,
-        x: u32,
-        y: u32,
-        character_offset_x: u32,
-        character_offset_y: u32,
-        character_index: u16,
-        palette: PaletteRegister,
-        horizontal_flip: bool,
-        vertical_flip: bool,
-    ) {
-        // Flip pixel position, if necessary
-        let character_offset_x = (if horizontal_flip {
-            7 - character_offset_x
-        } else {
-            character_offset_x
-        });
-        let character_offset_y = (if vertical_flip {
-            7 - character_offset_y
-        } else {
-            character_offset_y
-        });
-
-        // Index into character blocks using the virtual addresses for ease of access
-        // 8 rows per block. 2 bytes per row = 16 per character
-        let character_address = 0x7_8000 + (character_index as u32) * 16;
-
-        // Index to the correct row
-        let character_address = character_address + character_offset_y * 2;
-
-        // TODO: This can be optimized
-        let row_halfword = self.get_bus(character_address as u32);
-
-        // Extract pixel
-        let pixel_palette_index = (row_halfword >> (character_offset_x * 2)) & 0x3;
-
-        let pixel = match pixel_palette_index {
-            // No need to draw. Background "blank" pixel has already been written to FB
-            0 => return,
-            1 => palette.character1,
-            2 => palette.character2,
-            _ => palette.character3,
-        };
-
-        // Write to framebuffer
-        // Pixels are stored in the framebuffer in columns, rather than in rows
-        let framebuffer_offset = x * FRAMEBUFFER_HEIGHT as u32 + y;
-        // Each pixel is 2 bits, so find the right byte for this pixel
-        let framebuffer_byte_offset = framebuffer_offset / 4;
-        let pixel_shift = (y & 0x3) * 2;
-
-        let framebuffer_address = framebuffer_address_at_side(left_eye, self.drawing_framebuffer_1)
-            + framebuffer_byte_offset as usize;
-
-        let removal_mask = !(0x3 << pixel_shift);
-
-        let existing_byte = self.get_vram_u8(framebuffer_address);
-        let byte = (existing_byte & removal_mask) | (pixel << pixel_shift);
-        self.set_vram_u8(framebuffer_address, byte);
     }
 
     fn set_intclear(&mut self, value: u16) {
@@ -1117,41 +639,5 @@ impl VIPInterrupt {
             || (self.sbhit && b.sbhit)
             || (self.xpend && b.xpend)
             || (self.timeerr && b.timeerr)
-    }
-}
-
-impl PaletteRegister {
-    fn new() -> Self {
-        PaletteRegister {
-            character1: 0,
-            character2: 0,
-            character3: 0,
-        }
-    }
-
-    fn get(&self) -> u16 {
-        ((self.character3 << 6) | (self.character2 << 4) | (self.character1 << 2)) as u16
-    }
-
-    fn set(&mut self, value: u16) {
-        self.character1 = ((value >> 2) & 0x3) as u8;
-        self.character2 = ((value >> 4) & 0x3) as u8;
-        self.character3 = ((value >> 6) & 0x3) as u8;
-    }
-}
-
-fn framebuffer_addresses(use_fb_1: bool) -> (usize, usize) {
-    let left_framebuffer_address = if use_fb_1 { 0x8000 } else { 0 };
-    let right_framebuffer_address = left_framebuffer_address + 0x1_0000;
-
-    (left_framebuffer_address, right_framebuffer_address)
-}
-
-fn framebuffer_address_at_side(left_eye: bool, use_fb_1: bool) -> usize {
-    let (left_framebuffer_address, right_framebuffer_address) = framebuffer_addresses(use_fb_1);
-
-    match left_eye {
-        true => left_framebuffer_address,
-        false => right_framebuffer_address,
     }
 }
