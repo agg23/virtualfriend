@@ -111,6 +111,8 @@ pub struct CpuV810 {
     unknown_31: u32,
 
     last_bus_activity: BusActivity,
+
+    processing_bitstring: bool,
 }
 
 impl CpuV810 {
@@ -137,6 +139,8 @@ impl CpuV810 {
             unknown_31: 0,
 
             last_bus_activity: BusActivity::Standard,
+
+            processing_bitstring: false,
         }
     }
 
@@ -200,6 +204,11 @@ impl CpuV810 {
         // TODO: Mednafen seems to wrap cycle count at the arbitrary? value 0x061200
         // let cycle_count = cycle_count % 0x061200;
         // string += &format!(" TStamp={cycle_count:06X}");
+
+        if self.processing_bitstring {
+            // Ignore step
+            return;
+        }
 
         let chcw = if self.cache_enabled { 2 } else { 0 };
 
@@ -274,6 +283,8 @@ impl CpuV810 {
         self.psw.address_trap_enable = false;
 
         self.pc = 0xFFFF_0000 | code as u32;
+
+        self.processing_bitstring = false;
 
         // Clear halt
         self.is_halted = false;
@@ -1011,6 +1022,8 @@ impl CpuV810 {
                 // Bit string operations
                 let (sub_opcode, _) = extract_reg1_2_index(instruction);
 
+                self.processing_bitstring = false;
+
                 if sub_opcode < 5 {
                     // Search operation
                     let (upwards_direction, match_1) = match sub_opcode {
@@ -1414,6 +1427,9 @@ impl CpuV810 {
         if !found && length != 0 {
             // There's still more string to process
             self.pc -= 2;
+
+            // Mark that we're still doing a bitstring op
+            self.processing_bitstring = true;
         } else if found {
             // examined_bit_count counted the matched bit, remove it
             examined_bit_count -= 1;
@@ -1489,12 +1505,12 @@ impl CpuV810 {
             drop(dest_bit);
             bus.set_u32(dest_addr, dest_word.data);
 
+            length -= 1;
+
             if source_offset >= 31 {
                 source_offset = 0;
                 // Increase by a word
                 source_addr += 4;
-
-                break;
             } else {
                 source_offset += 1;
             }
@@ -1508,19 +1524,20 @@ impl CpuV810 {
             } else {
                 dest_offset += 1;
             }
-
-            length -= 1;
         }
 
         if length != 0 {
             // We haven't finished this operation. Rewind PC
             self.pc -= 2;
+
+            // Mark that we're still doing a bitstring op
+            self.processing_bitstring = true;
         }
 
         // TODO: Do these need to be updated constantly and are interrupts allowed to interrupt this?
         self.set_gen_purpose_reg(26, dest_offset);
         self.set_gen_purpose_reg(27, source_offset);
-        self.set_gen_purpose_reg(28, 0);
+        self.set_gen_purpose_reg(28, length);
         self.set_gen_purpose_reg(29, dest_addr);
         self.set_gen_purpose_reg(30, source_addr);
     }
