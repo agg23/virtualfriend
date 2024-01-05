@@ -3,6 +3,7 @@ use std::{
 };
 
 use bus::Bus;
+use constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET;
 use cpu_v810::CpuV810;
 use gamepad::GamepadInputs;
 use image::{ImageBuffer, Luma};
@@ -173,6 +174,8 @@ fn create_emulator(
         // let mut writer = BufWriter::new(log_file);
         let mut line_count = 0;
 
+        let mut frame_serviced = false;
+
         loop {
             // cpu.log_instruction(Some(&mut writer), cycle_count, None);
             line_count += 1;
@@ -191,20 +194,24 @@ fn create_emulator(
                 continue;
             }
 
-            if bus.vip.current_display_clock_cycle.clone() == 0 {
-                // Render framebuffer
-                println!("Sending frame");
+            if bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
+                if !frame_serviced {
+                    // Render framebuffer
+                    frame_serviced = true;
 
-                buffer_transmitter
-                    .update(Frame {
-                        data: bus.vip.left_rendered_framebuffer.clone(),
-                        id: frame_id,
-                    })
-                    .unwrap();
+                    buffer_transmitter
+                        .update(Frame {
+                            data: bus.vip.left_rendered_framebuffer.clone(),
+                            id: frame_id,
+                        })
+                        .unwrap();
 
-                inputs = inputs_receiver.latest();
+                    inputs = inputs_receiver.latest();
 
-                frame_id += 1;
+                    frame_id += 1;
+                }
+            } else {
+                frame_serviced = false;
             }
         }
     });
