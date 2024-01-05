@@ -659,11 +659,11 @@ impl VIP {
             }
 
             match world.background_type {
-                BackgroundType::Normal => {
-                    self.render_normal_or_hbias_background(&world, true, false, y);
-                    self.render_normal_or_hbias_background(&world, false, false, y);
+                BackgroundType::Normal | BackgroundType::HBias => {
+                    let hbias = world.background_type == BackgroundType::HBias;
+                    self.render_normal_or_hbias_background(&world, true, hbias, y);
+                    self.render_normal_or_hbias_background(&world, false, hbias, y);
                 }
-                BackgroundType::HBias => todo!(),
                 BackgroundType::Affine => todo!(),
                 BackgroundType::Obj => {
                     let (mut start_obj_index, end_obj_index) = match object_group_counter {
@@ -743,19 +743,20 @@ impl VIP {
             // Get window start Y position
             let window_y = y.wrapping_sub(world.background_y_destination);
 
-            // TODO: Implement HBias
             let line_offset = if is_hbias {
-                // HBias has two additional parameters
-                let base_address = world.param_base + 10 * 2;
+                // HBias has two additional parameters of 16 bits per row
+                let base_address = 0x20000 + world.param_base * 2 + window_y as usize * 4;
 
-                if left_eye {
-                    sign_extend_16(self.get_vram_u16(base_address), 13)
+                let address = if left_eye {
+                    base_address
                 } else {
                     // "The VIP appears to determine the address of HOFSTR by OR'ing the address of HOFSTL with 2.
                     // If the Param Base attribute in the world is not divisibe by 2, this will result in HOFSTL being
                     // used for both the left and right images, and HOFSTR will not be accessed."
-                    sign_extend_16(self.get_vram_u16(base_address), 13)
-                }
+                    base_address | 2
+                };
+
+                sign_extend_16(self.get_vram_u16(address), 13)
             } else {
                 0
             };
@@ -770,6 +771,8 @@ impl VIP {
                 let window_x = x - parallax_x;
 
                 let background_x = window_x.wrapping_add(world.background_x_destination);
+                // Offset line from h-bias
+                let background_x = background_x.wrapping_add(line_offset);
 
                 let background_x = if left_eye {
                     background_x.wrapping_sub(world.background_parallax_source)

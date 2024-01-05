@@ -68,6 +68,7 @@ pub enum WorldDisplayState {
     Dummy,
 }
 
+#[derive(PartialEq)]
 pub enum BackgroundType {
     Normal,
     HBias,
