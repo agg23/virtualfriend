@@ -3,8 +3,125 @@ use crate::{
     vip::{
         util::{framebuffer_address_at_side, PaletteRegister, RenderState},
         vram::VRAM,
+        world::World,
     },
 };
+
+pub fn draw_background_pixel(
+    vram: &mut VRAM,
+    state: &RenderState,
+    world: &World,
+    left_eye: bool,
+    x: u32,
+    y: u32,
+    background_x: u32,
+    background_y: u32,
+) {
+    // TODO: Move this out of pixel draw method. Unnecessary duplication of work
+    let screen_x_size = 1 << world.screen_x_size;
+    let screen_y_size = 1 << world.screen_y_size;
+
+    // Size of all of the background tiles together (they're 512x512 pixels)
+    let total_background_width = screen_x_size * 512;
+    let total_background_height = screen_y_size * 512;
+
+    // Get pixel offset in the given block
+    let background_pixel_offset_x = background_x & 0x7;
+    let background_pixel_offset_y = background_y & 0x7;
+
+    if world.overplane
+        && (background_x >= total_background_height || background_y >= total_background_width)
+    {
+        // Overplane is enabled and our background tile is outside of the total background bounds
+        // Draw overplane character
+        let overplane_character_address = 0x2_0000 + (world.overplane_character_index as usize) * 2;
+        let overplane_character_halfword = vram.get_u16(overplane_character_address);
+
+        extract_and_draw_character_entry_pixel(
+            vram,
+            state,
+            overplane_character_halfword,
+            left_eye,
+            x,
+            y,
+            background_pixel_offset_x,
+            background_pixel_offset_y,
+        )
+    } else {
+        // Draw normal pixel
+        // Get active background map (AND to limit to the available range)
+        let active_background_map_x = (background_x / 512) & (screen_x_size - 1);
+        let active_background_map_y = (background_y / 512) & (screen_y_size - 1);
+
+        // Each background is 0x2000 bytes
+        let background_base_offset_address = 0x2_0000 + (world.map_base_index as u32) * 0x2000;
+        let background_offset_address = background_base_offset_address
+            + (active_background_map_y * screen_x_size + active_background_map_x) * 0x2000;
+
+        // Limit our pixel positions to be within the background
+        let background_x = background_x & 0x1FF;
+        let background_y = background_y & 0x1FF;
+
+        // Get X/Y position of the character block
+        let character_x = background_x / 8;
+        let character_y = background_y / 8;
+
+        // There are 512/8 = 64 blocks in a row in a background
+        let character_address = background_offset_address + (character_y * 64 + character_x) * 2;
+
+        // Get background map character block info
+        let character_halfword = vram.get_u16(character_address as usize);
+
+        extract_and_draw_character_entry_pixel(
+            vram,
+            state,
+            character_halfword,
+            left_eye,
+            x,
+            y,
+            background_pixel_offset_x,
+            background_pixel_offset_y,
+        );
+    }
+}
+
+fn extract_and_draw_character_entry_pixel(
+    vram: &mut VRAM,
+    state: &RenderState,
+    character_halfword: u16,
+    left_eye: bool,
+    x: u32,
+    y: u32,
+    character_offset_x: u32,
+    character_offset_y: u32,
+) {
+    let character_index = character_halfword & 0x7FF;
+    let vertical_flip = character_halfword & 0x1000 != 0;
+    let horizontal_flip = character_halfword & 0x2000 != 0;
+    let palette = character_halfword >> 14;
+
+    // TODO: Handle OBJ palettes
+    let palette = match palette {
+        0 => state.background_palette_control0,
+        1 => state.background_palette_control1,
+        2 => state.background_palette_control2,
+        _ => state.background_palette_control3,
+    };
+
+    draw_character_pixel(
+        vram,
+        state,
+        left_eye,
+        x,
+        y,
+        character_offset_x,
+        character_offset_y,
+        character_index,
+        palette,
+        horizontal_flip,
+        vertical_flip,
+    );
+}
 
 pub fn draw_character_pixel(
     vram: &mut VRAM,

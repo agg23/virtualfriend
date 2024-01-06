@@ -1,3 +1,4 @@
+mod affine;
 mod normal_hbias;
 mod obj;
 mod shared;
@@ -7,7 +8,7 @@ use crate::{
     vip::{drawing::obj::render_obj_world, object::Object},
 };
 
-use self::normal_hbias::render_normal_or_hbias_background;
+use self::{affine::render_affine_background, normal_hbias::render_normal_or_hbias_background};
 
 use super::{
     util::{framebuffer_addresses, RenderState},
@@ -73,7 +74,10 @@ pub fn draw_block_row(vram: &mut VRAM, state: &RenderState) {
                 render_normal_or_hbias_background(vram, state, &world, true, hbias, y);
                 render_normal_or_hbias_background(vram, state, &world, false, hbias, y);
             }
-            BackgroundType::Affine => todo!(),
+            BackgroundType::Affine => {
+                render_affine_background(vram, state, &world, true, y);
+                render_affine_background(vram, state, &world, false, y);
+            }
             BackgroundType::Obj => {
                 let (mut start_obj_index, end_obj_index) = match object_group_counter {
                     // First group always starts at 0
