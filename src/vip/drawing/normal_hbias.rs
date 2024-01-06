@@ -15,6 +15,7 @@ pub fn render_normal_or_hbias_background(
     block_start_y: u32,
 ) {
     // Calculate start coordinate offset using world parallax
+    // Depth of the world in the image
     let parallax_x = if left_eye {
         world
             .background_x_destination
@@ -67,10 +68,11 @@ pub fn render_normal_or_hbias_background(
                 continue;
             }
 
-            let background_x = window_x.wrapping_add(world.background_x_destination as u32);
+            let background_x = window_x.wrapping_add(world.background_x_source as u32);
             // Offset line from h-bias
             let background_x = background_x.wrapping_add(line_offset as u32);
 
+            // Add depth of the background within the world
             let background_x = if left_eye {
                 background_x.wrapping_sub(world.background_parallax_source as u32)
             } else {

@@ -69,7 +69,7 @@ pub fn draw_block_row(vram: &mut VRAM, state: &RenderState) {
         }
 
         match world.background_type {
-            BackgroundType::Normal | BackgroundType::HBias => {
+            BackgroundType::Standard | BackgroundType::HBias => {
                 let hbias = world.background_type == BackgroundType::HBias;
                 render_normal_or_hbias_background(vram, state, &world, true, hbias, y);
                 render_normal_or_hbias_background(vram, state, &world, false, hbias, y);

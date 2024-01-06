@@ -70,7 +70,7 @@ pub enum WorldDisplayState {
 
 #[derive(PartialEq)]
 pub enum BackgroundType {
-    Normal,
+    Standard,
     HBias,
     Affine,
     Obj,
@@ -102,7 +102,7 @@ impl World {
         };
 
         let background_type = match background_type {
-            0 => BackgroundType::Normal,
+            0 => BackgroundType::Standard,
             1 => BackgroundType::HBias,
             2 => BackgroundType::Affine,
             3 => BackgroundType::Obj,
