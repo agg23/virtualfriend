@@ -25,15 +25,19 @@ pub fn render_normal_or_hbias_background(
             .wrapping_add(world.background_parallax_destination)
     };
 
-    let world_height = world.window_height + 1;
+    let world_height = world.window_height as u32 + 1;
+    let world_width = world.window_width as u32 + 1;
 
-    // Loop over y pixels in range of this block
-    let lower_bound = block_start_y as i16 + world.background_y_destination;
-
-    for y in lower_bound..lower_bound + 8 {
+    for window_y in 0..world_height {
         // For each row in the block
-        // Get window start Y position
-        let window_y = y.wrapping_sub(world.background_y_destination);
+        // Get the final pixel height corresponding to that row, after background shift
+        let pixel_y = window_y.wrapping_add(world.background_y_destination as u32);
+
+        // TODO: I don't like this. I would rather loop over exactly the elements we need
+        if pixel_y < block_start_y || pixel_y >= block_start_y + 8 {
+            // This pixel is not currently being rendered, skip
+            continue;
+        }
 
         let line_offset = if is_hbias {
             // HBias has two additional parameters of 16 bits per row
@@ -53,34 +57,35 @@ pub fn render_normal_or_hbias_background(
             0
         };
 
-        let lower_bound = 0 + parallax_x;
-
-        for x in lower_bound..lower_bound + world.window_width as i16 + 1 {
+        for window_x in 0..world_width {
             // Loop over all columns in the row
-            if x >= DISPLAY_WIDTH as i16 {
+            // Get the final pixel column corresponding to that world column, after background shift
+            let pixel_x = window_x.wrapping_add(parallax_x as u32);
+
+            // TODO: I don't like this. I would rather loop over exactly the elements we need
+            if pixel_x >= DISPLAY_WIDTH as u32 {
                 continue;
             }
-            let window_x = x - parallax_x;
 
-            let background_x = window_x.wrapping_add(world.background_x_destination);
+            let background_x = window_x.wrapping_add(world.background_x_destination as u32);
             // Offset line from h-bias
-            let background_x = background_x.wrapping_add(line_offset);
+            let background_x = background_x.wrapping_add(line_offset as u32);
 
             let background_x = if left_eye {
-                background_x.wrapping_sub(world.background_parallax_source)
+                background_x.wrapping_sub(world.background_parallax_source as u32)
             } else {
-                background_x.wrapping_add(world.background_parallax_source)
+                background_x.wrapping_add(world.background_parallax_source as u32)
             };
 
-            let background_y = window_y.wrapping_add(world.background_y_source);
+            let background_y = window_y.wrapping_add(world.background_y_source as u32);
 
             draw_background_pixel(
                 vram,
                 state,
                 world,
                 left_eye,
-                x as u32,
-                y as u32,
+                pixel_x,
+                pixel_y,
                 background_x as u32,
                 background_y as u32,
             );
