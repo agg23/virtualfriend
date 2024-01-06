@@ -242,7 +242,10 @@ impl VIP {
                 // Character table 4 remap
                 self.vram.get_u16((address & 0x1FFF) + 0x1_E000)
             }
-            _ => unimplemented!("Read address {:08X}", address),
+            _ => {
+                println!("Read from invalid register address {address:08X}");
+                0
+            }
         }
     }
 
@@ -347,7 +350,7 @@ impl VIP {
                 // Character table 4 remap
                 self.vram.set_u16((address & 0x1FFF) + 0x1_E000, value);
             }
-            _ => unimplemented!("Write address {:08X}", address),
+            _ => println!("Write to invalid register address {address:08X}"),
         }
     }
 
@@ -569,16 +572,16 @@ impl VIP {
         new_interrupt.set(value);
 
         // Clear any interrupts that are set in `value`
-        self.interrupt_pending.scanerr ^= new_interrupt.scanerr;
-        self.interrupt_pending.lfbend ^= new_interrupt.lfbend;
-        self.interrupt_pending.rfbend ^= new_interrupt.rfbend;
-        self.interrupt_pending.gamestart ^= new_interrupt.gamestart;
+        self.interrupt_pending.scanerr &= !new_interrupt.scanerr;
+        self.interrupt_pending.lfbend &= !new_interrupt.lfbend;
+        self.interrupt_pending.rfbend &= !new_interrupt.rfbend;
+        self.interrupt_pending.gamestart &= !new_interrupt.gamestart;
 
-        self.interrupt_pending.framestart ^= new_interrupt.framestart;
+        self.interrupt_pending.framestart &= !new_interrupt.framestart;
 
-        self.interrupt_pending.sbhit ^= new_interrupt.sbhit;
-        self.interrupt_pending.xpend ^= new_interrupt.xpend;
-        self.interrupt_pending.timeerr ^= new_interrupt.timeerr;
+        self.interrupt_pending.sbhit &= !new_interrupt.sbhit;
+        self.interrupt_pending.xpend &= !new_interrupt.xpend;
+        self.interrupt_pending.timeerr &= !new_interrupt.timeerr;
     }
 }
 
