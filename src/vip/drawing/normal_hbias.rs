@@ -42,7 +42,7 @@ pub fn render_normal_or_hbias_background(
 
         let line_offset = if is_hbias {
             // HBias has two additional parameters of 16 bits per row
-            let base_address = 0x20000 + world.param_base * 2 + window_y as usize * 4;
+            let base_address = 0x2_0000 + world.param_base * 2 + window_y as usize * 4;
 
             let address = if left_eye {
                 base_address
