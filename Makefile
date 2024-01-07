@@ -1,4 +1,4 @@
 run:
-	rm -f instructions.log && cargo run --release
+	cd virtualfriend_desktop && rm -f instructions.log && cargo run --release
 profile:
-	cargo flamegraph --dev --root
+	cd virtualfriend_desktop && cargo flamegraph --dev --root

@@ -1,14 +1,6 @@
-use std::{
-    fs::OpenOptions, io::BufWriter, num::NonZeroU32, path::Path, rc::Rc, sync::Mutex, thread,
-};
+use std::{path::Path, thread};
 
-use bus::Bus;
-use constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET;
-use cpu_v810::CpuV810;
-use gamepad::GamepadInputs;
-use image::{ImageBuffer, Luma};
 use pixels::{Pixels, SurfaceTexture};
-use rom::ROM;
 use single_value_channel::{channel_starting_with, Receiver, Updater};
 use winit::{
     dpi::PhysicalSize,
@@ -19,20 +11,13 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{hardware::Hardware, interrupt::InterruptRequest, timer::Timer, vip::VIP};
-
-pub mod bus;
-pub mod constants;
-pub mod cpu_internals;
-mod cpu_v810;
-pub mod gamepad;
-pub mod hardware;
-pub mod interrupt;
-pub mod rom;
-pub mod timer;
-pub mod util;
-pub mod vip;
-mod virtualfriend;
+use virtualfriend::bus::Bus;
+use virtualfriend::constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET;
+use virtualfriend::cpu_v810::CpuV810;
+use virtualfriend::gamepad::GamepadInputs;
+use virtualfriend::hardware::Hardware;
+use virtualfriend::rom::ROM;
+use virtualfriend::vip::VIP;
 
 const DISPLAY_WIDTH: usize = 384;
 const DISPLAY_MARGIN: usize = 40;
