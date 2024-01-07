@@ -1,6 +1,7 @@
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::{array::BitArray, bitarr};
+use tartan_bitfield::bitfield;
 
 use crate::constants::{
     DISPLAY_HEIGHT, DISPLAY_PIXEL_LENGTH, DISPLAY_WIDTH, DRAWING_BLOCK_COUNT,
@@ -73,23 +74,25 @@ pub enum DisplayState {
     None,
 }
 
-pub struct VIPInterrupt {
-    /// Mirrors are not stable.
-    scanerr: bool,
-    /// The display procedure has completed for the left eye.
-    lfbend: bool,
-    /// The display procedure has completed for the right eye.
-    rfbend: bool,
-    /// The drawing procedure has begun.
-    gamestart: bool,
-    /// The display procedure has begun.
-    framestart: bool,
-    /// Drawing has begun on the group of 8 rows of pixels specified in the `SBCMP` field of `XPCTRL`.
-    sbhit: bool,
-    /// The drawing procedure has finished.
-    xpend: bool,
-    /// Drawing is in progress on a frame buffer that will next be displayed.
-    timeerr: bool,
+bitfield! {
+    pub struct VIPInterrupt(u16) {
+        /// Mirrors are not stable.
+        [0] scanerr,
+        /// The display procedure has completed for the left eye.
+        [1] lfbend,
+        /// The display procedure has completed for the right eye.
+        [2] rfbend,
+        /// The drawing procedure has begun.
+        [3] gamestart,
+        /// The display procedure has begun.
+        [4] framestart,
+        /// Drawing has begun on the group of 8 rows of pixels specified in the `SBCMP` field of `XPCTRL`.
+        [13] sbhit,
+        /// The drawing procedure has finished.
+        [14] xpend,
+        /// Drawing is in progress on a frame buffer that will next be displayed.
+        [15] timeerr,
+    }
 }
 
 impl VIP {
@@ -99,8 +102,8 @@ impl VIP {
             vram: VRAM::new(),
             left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
             right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
-            interrupt_pending: VIPInterrupt::new(),
-            interrupt_enabled: VIPInterrupt::new(),
+            interrupt_pending: VIPInterrupt(0),
+            interrupt_enabled: VIPInterrupt(0),
             render_state: RenderState::new(),
             // Mednafen starts with display enabled
             display_enabled: true,
@@ -127,11 +130,11 @@ impl VIP {
             0x0..=0x3_FFFF => self.vram.get_u16(address),
             0x5_F800..=0x5_F801 => {
                 // INTPND Interrupt pending
-                self.interrupt_pending.get()
+                self.interrupt_pending.0
             }
             0x5_F802..=0x5_F803 => {
                 // INTENB Interrupt enable
-                self.interrupt_enabled.get()
+                self.interrupt_enabled.0
             }
             0x5_F804..=0x5F805 => {
                 // INTCLEAR Interrupt clear
@@ -261,7 +264,7 @@ impl VIP {
             }
             0x5_F802..=0x5_F803 => {
                 // INTENB Interrupt enable
-                self.interrupt_enabled.set(value)
+                self.interrupt_enabled.0 = value;
             }
             0x5_F804..=0x5F805 => {
                 // INTCLEAR Interrupt clear
@@ -278,15 +281,15 @@ impl VIP {
                     self.current_display_clock_cycle = 0;
                     self.current_displaying = DisplayState::None;
 
-                    self.interrupt_pending.gamestart = false;
-                    self.interrupt_pending.framestart = false;
-                    self.interrupt_pending.lfbend = false;
-                    self.interrupt_pending.rfbend = false;
+                    self.interrupt_pending.set_gamestart(false);
+                    self.interrupt_pending.set_framestart(false);
+                    self.interrupt_pending.set_lfbend(false);
+                    self.interrupt_pending.set_rfbend(false);
 
-                    self.interrupt_enabled.gamestart = false;
-                    self.interrupt_enabled.framestart = false;
-                    self.interrupt_enabled.lfbend = false;
-                    self.interrupt_enabled.rfbend = false;
+                    self.interrupt_enabled.set_gamestart(false);
+                    self.interrupt_enabled.set_framestart(false);
+                    self.interrupt_enabled.set_lfbend(false);
+                    self.interrupt_enabled.set_rfbend(false);
                 }
 
                 self.display_enabled = *array.get(1).unwrap();
@@ -312,8 +315,8 @@ impl VIP {
                     self.render_state.sbout = false;
                     self.render_state.sbcount = 0;
 
-                    self.interrupt_enabled.xpend = false;
-                    self.interrupt_pending.xpend = false;
+                    self.interrupt_enabled.set_xpend(false);
+                    self.interrupt_pending.set_xpend(false);
                 }
 
                 self.drawing_enabled = *array.get(1).unwrap();
@@ -379,7 +382,7 @@ impl VIP {
                 LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End left frame buffer
                     if self.display_enabled {
-                        self.interrupt_pending.lfbend = true;
+                        self.interrupt_pending.set_lfbend(true);
 
                         self.current_displaying = DisplayState::None;
                     }
@@ -398,7 +401,7 @@ impl VIP {
                 RIGHT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET => {
                     // End right frame buffer
                     if self.display_enabled {
-                        self.interrupt_pending.rfbend = true;
+                        self.interrupt_pending.set_rfbend(true);
                     }
 
                     self.current_displaying = DisplayState::None;
@@ -428,7 +431,7 @@ impl VIP {
                         if self.render_state.sbcount == self.render_state.sbcmp {
                             // Found rows. Fire SBHit
                             // Fire interrupt
-                            self.interrupt_pending.sbhit = true;
+                            self.interrupt_pending.set_sbhit(true);
                         }
 
                         self.render_state.sbout = true;
@@ -442,7 +445,7 @@ impl VIP {
                         println!("Ended drawing");
 
                         self.render_state.sbcount = 0;
-                        self.interrupt_pending.xpend = true;
+                        self.interrupt_pending.set_xpend(true);
                     }
                 } else {
                     self.drawing_cycle_count += 1;
@@ -472,7 +475,7 @@ impl VIP {
     fn init_display_frame(&mut self) {
         self.fclk = true;
 
-        self.interrupt_pending.framestart = true;
+        self.interrupt_pending.set_framestart(true);
 
         self.frame_count += 1;
 
@@ -484,7 +487,7 @@ impl VIP {
     }
 
     fn init_drawing_frame(&mut self) {
-        self.interrupt_pending.gamestart = true;
+        self.interrupt_pending.set_gamestart(true);
 
         if self.drawing_enabled {
             // Flip framebuffers to start writing to the currently displayed ones
@@ -502,7 +505,7 @@ impl VIP {
         } else {
             // Immediately mark drawing as ended, as we're not drawing at all
             // TODO: This should actually be after 2.8ms
-            self.interrupt_pending.xpend = true;
+            self.interrupt_pending.set_xpend(true);
             self.in_drawing = false;
         }
     }
@@ -573,79 +576,15 @@ impl VIP {
     }
 
     fn set_intclear(&mut self, value: u16) {
-        let mut new_interrupt = VIPInterrupt::new();
-        new_interrupt.set(value);
-
         // Clear any interrupts that are set in `value`
-        self.interrupt_pending.scanerr &= !new_interrupt.scanerr;
-        self.interrupt_pending.lfbend &= !new_interrupt.lfbend;
-        self.interrupt_pending.rfbend &= !new_interrupt.rfbend;
-        self.interrupt_pending.gamestart &= !new_interrupt.gamestart;
-
-        self.interrupt_pending.framestart &= !new_interrupt.framestart;
-
-        self.interrupt_pending.sbhit &= !new_interrupt.sbhit;
-        self.interrupt_pending.xpend &= !new_interrupt.xpend;
-        self.interrupt_pending.timeerr &= !new_interrupt.timeerr;
+        self.interrupt_pending.0 &= !value;
     }
 }
 
 impl VIPInterrupt {
-    fn new() -> Self {
-        VIPInterrupt {
-            scanerr: false,
-            lfbend: false,
-            rfbend: false,
-            gamestart: false,
-            framestart: false,
-            sbhit: false,
-            xpend: false,
-            timeerr: false,
-        }
-    }
-
-    fn get(&self) -> u16 {
-        let mut value = bitarr![u16, Lsb0; 0; 16];
-        value.set(0, self.scanerr);
-        value.set(1, self.lfbend);
-        value.set(2, self.rfbend);
-        value.set(3, self.gamestart);
-
-        value.set(4, self.framestart);
-
-        value.set(13, self.sbhit);
-        value.set(14, self.xpend);
-        value.set(15, self.timeerr);
-
-        value.load()
-    }
-
-    fn set(&mut self, value: u16) {
-        let array = BitArray::<_, Lsb0>::new([value]);
-
-        self.scanerr = *array.get(0).unwrap();
-        self.lfbend = *array.get(1).unwrap();
-        self.rfbend = *array.get(2).unwrap();
-        self.gamestart = *array.get(3).unwrap();
-
-        self.framestart = *array.get(4).unwrap();
-
-        self.sbhit = *array.get(13).unwrap();
-        self.xpend = *array.get(14).unwrap();
-        self.timeerr = *array.get(15).unwrap();
-    }
-
-    ///
     /// Intersects two sets of interrupt values. If there is at least one intersection (both sides
     /// have a true value), this method will return true.
     fn check_intersection(&self, b: &VIPInterrupt) -> bool {
-        (self.scanerr && b.scanerr)
-            || (self.lfbend && b.lfbend)
-            || (self.rfbend && b.rfbend)
-            || (self.gamestart && b.gamestart)
-            || (self.framestart && b.framestart)
-            || (self.sbhit && b.sbhit)
-            || (self.xpend && b.xpend)
-            || (self.timeerr && b.timeerr)
+        self.0 & b.0 != 0
     }
 }

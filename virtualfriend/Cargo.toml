@@ -7,3 +7,4 @@ edition = "2021"
 rand = "0.8.5"
 # Custom fork and branch upgrades `radium` to 1.0, which prevents atomics errors on more special platforms
 bitvec = { git = "https://github.com/alexanderkjall/bitvec", branch = "upgrade-radium-to-1", default-features = false }
+tartan-bitfield = "1.2.0"
