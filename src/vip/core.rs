@@ -20,7 +20,7 @@ pub struct VIP {
     vram: VRAM,
 
     pub left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
-    right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
+    pub right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
 
     interrupt_pending: VIPInterrupt,
     interrupt_enabled: VIPInterrupt,

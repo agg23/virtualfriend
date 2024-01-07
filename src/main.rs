@@ -7,9 +7,9 @@ use constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET;
 use cpu_v810::CpuV810;
 use gamepad::GamepadInputs;
 use image::{ImageBuffer, Luma};
+use pixels::{Pixels, SurfaceTexture};
 use rom::ROM;
 use single_value_channel::{channel_starting_with, Receiver, Updater};
-use softbuffer::{Context, Surface};
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, WindowEvent},
@@ -34,34 +34,61 @@ pub mod util;
 pub mod vip;
 mod virtualfriend;
 
-const WINDOW_WIDTH: usize = 512;
-const WINDOW_HEIGHT: usize = 256;
+const DISPLAY_WIDTH: usize = 384;
+const DISPLAY_MARGIN: usize = 40;
+const DISPLAY_HEIGHT: usize = 240;
+
+const COMBO_DISPLAY_WIDTH: usize = DISPLAY_WIDTH * 2 + DISPLAY_MARGIN;
+
+const WINDOW_WIDTH: usize = COMBO_DISPLAY_WIDTH * 3;
+const WINDOW_HEIGHT: usize = DISPLAY_HEIGHT * 3;
 
 struct Frame {
-    data: [u8; 384 * 224],
+    left: [u8; 384 * 224],
+    right: [u8; 384 * 224],
     id: u64,
 }
 
 fn main() {
     // Window
     let event_loop = EventLoop::new().unwrap();
-    let window = Rc::new(
-        WindowBuilder::new()
-            .with_inner_size(PhysicalSize::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32))
-            .build(&event_loop)
-            .unwrap(),
-    );
-    let graphics_context = Context::new(window.clone()).unwrap();
-    let mut surface = Surface::new(&graphics_context, window.clone()).unwrap();
-
-    surface
-        .resize(NonZeroU32::new(384).unwrap(), NonZeroU32::new(224).unwrap())
+    let window = WindowBuilder::new()
+        .with_inner_size(PhysicalSize::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32))
+        .with_title("Virtualfriend")
+        .build(&event_loop)
         .unwrap();
+
+    let surface_texture = SurfaceTexture::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32, &window);
+
+    let mut pixels = Pixels::new(
+        COMBO_DISPLAY_WIDTH as u32,
+        DISPLAY_HEIGHT as u32,
+        surface_texture,
+    )
+    .unwrap();
+
+    let buffer = pixels.frame_mut();
+
+    for y in 0..DISPLAY_HEIGHT {
+        for x in DISPLAY_WIDTH..DISPLAY_WIDTH + DISPLAY_MARGIN {
+            let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
+
+            buffer[base_address] = 0xFF;
+            buffer[base_address + 1] = 0xFF;
+            buffer[base_address + 2] = 0xFF;
+        }
+    }
+
+    for i in 0..COMBO_DISPLAY_WIDTH * DISPLAY_HEIGHT {
+        // Set all alphas
+        buffer[i * 4 + 3] = 0xFF;
+    }
 
     // Multithreading
     let mut last_frame_id = 0;
     let (mut buffer_receiver, buffer_transmitter) = channel_starting_with::<Frame>(Frame {
-        data: [0; 384 * 224],
+        left: [0; 384 * 224],
+        right: [0; 384 * 224],
         id: last_frame_id,
     });
     let (inputs_receiver, mut inputs_transmitter) =
@@ -88,18 +115,39 @@ fn main() {
                     window_id,
                     event: WindowEvent::RedrawRequested,
                 } => {
-                    let mut buffer = surface.buffer_mut().unwrap();
+                    let buffer = pixels.frame_mut();
 
                     let frame = buffer_receiver.latest();
 
-                    for i in 0..frame.data.len() {
-                        let value = frame.data[i] as u32;
-                        buffer[i] = (value << 16) | (value << 8) | value;
+                    for i in 0..frame.left.len() {
+                        let value = frame.left[i];
+
+                        let y = i / DISPLAY_WIDTH;
+                        let x = i % DISPLAY_WIDTH;
+
+                        let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
+
+                        buffer[base_address] = value;
+                        buffer[base_address + 1] = value;
+                        buffer[base_address + 2] = value;
+                    }
+
+                    for i in 0..frame.right.len() {
+                        let value = frame.right[i];
+
+                        let y = i / DISPLAY_WIDTH;
+                        let x = i % DISPLAY_WIDTH;
+
+                        let base_address =
+                            (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
+
+                        buffer[base_address] = value;
+                        buffer[base_address + 1] = value;
+                        buffer[base_address + 2] = value;
                     }
 
                     println!("Updaing buffer");
-
-                    buffer.present().unwrap();
+                    pixels.render().unwrap();
                 }
                 Event::WindowEvent {
                     window_id,
@@ -150,7 +198,9 @@ fn create_emulator(
     mut inputs_receiver: Receiver<GamepadInputs>,
 ) {
     thread::spawn(move || {
-        let rom = ROM::load_from_file(Path::new("/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb"));
+        let rom = ROM::load_from_file(Path::new(
+            "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
+        ));
 
         let mut cpu = CpuV810::new();
 
@@ -201,7 +251,8 @@ fn create_emulator(
 
                     buffer_transmitter
                         .update(Frame {
-                            data: bus.vip.left_rendered_framebuffer.clone(),
+                            left: bus.vip.left_rendered_framebuffer.clone(),
+                            right: bus.vip.right_rendered_framebuffer.clone(),
                             id: frame_id,
                         })
                         .unwrap();
