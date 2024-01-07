@@ -1,6 +1,8 @@
 [workspace]
+resolver = "2"
 
 members = [
-  "virtualfriend_desktop",
   "virtualfriend",
+  "virtualfriend_3ds",
+  "virtualfriend_desktop",
 ]
