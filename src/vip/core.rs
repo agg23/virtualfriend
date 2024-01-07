@@ -517,11 +517,16 @@ impl VIP {
         let (left_framebuffer_address, right_framebuffer_address) =
             framebuffer_addresses(!self.render_state.drawing_framebuffer_1);
 
+        // Pixels range from 0-127 in brightness, so double the value to use the full range
+        let brightness_a = self.render_state.brightness_control_reg_a * 2;
+        let brightness_b = self.render_state.brightness_control_reg_b * 2;
+
         let brightness_c = self
             .render_state
             .brightness_control_reg_a
             .wrapping_add(self.render_state.brightness_control_reg_b)
-            .wrapping_add(self.render_state.brightness_control_reg_c);
+            .wrapping_add(self.render_state.brightness_control_reg_c)
+            * 2;
 
         for x in 0..DISPLAY_WIDTH {
             for y in 0..DISPLAY_HEIGHT {
@@ -548,15 +553,15 @@ impl VIP {
 
                 let left_pixel = match left_pixel {
                     0 => 0,
-                    1 => self.render_state.brightness_control_reg_a,
-                    2 => self.render_state.brightness_control_reg_b,
+                    1 => brightness_a,
+                    2 => brightness_b,
                     _ => brightness_c,
                 };
 
                 let right_pixel = match right_pixel {
                     0 => 0,
-                    1 => self.render_state.brightness_control_reg_a,
-                    2 => self.render_state.brightness_control_reg_b,
+                    1 => brightness_a,
+                    2 => brightness_b,
                     _ => brightness_c,
                 };
 

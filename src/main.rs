@@ -69,13 +69,14 @@ fn main() {
 
     let buffer = pixels.frame_mut();
 
+    // Border between eyes
     for y in 0..DISPLAY_HEIGHT {
         for x in DISPLAY_WIDTH..DISPLAY_WIDTH + DISPLAY_MARGIN {
             let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
 
-            buffer[base_address] = 0xFF;
-            buffer[base_address + 1] = 0xFF;
-            buffer[base_address + 2] = 0xFF;
+            buffer[base_address] = 0x30;
+            buffer[base_address + 1] = 0x30;
+            buffer[base_address + 2] = 0x30;
         }
     }
 
@@ -127,9 +128,10 @@ fn main() {
 
                         let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
 
+                        // Only set red
                         buffer[base_address] = value;
-                        buffer[base_address + 1] = value;
-                        buffer[base_address + 2] = value;
+                        // buffer[base_address + 1] = value;
+                        // buffer[base_address + 2] = value;
                     }
 
                     for i in 0..frame.right.len() {
@@ -141,9 +143,10 @@ fn main() {
                         let base_address =
                             (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
 
+                        // Only set red
                         buffer[base_address] = value;
-                        buffer[base_address + 1] = value;
-                        buffer[base_address + 2] = value;
+                        // buffer[base_address + 1] = value;
+                        // buffer[base_address + 2] = value;
                     }
 
                     println!("Updaing buffer");
