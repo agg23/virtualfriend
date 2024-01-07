@@ -66,7 +66,7 @@ pub fn draw_background_pixel(
         let character_x = background_x / 8;
         let character_y = background_y / 8;
 
-        // There are 512/8 = 64 blocks in a row in a background
+        // There are 512/8 = 64 blocks in a row in a background. 2 bytes per character
         let character_address = background_offset_address + (character_y * 64 + character_x) * 2;
 
         // Get background map character block info
@@ -100,7 +100,7 @@ fn extract_and_draw_character_entry_pixel(
     let horizontal_flip = character_halfword & 0x2000 != 0;
     let palette = character_halfword >> 14;
 
-    // TODO: Handle OBJ palettes
+    // Non-obj palette
     let palette = match palette {
         0 => state.background_palette_control0,
         1 => state.background_palette_control1,
@@ -181,7 +181,7 @@ pub fn draw_character_pixel(
     // Write to framebuffer
     // Pixels are stored in the framebuffer in columns, rather than in rows
     let framebuffer_offset = x * FRAMEBUFFER_HEIGHT as u32 + y;
-    // Each pixel is 2 bits, so find the right byte for this pixel
+    // Each pixel is 2 bits, i.e. 4 per byte, so find the right byte for this pixel
     let framebuffer_byte_offset = framebuffer_offset / 4;
     let pixel_shift = (y & 0x3) * 2;
 

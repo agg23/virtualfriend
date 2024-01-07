@@ -48,6 +48,7 @@ pub fn render_affine_background(
     block_start_y: u32,
 ) {
     // Calculate start coordinate offset using world parallax
+    // Depth of the world in the image
     let parallax_x = if left_eye {
         world
             .background_x_destination
@@ -71,7 +72,8 @@ pub fn render_affine_background(
 
         // Affine element for each row. Each affine element is 16 bytes
         let param_address = world.param_base + window_y as usize * 16;
-        let halfwords = vram.slice_mut(param_address, param_address + 5);
+        let param_halfword_address = param_address >> 1;
+        let halfwords = vram.slice_mut(param_halfword_address, param_halfword_address + 5);
 
         let affine_element = AffineElement::parse(halfwords);
 
