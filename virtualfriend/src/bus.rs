@@ -63,10 +63,6 @@ impl<'a> Bus<'a> {
     }
 
     pub fn get_u16(&mut self, address: u32) -> u16 {
-        if address == 0x0600012C {
-            println!("Hit address");
-        }
-
         // Mask top 5 bits to mirror bus
         let address = address & 0x07FF_FFFF;
 
@@ -91,6 +87,11 @@ impl<'a> Bus<'a> {
             0x0700_0000..=0x07FF_FFFF => self.rom.get_rom(local_address),
             _ => 0,
         }
+    }
+
+    /// Hack to optimize PC fetch
+    pub fn get_rom(&self, address: u32) -> u16 {
+        self.rom.get_rom(address as usize)
     }
 
     pub fn get_u32(&mut self, address: u32) -> u32 {

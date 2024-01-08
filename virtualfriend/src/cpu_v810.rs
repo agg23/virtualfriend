@@ -1102,7 +1102,9 @@ impl CpuV810 {
     }
 
     fn fetch_instruction_word(&mut self, bus: &mut Bus) -> u16 {
-        let instruction = bus.get_u16(self.pc);
+        // let instruction = bus.get_u16(self.pc);
+        // Hack for speed. This will break if there are instructions fetched from outside of ROM
+        let instruction = bus.get_rom(self.pc >> 1);
 
         // Increment PC by 2 bytes
         self.pc = self.pc.wrapping_add(2);
@@ -1594,6 +1596,7 @@ impl CpuV810 {
     }
 }
 
+#[inline(always)]
 fn extract_reg1_2_index(instruction: u16) -> (usize, usize) {
     (
         extract_reg1_index(instruction),
@@ -1601,10 +1604,12 @@ fn extract_reg1_2_index(instruction: u16) -> (usize, usize) {
     )
 }
 
+#[inline(always)]
 fn extract_reg2_index(instruction: u16) -> usize {
     ((instruction >> 5) & 0x1F) as usize
 }
 
+#[inline(always)]
 fn extract_reg1_index(instruction: u16) -> usize {
     (instruction & 0x1F) as usize
 }
