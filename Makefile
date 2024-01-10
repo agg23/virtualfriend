@@ -7,3 +7,6 @@ profile:
 
 3ds:
 	cd virtualfriend_3ds && cargo 3ds run --address 192.168.1.169 --server --release
+
+3ds-asm:
+	cargo asm -p virtualfriend --rust --target armv6k-nintendo-3ds -Z build-std=std --lib virtualfriend::cpu_v810::CpuV810::step > output.asm
