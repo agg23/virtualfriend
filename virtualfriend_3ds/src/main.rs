@@ -43,6 +43,8 @@ fn panic_hook_setup() {
 fn main() {
     panic_hook_setup();
 
+    unsafe { ctru_sys::osSetSpeedupEnable(true) };
+
     let apt = Apt::new().unwrap();
     let mut hid = Hid::new().unwrap();
     let gfx = Gfx::new().unwrap();

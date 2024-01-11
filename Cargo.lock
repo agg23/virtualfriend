@@ -1803,6 +1803,7 @@ name = "virtualfriend-3ds"
 version = "0.1.0"
 dependencies = [
  "ctru-rs",
+ "ctru-sys",
  "virtualfriend",
 ]
 
