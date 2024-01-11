@@ -43,7 +43,11 @@ fn panic_hook_setup() {
 fn main() {
     panic_hook_setup();
 
-    unsafe { ctru_sys::osSetSpeedupEnable(true) };
+    unsafe {
+        ctru_sys::osSetSpeedupEnable(true);
+        // Enable both CPU and L2 cache
+        ctru_sys::PTMSYSM_ConfigureNew3DSCPU(0x3);
+    };
 
     let apt = Apt::new().unwrap();
     let mut hid = Hid::new().unwrap();
