@@ -64,27 +64,22 @@ impl<'a> Bus<'a> {
 
     pub fn get_u16(&mut self, address: u32) -> u16 {
         // Mask top 5 bits to mirror bus
-        let address = address & 0x07FF_FFFF;
-
-        // Address for bus block
-        let local_address = (address as usize) & 0xFF_FFFF;
-        // Remove bottom 1 (shifted out) to make halfword addresses
-        let local_address = local_address >> 1;
+        let address = address as usize & 0x07FF_FFFF;
 
         match address {
             0x0000_0000..=0x00FF_FFFF => self.vip.get_bus(address),
-            0x0100_0000..=0x01FF_FFFF => {
-                // VSU
-                // All reads are undefined
-                0
-            }
+            // 0x0100_0000..=0x01FF_FFFF => {
+            //     // VSU
+            //     // All reads are undefined
+            //     0
+            // }
             0x0200_0000..=0x02FF_FFFF => self.hardware.get(address as u8),
             0x0400_0000..=0x04FF_FFFF => {
                 todo!("Game Pak Expansion")
             }
-            0x0500_0000..=0x05FF_FFFF => self.wram[local_address & 0x7FFF],
-            0x0600_0000..=0x06FF_FFFF => self.rom.get_ram(local_address),
-            0x0700_0000..=0x07FF_FFFF => self.rom.get_rom(local_address),
+            0x0500_0000..=0x05FF_FFFF => self.wram[(address >> 1) & 0x7FFF],
+            0x0600_0000..=0x06FF_FFFF => self.rom.get_ram((address >> 1) & 0x7F_FFFF),
+            0x0700_0000..=0x07FF_FFFF => self.rom.get_rom((address >> 1) & 0x7F_FFFF),
             _ => 0,
         }
     }

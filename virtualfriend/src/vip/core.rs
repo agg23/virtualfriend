@@ -123,9 +123,7 @@ impl VIP {
         }
     }
 
-    pub fn get_bus(&self, address: u32) -> u16 {
-        let address = address as usize;
-
+    pub fn get_bus(&self, address: usize) -> u16 {
         match address {
             0x0..=0x3_FFFF => self.vram.get_u16(address),
             0x5_F800..=0x5_F801 => {
