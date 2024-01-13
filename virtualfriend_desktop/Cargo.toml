@@ -3,6 +3,10 @@ name = "virtualfriend_desktop"
 version = "0.1.0"
 edition = "2021"
 
+[[bench]]
+name = "complete"
+harness = false
+
 [dependencies]
 virtualfriend = { path = "../virtualfriend" }
 
