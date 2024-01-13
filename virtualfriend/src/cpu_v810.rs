@@ -301,663 +301,78 @@ impl CpuV810 {
     fn perform_instruction(&mut self, bus: &mut Bus, instruction: u16) -> (u32, BusActivity) {
         let opcode = instruction >> 10;
 
-        if self.pc == 0xFFFCB5C8 + 2 {
-            println!("{:08X} {:02X}", self.pc, opcode);
-        }
-
         match opcode {
             // Register transfer
-            0b01_0000 => {
-                // MOV Immediate
-                self.mov(instruction, true)
-            }
-            0b00_0000 => {
-                // MOV Register
-                self.mov(instruction, false)
-            }
-            0b10_1000 => {
-                // MOVEA Add
-                self.movea(instruction, bus)
-            }
-            0b10_1111 => {
-                // MOVHI Add upper immediate
-                self.movhi(instruction, bus)
-            }
+            0b01_0000 => self.mov(instruction, true),
+            0b00_0000 => self.mov(instruction, false),
+            0b10_1000 => self.movea(instruction, bus),
+            0b10_1111 => self.movhi(instruction, bus),
 
             // Load and Input
-            0b11_1000 => {
-                // IN.B Input single byte
-                self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 0)
-            }
-            0b11_1001 => {
-                // IN.H Input 16 bit word
-                self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 0)
-            }
-            0b11_1011 | 0b11_0011 => {
-                // IN.W/LD.W Load word
-                self.ld_w(instruction, bus)
-            }
-            0b11_0000 => {
-                // LD.B Load single byte (sign extend)
-                self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 8)
-            }
-            0b11_0001 => {
-                // LD.H Load 16 bit word (sign extend)
-                self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 16)
-            }
+            0b11_1000 => self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 0), // IN.B Input single byte
+            0b11_1001 => self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 0), // IN.H Input 16 bit word
+
+            0b11_1011 | 0b11_0011 => self.ld_w(instruction, bus),
+            0b11_0000 => self.load_inst_16(bus, instruction, 0xFFFF_FFFF, 0xFF, 8), // LD.B Load single byte (sign extend)
+            0b11_0001 => self.load_inst_16(bus, instruction, 0xFFFF_FFFE, 0xFFFF, 16), // LD.H Load 16 bit word (sign extend)
 
             // Store and Output
-            0b11_1100 | 0b11_0100 => {
-                // OUT.B/ST.B Store byte
-                self.st_b(instruction, bus)
-            }
-            0b11_1101 | 0b11_0101 => {
-                // OUT.H/ST.H Store 16 bit word
-                self.st_h(instruction, bus)
-            }
-            0b11_1111 | 0b11_0111 => {
-                // OUT.W/ST.W Store word
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let disp = self.fetch_instruction_word(bus) as u32;
-                let disp = (disp as i16) as u32;
-
-                let address = self.general_purpose_reg[reg1_index].wrapping_add(disp) & 0xFFFF_FFFC;
-
-                bus.set_u32(address, self.general_purpose_reg[reg2_index]);
-
-                (
-                    self.store_inst_cycle_count(),
-                    self.incrementing_store_bus_activity(),
-                )
-            }
+            0b11_1100 | 0b11_0100 => self.st_b(instruction, bus),
+            0b11_1101 | 0b11_0101 => self.st_h(instruction, bus),
+            0b11_1111 | 0b11_0111 => self.st_w(instruction, bus),
 
             // Arithmetic
-            0b01_0001 => {
-                // ADD immediate
-                self.add(instruction, true)
-            }
-            0b00_0001 => {
-                // ADD reg
-                self.add(instruction, false)
-            }
-            0b10_1001 => {
-                // ADD 16 bit immediate
-                self.add_16_bit(instruction, bus)
-            }
-            0b01_0011 => {
-                // CMP immediate
-                self.cmp(instruction, true)
-            }
-            0b00_0011 => {
-                // CMP register
-                self.cmp(instruction, false)
-            }
-            0b00_1001 => {
-                // DIV (signed)
-                self.div(instruction, true)
-            }
-            0b00_1011 => {
-                // DIVU (unsigned)
-                self.div(instruction, false)
-            }
-            0b00_1000 => {
-                // MUL (signed)
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index] as i32;
-                let reg2 = self.general_purpose_reg[reg2_index] as i32;
-
-                let (result, overflow) = (reg1 as i64).overflowing_mul(reg2 as i64);
-                let result = result as u64;
-
-                self.set_gen_purpose_reg(30, (result >> 32) as u32);
-                self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
-                self.psw.update_alu_flags_u64(result, overflow, None);
-
-                (13, BusActivity::Long)
-            }
-            0b00_1010 => {
-                // MUL (unsigned)
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                let (result, overflow) = (reg1 as u64).overflowing_mul(reg2 as u64);
-
-                self.set_gen_purpose_reg(30, (result >> 32) as u32);
-                self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
-                self.psw.update_alu_flags_u64(result, overflow, None);
-
-                (13, BusActivity::Long)
-            }
-            0b00_0010 => {
-                // SUB
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.sub_inst(reg2, reg1, Some(reg2_index))
-            }
+            0b01_0001 => self.add(instruction, true), // ADD immediate
+            0b00_0001 => self.add(instruction, false), // ADD reg
+            0b10_1001 => self.add_16_bit(instruction, bus),
+            0b01_0011 => self.cmp(instruction, true),
+            0b00_0011 => self.cmp(instruction, false),
+            0b00_1001 => self.div(instruction, true),
+            0b00_1011 => self.div(instruction, false),
+            0b00_1000 => self.mul_signed(instruction),
+            0b00_1010 => self.mul_unsigned(instruction),
+            0b00_0010 => self.sub(instruction),
 
             // Bitwise
-            0b00_1101 => {
-                // AND
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                let result = reg2 & reg1;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
-            0b10_1101 => {
-                // ANDI immediate, zero extended
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(bus) as u32;
-
-                let result = reg1 & immediate;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-                // Special case, sign is always false
-                self.psw.sign = false;
-
-                (1, BusActivity::Standard)
-            }
-            0b00_1111 => {
-                // NOT
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-
-                // Interestingly, Rust uses ! for bitwise NOT
-                let result = !reg1;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
-            0b00_1100 => {
-                // OR
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                let result = reg2 | reg1;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
-            0b10_1100 => {
-                // ORI immediate, zero extend
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(bus) as u32;
-
-                let result = reg1 | immediate;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
-            0b01_0111 => {
-                // SAR Shift arthmetic right by immediate
-                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.sar_inst(reg2, immediate as u32, reg2_index)
-            }
-            0b00_0111 => {
-                // SAR Shift arthmetic right by register
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.sar_inst(reg2, reg1, reg2_index)
-            }
-            0b01_0100 => {
-                // SHL Shift logical left by immediate
-                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.shl_inst(reg2, immediate as u32, reg2_index)
-            }
-            0b00_0100 => {
-                // SHL Shift logical left by register
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.shl_inst(reg2, reg1, reg2_index)
-            }
-            0b01_0101 => {
-                // SHR Shift logical right by immediate
-                let (immediate, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.shr_inst(reg2, immediate as u32, reg2_index)
-            }
-            0b00_0101 => {
-                // SHR Shift logical right by register
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                self.shr_inst(reg2, reg1, reg2_index)
-            }
-            0b00_1110 => {
-                // XOR
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                let result = reg2 ^ reg1;
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
-            0b10_1110 => {
-                // XOR immediate, zero extend
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-                let immediate = self.fetch_instruction_word(bus);
-
-                let result = reg1 ^ (immediate as u32);
-
-                self.set_gen_purpose_reg(reg2_index, result);
-                self.psw.update_alu_flags_u32(result, false, None);
-
-                (1, BusActivity::Standard)
-            }
+            0b00_1101 => self.and(instruction),
+            0b10_1101 => self.andi(instruction, bus),
+            0b00_1111 => self.not(instruction),
+            0b00_1100 => self.or(instruction),
+            0b10_1100 => self.ori(instruction, bus),
+            0b01_0111 => self.sar(instruction, true), // SAR Shift arthmetic right by immediate
+            0b00_0111 => self.sar(instruction, false), // SAR Shift arthmetic right by register
+            0b01_0100 => self.shl(instruction, true), // SHL Shift logical left by immediate
+            0b00_0100 => self.shl(instruction, false), // SHL Shift logical left by register
+            0b01_0101 => self.shr(instruction, true), // SHR Shift logical right by immediate
+            0b00_0101 => self.shr(instruction, false), // SHR Shift logical right by register
+            0b00_1110 => self.xor(instruction, false, bus), // XOR register
+            0b10_1110 => self.xor(instruction, true, bus), // XOR immediate, zero extend
 
             // CPU Control
             // 0b10_0 + 4 bits
             // Opcode is 6 bits, whereas this needs 7, so we just grab the relevant opcode
             // ranges, then extract the condition from the instruction inside
-            0b10_0000..=0b10_0111 => {
-                // BCOND
-                let condition = (instruction >> 9) & 0xF;
-                let disp = instruction & 0x1FF;
-                let disp = sign_extend(disp as u32, 9);
+            0b10_0000..=0b10_0111 => self.bcond(instruction),
+            0b01_1010 => self.halt(),
+            0b10_1011 => self.displaced_jump(bus, instruction, true), // JAL Jump and link
+            0b00_0110 => self.jmp(instruction),
+            0b10_1010 => self.displaced_jump(bus, instruction, false), // JR Jump relative
+            0b01_1100 => self.ldsr(instruction), // LDSR Load to system register
+            0b01_1001 => self.reti(),            // RETI Return from trap or interrupt
+            0b01_1101 => self.stsr(instruction), // STSR Store contents of system register
+            0b01_1000 => self.trap(),
 
-                let condition = self.indexed_flag(condition);
+            0b11_1110 => self.float_inst(instruction, bus), // Floating point operations and Nintendo
 
-                self.conditional_jump(disp, condition)
-            }
-            0b01_1010 => {
-                // HALT
-                self.is_halted = true;
-
-                (1, BusActivity::Standard)
-            }
-            0b10_1011 => {
-                // JAL Jump and link
-                self.jump(bus, instruction, true)
-            }
-            0b00_0110 => {
-                // JMP Jump register
-                let (reg1_index, _) = extract_reg1_2_index(instruction);
-
-                let reg1 = self.general_purpose_reg[reg1_index];
-
-                self.pc = reg1;
-
-                (3, BusActivity::Standard)
-            }
-            0b10_1010 => {
-                // JR Jump relative
-                self.jump(bus, instruction, false)
-            }
-            0b01_1100 => {
-                // LDSR Load to system register
-                let (reg_id, reg2_index) = extract_reg1_2_index(instruction);
-
-                let reg2 = self.general_purpose_reg[reg2_index];
-
-                match reg_id {
-                    0 => self.eipc = reg2 & 0xFFFF_FFFE,
-                    1 => {
-                        // Don't write unused or reserved bits
-                        self.eipsw = reg2 & 0x000FF3FF
-                    }
-                    2 => self.fepc = reg2 & 0xFFFF_FFFE,
-                    3 => self.fepsw = reg2 & 0x000FF3FF,
-                    // 4 => ECR not setable
-                    5 => self.psw.set(reg2),
-                    // 6 => pir
-                    7 => self.tkcw = reg2,
-                    24 => {
-                        println!("WARNING: Writing to cache control register");
-                        // TODO: Finish implementation
-                        // Cache enabled is stored here because it can be read
-                        self.cache_enabled = reg2 & 0x2 != 0;
-                    }
-                    25 => self.adtre = reg2,
-                    29 => self.unknown_29 = reg2,
-                    30 => self.unknown_30 = reg2,
-                    31 => self.unknown_31 = reg2,
-                    _ => {}
-                }
-
-                // TODO: Are flags supposed to be set here?
-
-                // TODO: Mednafen has this set to 1 cycle
-                // The V810 manual doesn't list a cycle count
-                // (8, BusActivity::Standard)
-                (1, BusActivity::Standard)
-            }
-            0b01_1001 => {
-                // RETI Return from trap or interrupt
-                if self.psw.nmi_pending {
-                    self.pc = self.fepc;
-                    self.psw.set(self.fepsw);
-                } else {
-                    self.pc = self.eipc;
-                    self.psw.set(self.eipsw);
-                }
-
-                // TODO: Are flags supposed to be set here?
-
-                (10, BusActivity::Standard)
-            }
-            0b01_1101 => {
-                // STSR Store contents of system register
-                let (reg_id, reg2_index) = extract_reg1_2_index(instruction);
-
-                let value = match reg_id {
-                    0 => self.eipc,
-                    1 => self.eipsw,
-                    2 => self.fepc,
-                    3 => self.fepsw,
-                    4 => self.ecr,
-                    5 => self.psw.get(),
-                    6 => {
-                        // PIR Processor ID register
-                        // Static value
-                        0x5346
-                    }
-                    // 7 => tkcw
-                    24 => {
-                        // CHCW
-                        if self.cache_enabled {
-                            2
-                        } else {
-                            0
-                        }
-                    }
-                    25 => self.adtre,
-                    29 => self.unknown_29,
-                    30 => self.unknown_30,
-                    31 => self.unknown_31,
-                    _ => 0,
-                };
-
-                self.set_gen_purpose_reg(reg2_index, value);
-
-                (8, BusActivity::Standard)
-            }
-            0b01_1000 => {
-                // TRAP
-                todo!("Raise exception and set restore PC");
-            }
-
-            0b11_1110 => {
-                // Floating point operations and Nintendo
-                let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
-
-                let second_instruction = self.fetch_instruction_word(bus);
-                let sub_opcode = second_instruction >> 10;
-
-                let reg1_int = self.general_purpose_reg[reg1_index];
-                let reg2_int = self.general_purpose_reg[reg2_index];
-                let reg1_float = f32::from_bits(reg1_int);
-                let reg2_float = f32::from_bits(reg2_int);
-
-                match sub_opcode {
-                    // Float
-                    0b00_0100 => {
-                        // ADDF.S Add
-                        let result = reg2_float + reg1_float;
-
-                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
-                        self.psw
-                            .update_float_flags(result, true, false, false, true, true, true);
-
-                        // TODO: This is a range of 9-28 cycles
-                        (28, BusActivity::Standard)
-                    }
-                    0b00_0000 => {
-                        // CMPF.S Compare
-                        let result = reg2_float - reg1_float;
-
-                        self.psw
-                            .update_float_flags(result, true, false, false, false, false, false);
-
-                        // TODO: This is a range of 7-10 cycles
-                        (10, BusActivity::Standard)
-                    }
-                    0b00_0011 => {
-                        // CVT.SW Convert float to int
-                        let result = reg1_float.round() as i32;
-
-                        self.set_gen_purpose_reg(reg2_index, result as u32);
-                        self.psw.update_float_flags(
-                            result as f32,
-                            true,
-                            true,
-                            false,
-                            false,
-                            false,
-                            true,
-                        );
-                        self.psw.update_alu_flags_u32(result as u32, false, None);
-
-                        // TODO: This is a range of 9-14 cycles
-                        (14, BusActivity::Standard)
-                    }
-                    0b00_0010 => {
-                        // CVT.WS Convert int to float
-                        let result = (reg1_int as i32) as f32;
-
-                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
-                        self.psw
-                            .update_float_flags(result, false, false, false, false, false, true);
-
-                        // TODO: This is a range of 5-16 cycles
-                        (16, BusActivity::Standard)
-                    }
-                    0b00_0111 => {
-                        // DIVF.S Divide
-                        let result = reg2_float / reg1_float;
-
-                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
-                        self.psw
-                            .update_float_flags(result, true, true, true, true, true, true);
-
-                        (44, BusActivity::Standard)
-                    }
-                    0b00_0110 => {
-                        // MULF.S Multiply
-                        let result = reg2_float * reg1_float;
-
-                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
-                        self.psw
-                            .update_float_flags(result, true, false, false, true, true, true);
-
-                        // TODO: This is a range of 8-30 cycles
-                        (30, BusActivity::Standard)
-                    }
-                    0b00_0101 => {
-                        // SUBF.S Subtract
-                        let result = reg2_float - reg1_float;
-
-                        self.set_gen_purpose_reg(reg2_index, result.to_bits());
-                        self.psw
-                            .update_float_flags(result, true, false, false, true, true, true);
-
-                        // TODO: This is a range of 12-28 cycles
-                        (28, BusActivity::Standard)
-                    }
-                    0b00_1011 => {
-                        // TRNC.SW Truncate float to int
-                        let result = reg1_float.trunc() as i32;
-
-                        self.set_gen_purpose_reg(reg2_index, result as u32);
-                        self.psw.update_float_flags(
-                            result as f32,
-                            true,
-                            true,
-                            false,
-                            false,
-                            false,
-                            true,
-                        );
-
-                        // TODO: This is a range of 9-14 cycles
-                        (14, BusActivity::Standard)
-                    }
-
-                    // Nintendo
-                    0b00_1100 => {
-                        // MPYHW Multiply halfword
-                        let reg1_int = ((reg1_int << 15) as i32) >> 15;
-                        let result = (reg2_int as i32) * reg1_int;
-
-                        self.set_gen_purpose_reg(reg2_index, result as u32);
-
-                        (9, BusActivity::Standard)
-                    }
-                    0b00_1010 => {
-                        // REV Reverse bits in word
-                        let result = reg1_int.reverse_bits();
-
-                        self.set_gen_purpose_reg(reg2_index, result);
-
-                        (22, BusActivity::Standard)
-                    }
-                    0b00_1000 => {
-                        // XB Exchange byte
-                        // Swaps the bottom two bytes
-                        let upper = reg2_int & 0xFFFF_0000;
-                        let lower_high = (reg2_int << 8) & 0xFF00;
-                        let lower_low = (reg2_int >> 8) & 0xFF;
-
-                        let result = upper | lower_high | lower_low;
-
-                        self.set_gen_purpose_reg(reg2_index, result);
-
-                        (6, BusActivity::Standard)
-                    }
-                    0b00_1001 => {
-                        // XH Exchange halfword
-                        // Swap upper and lower halfwords
-                        let result = (reg2_int >> 16) | (reg2_int << 16);
-
-                        self.set_gen_purpose_reg(reg2_index, result);
-
-                        (1, BusActivity::Standard)
-                    }
-
-                    _ => panic!("Invalid float or Nintendo instruction {sub_opcode:x}"),
-                }
-            }
-
-            0b01_1111 => {
-                // Bit string operations
-                let (sub_opcode, _) = extract_reg1_2_index(instruction);
-
-                self.processing_bitstring = false;
-
-                if sub_opcode < 5 {
-                    // Search operation
-                    let (upwards_direction, match_1) = match sub_opcode {
-                        0b0_0001 => {
-                            // Search for 0, downward
-                            (false, false)
-                        }
-                        0b0_0000 => {
-                            // Search for 0, upward
-                            (true, false)
-                        }
-                        0b0_0011 => {
-                            // Search for 1, downward
-                            (false, true)
-                        }
-                        0b0_0010 => {
-                            // Search for 1, upward
-                            (true, true)
-                        }
-                        _ => unreachable!(),
-                    };
-
-                    self.bit_string_search(bus, upwards_direction, match_1)
-                } else {
-                    self.bit_string_process_upwards(bus, sub_opcode);
-                }
-
-                // TODO: This should be updated from the table in the V810 manual
-                // No one seems to emulate this correctly
-                (49, BusActivity::Standard)
-            }
+            0b01_1111 => self.bit_string_inst(instruction, bus), // Bit string operations
 
             // Miscellaneous
-            0b11_1010 => {
-                // CAXI Compare and exchange interlocked
-                unimplemented!("CAXI doesn't really do anything on VB")
-            }
-            0b01_0010 => {
-                // SETF Set flag condition
-                let (_, reg2_index) = extract_reg1_2_index(instruction);
-
-                let condition = instruction & 0xF;
-
-                let value = if self.indexed_flag(condition) { 1 } else { 0 };
-
-                self.set_gen_purpose_reg(reg2_index, value);
-
-                (1, BusActivity::Standard)
-            }
+            0b11_1010 => self.caxi(), // CAXI Compare and exchange interlocked
+            0b01_0010 => self.setf(instruction),
 
             // Nintendo
-            0b01_0110 => {
-                // CLI Clear interrupt disable flag
-                self.psw.interrupt_disable = false;
-
-                // TODO: Mednafen has this set to 1 cycle
-                (12, BusActivity::Standard)
-            }
-            0b01_1110 => {
-                // SEI Set interrupt disable flag
-                self.psw.interrupt_disable = true;
-
-                // TODO: Mednafen has this set to 1 cycle
-                (12, BusActivity::Standard)
-            }
+            0b01_0110 => self.cli(), // CLI Clear interrupt disable flag
+            0b01_1110 => self.sei(), // SEI Set interrupt disable flag
             _ => panic!("Invalid opcode {opcode:x}"),
         }
     }
@@ -1000,6 +415,7 @@ impl CpuV810 {
     }
 
     fn movea(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // MOVEA Add
         // Don't modify flags
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
@@ -1016,6 +432,7 @@ impl CpuV810 {
     }
 
     fn movhi(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // MOVHI Add upper immediate
         // Don't modify flags
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
@@ -1046,6 +463,7 @@ impl CpuV810 {
     }
 
     fn st_b(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // OUT.B/ST.B Store byte
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
         let disp = self.fetch_instruction_word(bus) as u32;
@@ -1062,6 +480,7 @@ impl CpuV810 {
     }
 
     fn st_h(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // OUT.H/ST.H Store 16 bit word
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
         let disp = self.fetch_instruction_word(bus) as u32;
@@ -1073,6 +492,23 @@ impl CpuV810 {
             address,
             (self.general_purpose_reg[reg2_index] & 0xFFFF) as u16,
         );
+
+        (
+            self.store_inst_cycle_count(),
+            self.incrementing_store_bus_activity(),
+        )
+    }
+
+    fn st_w(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // OUT.W/ST.W Store word
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let disp = self.fetch_instruction_word(bus) as u32;
+        let disp = (disp as i16) as u32;
+
+        let address = self.general_purpose_reg[reg1_index].wrapping_add(disp) & 0xFFFF_FFFC;
+
+        bus.set_u32(address, self.general_purpose_reg[reg2_index]);
 
         (
             self.store_inst_cycle_count(),
@@ -1095,6 +531,7 @@ impl CpuV810 {
     }
 
     fn add_16_bit(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // ADD 16 bit immediate
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
         let immediate = self.fetch_instruction_word(bus);
         let immediate = (immediate as i16) as u32;
@@ -1156,6 +593,594 @@ impl CpuV810 {
         let cycles = if signed { 38 } else { 36 };
 
         (cycles, BusActivity::Long)
+    }
+
+    fn mul_signed(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index] as i32;
+        let reg2 = self.general_purpose_reg[reg2_index] as i32;
+
+        let (result, overflow) = (reg1 as i64).overflowing_mul(reg2 as i64);
+        let result = result as u64;
+
+        self.set_gen_purpose_reg(30, (result >> 32) as u32);
+        self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
+        self.psw.update_alu_flags_u64(result, overflow, None);
+
+        (13, BusActivity::Long)
+    }
+
+    fn mul_unsigned(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let reg2 = self.general_purpose_reg[reg2_index];
+
+        let (result, overflow) = (reg1 as u64).overflowing_mul(reg2 as u64);
+
+        self.set_gen_purpose_reg(30, (result >> 32) as u32);
+        self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
+        self.psw.update_alu_flags_u64(result, overflow, None);
+
+        (13, BusActivity::Long)
+    }
+
+    fn sub(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let reg2 = self.general_purpose_reg[reg2_index];
+
+        self.sub_inst(reg2, reg1, Some(reg2_index))
+    }
+
+    fn and(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let reg2 = self.general_purpose_reg[reg2_index];
+
+        let result = reg2 & reg1;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn andi(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // ANDI immediate, zero extended
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let immediate = self.fetch_instruction_word(bus) as u32;
+
+        let result = reg1 & immediate;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+        // Special case, sign is always false
+        self.psw.sign = false;
+
+        (1, BusActivity::Standard)
+    }
+
+    fn not(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+
+        // Interestingly, Rust uses ! for bitwise NOT
+        let result = !reg1;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn or(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let reg2 = self.general_purpose_reg[reg2_index];
+
+        let result = reg2 | reg1;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn ori(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // ORI immediate, zero extend
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+        let immediate = self.fetch_instruction_word(bus) as u32;
+
+        let result = reg1 | immediate;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn sar(&mut self, instruction: u16, use_immediate: bool) -> (u32, BusActivity) {
+        // SAR Shift arthmetic right by immediate/register
+        let (reg1_index_or_immediate, store_reg_index) = extract_reg1_2_index(instruction);
+
+        let reg2 = self.general_purpose_reg[store_reg_index];
+        let shift = if use_immediate {
+            reg1_index_or_immediate as u32
+        } else {
+            self.general_purpose_reg[reg1_index_or_immediate]
+        };
+
+        // Limit to shift by 32
+        let shift = shift & 0x1F;
+
+        // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
+        // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
+        // So we use a signed type
+        let (result, carry) = if shift > 0 {
+            let carry_result = (reg2 as i32) >> (shift - 1);
+
+            // One last shift to finish it
+            let result = (carry_result >> 1) as u32;
+
+            // Carry is the last bit that's shifted out
+            let carry = carry_result & 1 != 0;
+
+            (result, carry)
+        } else {
+            (reg2, false)
+        };
+
+        self.set_gen_purpose_reg(store_reg_index, result);
+        self.psw.update_alu_flags_u32(result, false, Some(carry));
+
+        (1, BusActivity::Standard)
+    }
+
+    fn shr(&mut self, instruction: u16, use_immediate: bool) -> (u32, BusActivity) {
+        // SHR Shift logical right by immediate/register
+        let (reg1_index_or_immediate, store_reg_index) = extract_reg1_2_index(instruction);
+
+        let reg2 = self.general_purpose_reg[store_reg_index];
+        let shift = if use_immediate {
+            reg1_index_or_immediate as u32
+        } else {
+            self.general_purpose_reg[reg1_index_or_immediate]
+        };
+
+        // Limit to shift by 32
+        let shift = shift & 0x1F;
+
+        // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
+        // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
+        // So we use a signed type
+        let (result, carry) = if shift > 0 {
+            let carry_result = reg2 >> (shift - 1);
+
+            // One last shift to finish it
+            let result = carry_result >> 1;
+
+            // Carry is the last bit that's shifted out
+            let carry = carry_result & 1 != 0;
+
+            (result, carry)
+        } else {
+            (reg2, false)
+        };
+
+        self.set_gen_purpose_reg(store_reg_index, result);
+        self.psw.update_alu_flags_u32(result, false, Some(carry));
+
+        (1, BusActivity::Standard)
+    }
+
+    fn shl(&mut self, instruction: u16, use_immediate: bool) -> (u32, BusActivity) {
+        // SHL Shift logical left by immediate/register
+        let (reg1_index_or_immediate, store_reg_index) = extract_reg1_2_index(instruction);
+
+        let reg2 = self.general_purpose_reg[store_reg_index];
+        let shift = if use_immediate {
+            reg1_index_or_immediate as u32
+        } else {
+            self.general_purpose_reg[reg1_index_or_immediate]
+        };
+
+        // Limit to shift by 32
+        let shift = shift & 0x1F;
+
+        let (result, carry) = if shift > 0 {
+            let carry_result = reg2 << (shift - 1);
+
+            // One last shift to finish it
+            let result = carry_result << 1;
+
+            // Carry is the last bit that's shifted out
+            let carry = reg2 != 0 && carry_result & 0x8000_0000 != 0;
+
+            (result, carry)
+        } else {
+            (reg2, false)
+        };
+
+        self.set_gen_purpose_reg(store_reg_index, result);
+        self.psw.update_alu_flags_u32(result, false, Some(carry));
+
+        (1, BusActivity::Standard)
+    }
+
+    fn xor(&mut self, instruction: u16, use_immediate: bool, bus: &mut Bus) -> (u32, BusActivity) {
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg2 = self.general_purpose_reg[reg2_index];
+        let value = if use_immediate {
+            self.fetch_instruction_word(bus) as u32
+        } else {
+            self.general_purpose_reg[reg1_index]
+        };
+
+        let result = reg2 ^ value;
+
+        self.set_gen_purpose_reg(reg2_index, result);
+        self.psw.update_alu_flags_u32(result, false, None);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn bcond(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let condition = (instruction >> 9) & 0xF;
+        let disp = instruction & 0x1FF;
+        let disp = sign_extend(disp as u32, 9);
+
+        let condition = self.indexed_flag(condition);
+
+        if condition {
+            // Jumping
+            // PC was already incremented by 2, so we have to remove that
+            self.pc = (self.pc - 2).wrapping_add(disp & 0xFFFF_FFFE);
+
+            (3, BusActivity::Standard)
+        } else {
+            // Don't jump
+            (1, BusActivity::Standard)
+        }
+    }
+
+    fn halt(&mut self) -> (u32, BusActivity) {
+        self.is_halted = true;
+
+        (1, BusActivity::Standard)
+    }
+
+    fn jmp(&mut self, instruction: u16) -> (u32, BusActivity) {
+        let (reg1_index, _) = extract_reg1_2_index(instruction);
+
+        let reg1 = self.general_purpose_reg[reg1_index];
+
+        self.pc = reg1;
+
+        (3, BusActivity::Standard)
+    }
+
+    fn ldsr(&mut self, instruction: u16) -> (u32, BusActivity) {
+        // LDSR Load to system register
+        let (reg_id, reg2_index) = extract_reg1_2_index(instruction);
+
+        let reg2 = self.general_purpose_reg[reg2_index];
+
+        match reg_id {
+            0 => self.eipc = reg2 & 0xFFFF_FFFE,
+            1 => {
+                // Don't write unused or reserved bits
+                self.eipsw = reg2 & 0x000FF3FF
+            }
+            2 => self.fepc = reg2 & 0xFFFF_FFFE,
+            3 => self.fepsw = reg2 & 0x000FF3FF,
+            // 4 => ECR not setable
+            5 => self.psw.set(reg2),
+            // 6 => pir
+            7 => self.tkcw = reg2,
+            24 => {
+                println!("WARNING: Writing to cache control register");
+                // TODO: Finish implementation
+                // Cache enabled is stored here because it can be read
+                self.cache_enabled = reg2 & 0x2 != 0;
+            }
+            25 => self.adtre = reg2,
+            29 => self.unknown_29 = reg2,
+            30 => self.unknown_30 = reg2,
+            31 => self.unknown_31 = reg2,
+            _ => {}
+        }
+
+        // TODO: Are flags supposed to be set here?
+
+        // TODO: Mednafen has this set to 1 cycle
+        // The V810 manual doesn't list a cycle count
+        (8, BusActivity::Standard)
+    }
+
+    fn reti(&mut self) -> (u32, BusActivity) {
+        // RETI Return from trap or interrupt
+        if self.psw.nmi_pending {
+            self.pc = self.fepc;
+            self.psw.set(self.fepsw);
+        } else {
+            self.pc = self.eipc;
+            self.psw.set(self.eipsw);
+        }
+
+        // TODO: Are flags supposed to be set here?
+
+        (10, BusActivity::Standard)
+    }
+
+    fn stsr(&mut self, instruction: u16) -> (u32, BusActivity) {
+        // STSR Store contents of system register
+        let (reg_id, reg2_index) = extract_reg1_2_index(instruction);
+
+        let value = match reg_id {
+            0 => self.eipc,
+            1 => self.eipsw,
+            2 => self.fepc,
+            3 => self.fepsw,
+            4 => self.ecr,
+            5 => self.psw.get(),
+            6 => {
+                // PIR Processor ID register
+                // Static value
+                0x5346
+            }
+            // 7 => tkcw
+            24 => {
+                // CHCW
+                if self.cache_enabled {
+                    2
+                } else {
+                    0
+                }
+            }
+            25 => self.adtre,
+            29 => self.unknown_29,
+            30 => self.unknown_30,
+            31 => self.unknown_31,
+            _ => 0,
+        };
+
+        self.set_gen_purpose_reg(reg2_index, value);
+
+        (8, BusActivity::Standard)
+    }
+
+    fn trap(&mut self) -> (u32, BusActivity) {
+        todo!("Raise exception and set restore PC");
+    }
+
+    fn float_inst(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // Floating point operations and Nintendo
+        let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
+
+        let second_instruction = self.fetch_instruction_word(bus);
+        let sub_opcode = second_instruction >> 10;
+
+        let reg1_int = self.general_purpose_reg[reg1_index];
+        let reg2_int = self.general_purpose_reg[reg2_index];
+        let reg1_float = f32::from_bits(reg1_int);
+        let reg2_float = f32::from_bits(reg2_int);
+
+        match sub_opcode {
+            // Float
+            0b00_0100 => {
+                // ADDF.S Add
+                let result = reg2_float + reg1_float;
+
+                self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                self.psw
+                    .update_float_flags(result, true, false, false, true, true, true);
+
+                // TODO: This is a range of 9-28 cycles
+                (28, BusActivity::Standard)
+            }
+            0b00_0000 => {
+                // CMPF.S Compare
+                let result = reg2_float - reg1_float;
+
+                self.psw
+                    .update_float_flags(result, true, false, false, false, false, false);
+
+                // TODO: This is a range of 7-10 cycles
+                (10, BusActivity::Standard)
+            }
+            0b00_0011 => {
+                // CVT.SW Convert float to int
+                let result = reg1_float.round() as i32;
+
+                self.set_gen_purpose_reg(reg2_index, result as u32);
+                self.psw
+                    .update_float_flags(result as f32, true, true, false, false, false, true);
+                self.psw.update_alu_flags_u32(result as u32, false, None);
+
+                // TODO: This is a range of 9-14 cycles
+                (14, BusActivity::Standard)
+            }
+            0b00_0010 => {
+                // CVT.WS Convert int to float
+                let result = (reg1_int as i32) as f32;
+
+                self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                self.psw
+                    .update_float_flags(result, false, false, false, false, false, true);
+
+                // TODO: This is a range of 5-16 cycles
+                (16, BusActivity::Standard)
+            }
+            0b00_0111 => {
+                // DIVF.S Divide
+                let result = reg2_float / reg1_float;
+
+                self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                self.psw
+                    .update_float_flags(result, true, true, true, true, true, true);
+
+                (44, BusActivity::Standard)
+            }
+            0b00_0110 => {
+                // MULF.S Multiply
+                let result = reg2_float * reg1_float;
+
+                self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                self.psw
+                    .update_float_flags(result, true, false, false, true, true, true);
+
+                // TODO: This is a range of 8-30 cycles
+                (30, BusActivity::Standard)
+            }
+            0b00_0101 => {
+                // SUBF.S Subtract
+                let result = reg2_float - reg1_float;
+
+                self.set_gen_purpose_reg(reg2_index, result.to_bits());
+                self.psw
+                    .update_float_flags(result, true, false, false, true, true, true);
+
+                // TODO: This is a range of 12-28 cycles
+                (28, BusActivity::Standard)
+            }
+            0b00_1011 => {
+                // TRNC.SW Truncate float to int
+                let result = reg1_float.trunc() as i32;
+
+                self.set_gen_purpose_reg(reg2_index, result as u32);
+                self.psw
+                    .update_float_flags(result as f32, true, true, false, false, false, true);
+
+                // TODO: This is a range of 9-14 cycles
+                (14, BusActivity::Standard)
+            }
+
+            // Nintendo
+            0b00_1100 => {
+                // MPYHW Multiply halfword
+                let reg1_int = ((reg1_int << 15) as i32) >> 15;
+                let result = (reg2_int as i32) * reg1_int;
+
+                self.set_gen_purpose_reg(reg2_index, result as u32);
+
+                (9, BusActivity::Standard)
+            }
+            0b00_1010 => {
+                // REV Reverse bits in word
+                let result = reg1_int.reverse_bits();
+
+                self.set_gen_purpose_reg(reg2_index, result);
+
+                (22, BusActivity::Standard)
+            }
+            0b00_1000 => {
+                // XB Exchange byte
+                // Swaps the bottom two bytes
+                let upper = reg2_int & 0xFFFF_0000;
+                let lower_high = (reg2_int << 8) & 0xFF00;
+                let lower_low = (reg2_int >> 8) & 0xFF;
+
+                let result = upper | lower_high | lower_low;
+
+                self.set_gen_purpose_reg(reg2_index, result);
+
+                (6, BusActivity::Standard)
+            }
+            0b00_1001 => {
+                // XH Exchange halfword
+                // Swap upper and lower halfwords
+                let result = (reg2_int >> 16) | (reg2_int << 16);
+
+                self.set_gen_purpose_reg(reg2_index, result);
+
+                (1, BusActivity::Standard)
+            }
+
+            _ => panic!("Invalid float or Nintendo instruction {sub_opcode:x}"),
+        }
+    }
+
+    fn bit_string_inst(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
+        // Bit string operations
+        let (sub_opcode, _) = extract_reg1_2_index(instruction);
+
+        self.processing_bitstring = false;
+
+        if sub_opcode < 5 {
+            // Search operation
+            let (upwards_direction, match_1) = match sub_opcode {
+                0b0_0001 => {
+                    // Search for 0, downward
+                    (false, false)
+                }
+                0b0_0000 => {
+                    // Search for 0, upward
+                    (true, false)
+                }
+                0b0_0011 => {
+                    // Search for 1, downward
+                    (false, true)
+                }
+                0b0_0010 => {
+                    // Search for 1, upward
+                    (true, true)
+                }
+                _ => unreachable!(),
+            };
+
+            self.bit_string_search(bus, upwards_direction, match_1)
+        } else {
+            self.bit_string_process_upwards(bus, sub_opcode);
+        }
+
+        // TODO: This should be updated from the table in the V810 manual
+        // No one seems to emulate this correctly
+        (49, BusActivity::Standard)
+    }
+
+    fn caxi(&mut self) -> (u32, BusActivity) {
+        // CAXI Compare and exchange interlocked
+        unimplemented!("CAXI doesn't really do anything on VB")
+    }
+
+    fn setf(&mut self, instruction: u16) -> (u32, BusActivity) {
+        // SETF Set flag condition
+        let (_, reg2_index) = extract_reg1_2_index(instruction);
+
+        let condition = instruction & 0xF;
+
+        let value = if self.indexed_flag(condition) { 1 } else { 0 };
+
+        self.set_gen_purpose_reg(reg2_index, value);
+
+        (1, BusActivity::Standard)
+    }
+
+    fn cli(&mut self) -> (u32, BusActivity) {
+        // CLI Clear interrupt disable flag
+        self.psw.interrupt_disable = false;
+
+        // TODO: Mednafen has this set to 1 cycle
+        (12, BusActivity::Standard)
+    }
+
+    fn sei(&mut self) -> (u32, BusActivity) {
+        // SEI Set interrupt disable flag
+        self.psw.interrupt_disable = true;
+
+        // TODO: Mednafen has this set to 1 cycle
+        (12, BusActivity::Standard)
     }
 
     // Utilities
@@ -1223,84 +1248,6 @@ impl CpuV810 {
         if let Some(store_reg_index) = store_reg_index {
             self.set_gen_purpose_reg(store_reg_index, result);
         }
-
-        (1, BusActivity::Standard)
-    }
-
-    fn sar_inst(&mut self, value: u32, shift: u32, store_reg_index: usize) -> (u32, BusActivity) {
-        // Limit to shift by 32
-        let shift = shift & 0x1F;
-
-        // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
-        // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
-        // So we use a signed type
-        let (result, carry) = if shift > 0 {
-            let carry_result = (value as i32) >> (shift - 1);
-
-            // One last shift to finish it
-            let result = (carry_result >> 1) as u32;
-
-            // Carry is the last bit that's shifted out
-            let carry = carry_result & 1 != 0;
-
-            (result, carry)
-        } else {
-            (value, false)
-        };
-
-        self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
-
-        (1, BusActivity::Standard)
-    }
-
-    fn shr_inst(&mut self, value: u32, shift: u32, store_reg_index: usize) -> (u32, BusActivity) {
-        // Limit to shift by 32
-        let shift = shift & 0x1F;
-
-        // Per https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
-        // Arithmetic right shift on signed integer types, logical right shift on unsigned integer types
-        // So we use a signed type
-        let (result, carry) = if shift > 0 {
-            let carry_result = value >> (shift - 1);
-
-            // One last shift to finish it
-            let result = carry_result >> 1;
-
-            // Carry is the last bit that's shifted out
-            let carry = carry_result & 1 != 0;
-
-            (result, carry)
-        } else {
-            (value, false)
-        };
-
-        self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
-
-        (1, BusActivity::Standard)
-    }
-
-    fn shl_inst(&mut self, value: u32, shift: u32, store_reg_index: usize) -> (u32, BusActivity) {
-        // Limit to shift by 32
-        let shift = shift & 0x1F;
-
-        let (result, carry) = if shift > 0 {
-            let carry_result = value << (shift - 1);
-
-            // One last shift to finish it
-            let result = carry_result << 1;
-
-            // Carry is the last bit that's shifted out
-            let carry = value != 0 && carry_result & 0x8000_0000 != 0;
-
-            (result, carry)
-        } else {
-            (value, false)
-        };
-
-        self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
 
         (1, BusActivity::Standard)
     }
@@ -1375,20 +1322,12 @@ impl CpuV810 {
         }
     }
 
-    fn conditional_jump(&mut self, disp: u32, condition: bool) -> (u32, BusActivity) {
-        if condition {
-            // Jumping
-            // PC was already incremented by 2, so we have to remove that
-            self.pc = (self.pc - 2).wrapping_add(disp & 0xFFFF_FFFE);
-
-            (3, BusActivity::Standard)
-        } else {
-            // Don't jump
-            (1, BusActivity::Standard)
-        }
-    }
-
-    fn jump(&mut self, bus: &mut Bus, instruction: u16, save_pc: bool) -> (u32, BusActivity) {
+    fn displaced_jump(
+        &mut self,
+        bus: &mut Bus,
+        instruction: u16,
+        save_pc: bool,
+    ) -> (u32, BusActivity) {
         let upper_disp = (instruction & 0x3FF) as u32;
         let disp = self.fetch_instruction_word(bus) as u32;
 
