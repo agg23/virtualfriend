@@ -1,3 +1,8 @@
+// This design is heavily influenced by Rustual Boy, and some of the rendering logic is nearly identical
+// (though rewritten and commented differently). Logic has been implemented independantly with docs and
+// Rustual Boy as a reference without intending to copy. The process thus producing many bugs that have been
+// fixed by examining the Rustual Boy codebase.
+
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::{array::BitArray, bitarr};
