@@ -14,3 +14,6 @@ virtualfriend = { path = "../virtualfriend" }
 winit = { version = "0.29", default-features = false, features = ["rwh_05", "x11", "wayland", "wayland-dlopen", "wayland-csd-adwaita"] }
 single_value_channel = "1.2.2"
 pixels = "0.13.0"
+
+cpal = "0.4.6"
+futures = "0.1.1"

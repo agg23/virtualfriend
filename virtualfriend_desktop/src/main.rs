@@ -1,5 +1,8 @@
-use std::{path::Path, thread};
+mod cpal_driver;
 
+use std::{collections::VecDeque, path::Path, thread};
+
+use cpal_driver::CpalDriver;
 use pixels::{Pixels, SurfaceTexture};
 use single_value_channel::{channel_starting_with, Receiver, Updater};
 use winit::{
@@ -11,13 +14,13 @@ use winit::{
     window::WindowBuilder,
 };
 
-use virtualfriend::bus::Bus;
-use virtualfriend::constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET;
-use virtualfriend::cpu_v810::CpuV810;
 use virtualfriend::gamepad::GamepadInputs;
 use virtualfriend::hardware::Hardware;
 use virtualfriend::rom::ROM;
 use virtualfriend::vip::VIP;
+use virtualfriend::{bus::Bus, vsu::VSU};
+use virtualfriend::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, vsu::traits::AudioFrame};
+use virtualfriend::{cpu_v810::CpuV810, vsu::traits::Sink};
 
 const DISPLAY_WIDTH: usize = 384;
 const DISPLAY_MARGIN: usize = 40;
@@ -181,6 +184,24 @@ fn main() {
         .unwrap();
 }
 
+struct SimpleAudioFrameSink {
+    inner: VecDeque<AudioFrame>,
+}
+
+impl SimpleAudioFrameSink {
+    fn new() -> Self {
+        SimpleAudioFrameSink {
+            inner: VecDeque::new(),
+        }
+    }
+}
+
+impl Sink<AudioFrame> for SimpleAudioFrameSink {
+    fn append(&mut self, frame: AudioFrame) {
+        self.inner.push_back(frame);
+    }
+}
+
 fn create_emulator(
     buffer_transmitter: Updater<Frame>,
     mut inputs_receiver: Receiver<GamepadInputs>,
@@ -190,12 +211,17 @@ fn create_emulator(
             "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
         ));
 
+        let audio_driver = CpalDriver::new(41700, 100).unwrap();
+        let mut base_audio_sink = audio_driver.sink();
+        let mut emu_audio_sink = SimpleAudioFrameSink::new();
+
         let mut cpu = CpuV810::new();
 
         let mut vip = VIP::new();
+        let mut vsu = VSU::new();
 
         let mut hardware = Hardware::new();
-        let mut bus = Bus::new(rom, &mut vip, &mut hardware);
+        let mut bus = Bus::new(rom, &mut vip, &mut vsu, &mut hardware);
 
         let mut frame_id = 1;
 
@@ -227,7 +253,7 @@ fn create_emulator(
 
             cycle_count += step_cycle_count;
 
-            if let Some(request) = bus.step(step_cycle_count, &inputs) {
+            if let Some(request) = bus.step(step_cycle_count, &mut emu_audio_sink, &inputs) {
                 cpu.request_interrupt(request);
                 continue;
             }
@@ -252,6 +278,9 @@ fn create_emulator(
             } else {
                 frame_serviced = false;
             }
+
+            base_audio_sink.append(emu_audio_sink.inner.as_slices().0);
+            emu_audio_sink.inner.clear();
         }
     });
 }

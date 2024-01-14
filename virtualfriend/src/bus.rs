@@ -1,19 +1,28 @@
 use rand::{thread_rng, Rng};
 
 use crate::{
-    gamepad::GamepadInputs, hardware::Hardware, interrupt::InterruptRequest, rom::ROM, vip::VIP,
+    gamepad::GamepadInputs,
+    hardware::Hardware,
+    interrupt::InterruptRequest,
+    rom::ROM,
+    vip::VIP,
+    vsu::{
+        traits::{AudioFrame, Sink},
+        VSU,
+    },
 };
 
 pub struct Bus<'a> {
     wram: [u16; 0x1_0000 / 2],
     rom: ROM,
     pub vip: &'a mut VIP,
+    vsu: &'a mut VSU,
     // TODO: Remove pub
     pub hardware: &'a mut Hardware,
 }
 
 impl<'a> Bus<'a> {
-    pub fn new(rom: ROM, vip: &'a mut VIP, hardware: &'a mut Hardware) -> Self {
+    pub fn new(rom: ROM, vip: &'a mut VIP, vsu: &'a mut VSU, hardware: &'a mut Hardware) -> Self {
         let mut wram = [0; 0x1_0000 / 2];
 
         // Randomize starting data
@@ -23,6 +32,7 @@ impl<'a> Bus<'a> {
             wram,
             rom,
             vip,
+            vsu,
             hardware,
         }
     }
@@ -42,11 +52,13 @@ impl<'a> Bus<'a> {
     pub fn step(
         &mut self,
         cycles_to_run: usize,
+        audio_sink: &mut dyn Sink<AudioFrame>,
         inputs: &GamepadInputs,
     ) -> Option<InterruptRequest> {
         let mut request = None;
 
         self.hardware.gamepad.step(cycles_to_run, inputs);
+        self.vsu.step(cycles_to_run, audio_sink);
 
         // Priority 1
         if self.hardware.timer.step(cycles_to_run) {
@@ -119,19 +131,17 @@ impl<'a> Bus<'a> {
         // Address for bus block
         let local_address = (address as usize) & 0xFF_FFFF;
         // Remove bottom 1 (shifted out) to make halfword addresses
-        let local_address = local_address >> 1;
+        let local_address_u16 = local_address >> 1;
 
         match address {
             0x0000_0000..=0x00FF_FFFF => self.vip.set_bus(address, value),
-            0x0100_0000..=0x01FF_FFFF => {
-                // todo!("VSU")
-            }
+            0x0100_0000..=0x01FF_FFFF => self.vsu.set_u8(local_address, value as u8),
             0x0200_0000..=0x02FF_FFFF => self.hardware.set(address as u8, value),
-            0x0400_0000..=0x04FF_FFFF => {
-                todo!("Game Pak Expansion")
-            }
-            0x0500_0000..=0x05FF_FFFF => self.wram[local_address & 0x7FFF] = value,
-            0x0600_0000..=0x06FF_FFFF => self.rom.set_ram(local_address, value),
+            // 0x0400_0000..=0x04FF_FFFF => {
+            //     todo!("Game Pak Expansion")
+            // }
+            0x0500_0000..=0x05FF_FFFF => self.wram[local_address_u16 & 0x7FFF] = value,
+            0x0600_0000..=0x06FF_FFFF => self.rom.set_ram(local_address_u16, value),
             0x0700_0000..=0x07FF_FFFF => {
                 // Game Pak ROM
                 // Do nothing

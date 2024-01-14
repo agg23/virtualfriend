@@ -3,14 +3,20 @@ pub const CLOCK_SPEED: usize = 20_000_000;
 const CYCLES_PER_MS: usize = CLOCK_SPEED / 1_000;
 const CYCLES_PER_US: usize = CLOCK_SPEED / 1_000_000;
 
+//
 // ROM
+//
+
 /// Max ROM size is 16MB
 pub const MAX_ROM_SIZE: usize = 16 * 1024 * 1024;
 pub const MIN_ROM_RAM_SIZE: usize = 1024;
 /// Max SRAM size is 16MB
 pub const MAX_ROM_RAM_SIZE: usize = 16 * 1024 * 1024;
 
+//
 // Framebuffer
+//
+
 pub const LEFT_FRAME_BUFFER_CYCLE_OFFSET: usize = CYCLES_PER_MS * 3;
 pub const LEFT_FRAME_BUFFER_COMPLETE_CYCLE_OFFSET: usize = CYCLES_PER_MS * 8;
 pub const FCLK_LOW_CYCLE_OFFSET: usize = CYCLES_PER_MS * 10;
@@ -42,9 +48,31 @@ pub const DRAWING_BLOCK_CYCLE_COUNT: usize =
 /// Total time SBOUT remains high
 pub const SBOUT_HIGH_CYCLE_COUNT: usize = CYCLES_PER_US * 56;
 
+//
 // Gamepad
+//
+
 pub const GAMEPAD_HARDWARE_READ_CYCLE_COUNT: usize = CLOCK_SPEED / 31_250;
 
+//
 // Timer
+//
+
 /// Minimum timer interval is 20us, and max is 100us
 pub const TIMER_MIN_INTERVAL_CYCLE_COUNT: usize = CYCLES_PER_US * 20;
+
+//
+// Sound
+//
+
+// CLOCK_SPEED / 260.4
+/// Number of cycles per live interval tick
+pub const SOUND_LIVE_INTERVAL_CYCLE_COUNT: usize = 76_805;
+
+/// Number of cycles per frequency tick for a waveform channel
+pub const WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT: usize = CLOCK_SPEED / 5_000_000;
+/// Number of cycles per frequency tick for the noise channel
+pub const NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT: usize = CLOCK_SPEED / 500_000;
+
+/// Sampled every 41.7kHz
+pub const SOUND_SAMPLE_RATE_CYCLE_COUNT: usize = CLOCK_SPEED / 41_700;

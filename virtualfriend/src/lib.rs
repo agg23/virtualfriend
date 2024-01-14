@@ -10,3 +10,4 @@ pub mod timer;
 pub mod util;
 pub mod vip;
 mod virtualfriend;
+pub mod vsu;
