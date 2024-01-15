@@ -37,6 +37,28 @@ struct Frame {
     id: u64,
 }
 
+struct RGB {
+    red: u8,
+    green: u8,
+    blue: u8,
+}
+
+impl RGB {
+    fn mix(&self, a_weight: u8, b_weight: u8, b: &RGB) -> RGB {
+        let calculate = |a: u8, b: u8| -> u8 {
+            let value = (a_weight as u16) * (a as u16) + (b_weight as u16) * (b as u16);
+            // let value = value / 2;
+            (value >> 8) as u8
+        };
+
+        let red = calculate(self.red, b.red);
+        let green = calculate(self.green, b.green);
+        let blue = calculate(self.blue, b.blue);
+
+        RGB { red, green, blue }
+    }
+}
+
 fn main() {
     // Window
     let event_loop = EventLoop::new().unwrap();
@@ -88,6 +110,18 @@ fn main() {
 
     create_emulator(buffer_transmitter, inputs_receiver);
 
+    let red_base = RGB {
+        red: 0xFF,
+        green: 0,
+        blue: 0,
+    };
+
+    let blue_base = RGB {
+        red: 0,
+        green: 0,
+        blue: 0xFF,
+    };
+
     event_loop
         .run(move |event, window_target| {
             window_target.set_control_flow(ControlFlow::Poll);
@@ -108,33 +142,50 @@ fn main() {
 
                     let frame = buffer_receiver.latest();
 
+                    // for i in 0..frame.left.len() {
+                    //     let value = frame.left[i];
+
+                    //     let y = i / DISPLAY_WIDTH;
+                    //     let x = i % DISPLAY_WIDTH;
+
+                    //     let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
+
+                    //     // Only set red
+                    //     buffer[base_address] = value;
+                    //     // buffer[base_address + 1] = value;
+                    //     // buffer[base_address + 2] = value;
+                    // }
+
+                    // for i in 0..frame.right.len() {
+                    //     let value = frame.right[i];
+
+                    //     let y = i / DISPLAY_WIDTH;
+                    //     let x = i % DISPLAY_WIDTH;
+
+                    //     let base_address =
+                    //         (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
+
+                    //     // Only set red
+                    //     buffer[base_address] = value;
+                    //     // buffer[base_address + 1] = value;
+                    //     // buffer[base_address + 2] = value;
+                    // }
+
                     for i in 0..frame.left.len() {
-                        let value = frame.left[i];
+                        let left_value = frame.left[i];
+                        let right_value = frame.right[i];
 
                         let y = i / DISPLAY_WIDTH;
                         let x = i % DISPLAY_WIDTH;
 
                         let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
 
-                        // Only set red
-                        buffer[base_address] = value;
-                        // buffer[base_address + 1] = value;
-                        // buffer[base_address + 2] = value;
-                    }
-
-                    for i in 0..frame.right.len() {
-                        let value = frame.right[i];
-
-                        let y = i / DISPLAY_WIDTH;
-                        let x = i % DISPLAY_WIDTH;
-
-                        let base_address =
-                            (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
+                        let color = red_base.mix(left_value, right_value, &blue_base);
 
                         // Only set red
-                        buffer[base_address] = value;
-                        // buffer[base_address + 1] = value;
-                        // buffer[base_address + 2] = value;
+                        buffer[base_address] = color.red;
+                        buffer[base_address + 1] = color.green;
+                        buffer[base_address + 2] = color.blue;
                     }
 
                     println!("Updaing buffer");
