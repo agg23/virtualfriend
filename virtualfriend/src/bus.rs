@@ -86,9 +86,9 @@ impl<'a> Bus<'a> {
             //     0
             // }
             0x0200_0000..=0x02FF_FFFF => self.hardware.get(address as u8),
-            0x0400_0000..=0x04FF_FFFF => {
-                todo!("Game Pak Expansion")
-            }
+            // 0x0400_0000..=0x04FF_FFFF => {
+            //     todo!("Game Pak Expansion")
+            // }
             0x0500_0000..=0x05FF_FFFF => self.wram[(address >> 1) & 0x7FFF],
             0x0600_0000..=0x06FF_FFFF => self.rom.get_ram((address >> 1) & 0x7F_FFFF),
             0x0700_0000..=0x07FF_FFFF => self.rom.get_rom((address >> 1) & 0x7F_FFFF),

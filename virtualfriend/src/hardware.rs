@@ -89,7 +89,10 @@ impl Hardware {
                 // SCR Serial control register
                 self.gamepad.get_control()
             }
-            _ => unreachable!(),
+            _ => {
+                println!("Unexpected hardware read at 0x{:04X}", address);
+                0
+            }
         }
     }
 
@@ -143,8 +146,9 @@ impl Hardware {
                 // SCR Serial control register
                 self.gamepad.set_control(value);
             }
-
-            _ => unreachable!(),
+            _ => {
+                println!("Unexpected hardware write at 0x{:04X}", address);
+            }
         }
     }
 }
