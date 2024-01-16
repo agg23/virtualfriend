@@ -47,7 +47,6 @@ impl RGB {
     fn mix(&self, a_weight: u8, b_weight: u8, b: &RGB) -> RGB {
         let calculate = |a: u8, b: u8| -> u8 {
             let value = (a_weight as u16) * (a as u16) + (b_weight as u16) * (b as u16);
-            // let value = value / 2;
             (value >> 8) as u8
         };
 

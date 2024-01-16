@@ -7,20 +7,20 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'virtualfriend'",
+      "name": "Debug executable 'virtualfriend_desktop'",
       "cargo": {
         "args": [
           "build",
-          "--bin=virtualfriend",
-          "--package=virtualfriend"
+          "--bin=virtualfriend_desktop",
+          "--package=virtualfriend_desktop"
         ],
         "filter": {
-          "name": "virtualfriend",
+          "name": "virtualfriend_desktop",
           "kind": "bin"
         }
       },
       "args": [],
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}/virtualfriend_desktop"
     },
     {
       "type": "lldb",

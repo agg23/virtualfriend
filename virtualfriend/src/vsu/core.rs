@@ -115,6 +115,10 @@ impl VSU {
     }
 
     pub fn step(&mut self, cycles_to_run: usize, audio_sink: &mut dyn Sink<AudioFrame>) {
+        for (channel, channel_type) in &mut self.channels {
+            channel_type.step(cycles_to_run, channel, &self.waveforms);
+        }
+
         for _ in 0..cycles_to_run {
             if self.sample_output_counter >= SOUND_SAMPLE_RATE_CYCLE_COUNT {
                 // Take sample
@@ -132,6 +136,10 @@ impl VSU {
         let mut right_acc = 0;
 
         for (channel, _) in &self.channels {
+            if !channel.enable_playback {
+                continue;
+            }
+
             let (left, right) = channel.sample();
 
             left_acc += left;
