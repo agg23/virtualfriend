@@ -1,6 +1,8 @@
 /target
+**/generated
 
 **/romfs
+*.vb
 
 *.log
 *.dump

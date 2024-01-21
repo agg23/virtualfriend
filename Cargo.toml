@@ -5,6 +5,7 @@ members = [
   "virtualfriend",
   "virtualfriend_3ds",
   "virtualfriend_desktop",
+  "virtualfriend_swift"
 ]
 
 [patch.crates-io]

@@ -1,0 +1,126 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "Reality Composer Pro Version 1.0 (409.60.6)"
+    }
+    defaultPrim = "Root"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "Root"
+{
+    def Cube "HoldingCube" (
+        active = true
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        rel material:binding = </Root/HoldingCube/StereoRenderMaterial>
+        double size = 0.2
+
+        def Material "StereoRenderMaterial"
+        {
+            asset inputs:Left_Image (
+                colorSpace = ""
+                customData = {
+                    dictionary realitykit = {
+                        float2 positionInSubgraph = (-732.8478, -67.271835)
+                        float2 sizeInSubgraph = (138.5, 53)
+                        int stackingOrderInSubgraph = 1215
+                    }
+                }
+            )
+            asset inputs:Right_Image (
+                colorSpace = ""
+                customData = {
+                    dictionary realitykit = {
+                        float2 positionInSubgraph = (-734.13513, 98.77861)
+                        float2 sizeInSubgraph = (146.5, 53)
+                        int stackingOrderInSubgraph = 1215
+                    }
+                }
+            )
+            prepend token outputs:mtlx:surface.connect = </Root/HoldingCube/StereoRenderMaterial/PreviewSurface.outputs:out>
+            token outputs:realitykit:vertex
+            token outputs:surface.connect = </Root/HoldingCube/StereoRenderMaterial/DefaultSurfaceShader.outputs:surface>
+            float2 ui:nodegraph:realitykit:subgraphOutputs:pos = (294.52734, 89.87109)
+            float2 ui:nodegraph:realitykit:subgraphOutputs:size = (181.5, 99)
+            int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 1215
+
+            def Shader "DefaultSurfaceShader" (
+                active = false
+            )
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (1, 1, 1)
+                float inputs:roughness = 0.75
+                token outputs:surface
+            }
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
+                color3f inputs:diffuseColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                float inputs:metallic
+                float inputs:opacity
+                float inputs:roughness
+                token outputs:out
+                float2 ui:nodegraph:node:pos = (39.527344, 85.37109)
+                float2 ui:nodegraph:node:size = (148.5, 199)
+                int ui:nodegraph:node:stackingOrder = 1215
+            }
+
+            def Shader "Image"
+            {
+                uniform token info:id = "ND_image_color3"
+                color3f inputs:default = (1, 0, 0.009548978) (
+                    colorSpace = "srgb_displayp3"
+                )
+                asset inputs:file.connect = </Root/HoldingCube/StereoRenderMaterial.inputs:Left_Image>
+                string inputs:filtertype
+                float2 inputs:texcoord
+                string inputs:uaddressmode
+                string inputs:vaddressmode
+                color3f outputs:out
+                float2 ui:nodegraph:node:pos = (-462.6278, 2.1553955)
+                float2 ui:nodegraph:node:size = (148.5, 199)
+                int ui:nodegraph:node:stackingOrder = 1215
+                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:default"]
+            }
+
+            def Shader "Image_1"
+            {
+                uniform token info:id = "ND_image_color3"
+                color3f inputs:default = (1, 1, 1) (
+                    colorSpace = "srgb_displayp3"
+                )
+                asset inputs:file.connect = </Root/HoldingCube/StereoRenderMaterial.inputs:Right_Image>
+                string inputs:filtertype
+                float2 inputs:texcoord
+                string inputs:uaddressmode
+                string inputs:vaddressmode
+                color3f outputs:out
+                float2 ui:nodegraph:node:pos = (-463.27545, 174.837)
+                float2 ui:nodegraph:node:size = (148.5, 199)
+                int ui:nodegraph:node:stackingOrder = 1215
+            }
+
+            def Shader "GeometrySwitchCameraIndex"
+            {
+                uniform token info:id = "ND_realitykit_geometry_switch_cameraindex_color3"
+                color3f inputs:left.connect = </Root/HoldingCube/StereoRenderMaterial/Image.outputs:out>
+                color3f inputs:mono = (0, 0.08667583, 0.9863684) (
+                    colorSpace = "srgb_displayp3"
+                )
+                color3f inputs:mono.connect = </Root/HoldingCube/StereoRenderMaterial/Image.outputs:out>
+                color3f inputs:right.connect = </Root/HoldingCube/StereoRenderMaterial/Image_1.outputs:out>
+                color3f outputs:out
+                float2 ui:nodegraph:node:pos = (-205.534, 56.090256)
+                float2 ui:nodegraph:node:size = (237, 145)
+                int ui:nodegraph:node:stackingOrder = 1215
+                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
+            }
+        }
+    }
+}
+

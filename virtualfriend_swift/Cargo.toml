@@ -1,0 +1,14 @@
+[package]
+name = "virtualfriend_swift"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "virtualfriend_swift"
+
+[build-dependencies]
+swift-bridge-build = "0.1"
+
+[dependencies]
+virtualfriend = { path = "../virtualfriend" }
+swift-bridge = "0.1"
