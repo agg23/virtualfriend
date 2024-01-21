@@ -3,6 +3,10 @@ name = "virtualfriend"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "virtualfriend"
+crate-type = ["lib", "staticlib", "cdylib"]
+
 [dependencies]
 rand = "0.8.5"
 # Custom fork and branch upgrades `radium` to 1.0, which prevents atomics errors on more special platforms

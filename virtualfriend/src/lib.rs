@@ -11,3 +11,8 @@ pub mod util;
 pub mod vip;
 mod virtualfriend;
 pub mod vsu;
+
+#[no_mangle]
+pub extern "C" fn virtualfriend_test() {
+    println!("Called from Swift");
+}
