@@ -5,7 +5,6 @@ edition = "2021"
 
 [lib]
 name = "virtualfriend"
-crate-type = ["lib", "staticlib", "cdylib"]
 
 [dependencies]
 rand = "0.8.5"

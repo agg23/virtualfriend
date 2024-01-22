@@ -25,6 +25,18 @@ pub mod vip;
 mod virtualfriend;
 pub mod vsu;
 
+pub struct VirtualFriend {
+    cpu: CpuV810,
+    bus: Bus,
+
+    frame_serviced: bool,
+}
+
+pub struct Frame {
+    pub left: Vec<u8>,
+    pub right: Vec<u8>,
+}
+
 struct SimpleAudioFrameSink {
     inner: VecDeque<AudioFrame>,
 }
@@ -43,75 +55,73 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
     }
 }
 
-pub fn run(rom_path: String) {
-    println!("Loading ROM at {rom_path}");
+impl VirtualFriend {
+    pub fn new(rom_path: String) -> Self {
+        println!("Loading ROM at {rom_path}");
 
-    let mut emu_audio_sink = SimpleAudioFrameSink::new();
+        let rom = ROM::load_from_file(Path::new(&rom_path));
 
-    let rom = ROM::load_from_file(Path::new(&rom_path));
+        let cpu = CpuV810::new();
 
-    let mut cpu = CpuV810::new();
+        let vip = VIP::new();
+        let vsu = VSU::new();
 
-    let mut vip = VIP::new();
-    let mut vsu = VSU::new();
+        let hardware = Hardware::new();
+        let bus = Bus::new(rom, vip, vsu, hardware);
 
-    let mut hardware = Hardware::new();
-    let mut bus = Bus::new(rom, &mut vip, &mut vsu, &mut hardware);
-
-    let mut frame_id = 1;
-
-    // TODO: Poll for input
-    let mut inputs = GamepadInputs {
-        a_button: false,
-        b_button: false,
-    };
-
-    // let mut log_file = OpenOptions::new()
-    //     .write(true)
-    //     .create(true)
-    //     .open("instructions.log")
-    //     .unwrap();
-
-    let mut cycle_count = 0;
-
-    // let mut writer = BufWriter::new(log_file);
-
-    let mut frame_serviced = false;
-
-    loop {
-        // cpu.log_instruction(Some(&mut writer), cycle_count, None);
-
-        let step_cycle_count = cpu.step(&mut bus);
-
-        cycle_count += step_cycle_count;
-
-        if let Some(request) = bus.step(step_cycle_count, &mut emu_audio_sink, &inputs) {
-            cpu.request_interrupt(request);
-            continue;
+        VirtualFriend {
+            cpu,
+            bus,
+            frame_serviced: false,
         }
+    }
 
-        if bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-            if !frame_serviced {
-                // Render framebuffer
-                frame_serviced = true;
+    pub fn run_frame(&mut self, inputs: GamepadInputs) -> Frame {
+        let mut emu_audio_sink = SimpleAudioFrameSink::new();
 
-                // buffer_transmitter
-                //     .update(Frame {
-                //         left: bus.vip.left_rendered_framebuffer.clone(),
-                //         right: bus.vip.right_rendered_framebuffer.clone(),
-                //         id: frame_id,
-                //     })
-                //     .unwrap();
+        // let mut log_file = OpenOptions::new()
+        //     .write(true)
+        //     .create(true)
+        //     .open("instructions.log")
+        //     .unwrap();
 
-                // inputs = inputs_receiver.latest();
+        let mut cycle_count = 0;
 
-                frame_id += 1;
+        // let mut writer = BufWriter::new(log_file);
+
+        loop {
+            // cpu.log_instruction(Some(&mut writer), cycle_count, None);
+
+            let step_cycle_count = self.cpu.step(&mut self.bus);
+
+            cycle_count += step_cycle_count;
+
+            if let Some(request) = self
+                .bus
+                .step(step_cycle_count, &mut emu_audio_sink, &inputs)
+            {
+                self.cpu.request_interrupt(request);
+                continue;
             }
-        } else {
-            frame_serviced = false;
-        }
 
-        // base_audio_sink.append(emu_audio_sink.inner.as_slices().0);
-        emu_audio_sink.inner.clear();
+            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
+                if !self.frame_serviced {
+                    // Render framebuffer
+                    self.frame_serviced = true;
+
+                    println!("Sending frame");
+
+                    return Frame {
+                        left: self.bus.vip.left_rendered_framebuffer.clone(),
+                        right: self.bus.vip.right_rendered_framebuffer.clone(),
+                    };
+                }
+            } else {
+                self.frame_serviced = false;
+            }
+
+            // base_audio_sink.append(emu_audio_sink.inner.as_slices().0);
+            emu_audio_sink.inner.clear();
+        }
     }
 }

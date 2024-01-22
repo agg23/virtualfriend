@@ -60,14 +60,19 @@ def Xform "Root"
             def Shader "PreviewSurface"
             {
                 uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
+                float inputs:clearcoat
+                float inputs:clearcoatRoughness
                 color3f inputs:diffuseColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                color3f inputs:emissiveColor
                 float inputs:metallic
+                float3 inputs:normal
                 float inputs:opacity
                 float inputs:roughness
                 token outputs:out
                 float2 ui:nodegraph:node:pos = (39.527344, 85.37109)
                 float2 ui:nodegraph:node:size = (148.5, 199)
-                int ui:nodegraph:node:stackingOrder = 1215
+                int ui:nodegraph:node:stackingOrder = 1221
+                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = []
             }
 
             def Shader "Image"

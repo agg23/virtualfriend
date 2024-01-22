@@ -9,17 +9,17 @@
 /* Begin PBXBuildFile section */
 		661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */ = {isa = PBXBuildFile; productRef = 661265C52B54460900D1B343 /* VBStereoRenderRealityKit */; };
 		661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 661265CB2B54533800D1B343 /* libresolv.tbd */; };
-		66136E272B5D949000D580BF /* libvirtualfriend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66136E262B5D948300D580BF /* libvirtualfriend.a */; };
 		6629A1D52B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */; };
 		6629A1D72B4E538200FE2AB3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D62B4E538200FE2AB3 /* ContentView.swift */; };
 		6629A1D92B4E538200FE2AB3 /* ImmersiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D82B4E538200FE2AB3 /* ImmersiveView.swift */; };
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
-		6688DEC22B5DAC18004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DEBE2B5DAC18004B2123 /* virtualfriend_swift.swift */; };
-		6688DEC32B5DAC18004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DEC12B5DAC18004B2123 /* SwiftBridgeCore.swift */; };
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
+		6688DED42B5DBA98004B2123 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */; };
+		6688DED52B5DBAD2004B2123 /* Mario's Tennis (Japan, USA).vb in Resources */ = {isa = PBXBuildFile; fileRef = 6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */; };
+		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,14 +39,12 @@
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66654C072B5B3F97008E283D /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Mario's Tennis (Japan, USA).vb"; sourceTree = "<group>"; };
-		6688DEBE2B5DAC18004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
-		6688DEBF2B5DAC18004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
-		6688DEC02B5DAC18004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
-		6688DEC12B5DAC18004B2123 /* SwiftBridgeCore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftBridgeCore.swift; sourceTree = "<group>"; };
 		6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
 		6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
 		6688DECE2B5DAC33004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
 		6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftBridgeCore.swift; sourceTree = "<group>"; };
+		6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-xros-sim/debug/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
+		6688DED62B5DF876004B2123 /* EmuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,8 +52,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66136E272B5D949000D580BF /* libvirtualfriend.a in Frameworks */,
 				661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */,
+				6688DED42B5DBA98004B2123 /* libvirtualfriend_swift.a in Frameworks */,
 				661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -66,6 +64,7 @@
 		661265C82B54531200D1B343 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */,
 				66136E262B5D948300D580BF /* libvirtualfriend.a */,
 				66654C052B5AF3E0008E283D /* libxrostest.a */,
 				66136E242B5B419600D580BF /* libxrostest.a */,
@@ -98,10 +97,10 @@
 		6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */ = {
 			isa = PBXGroup;
 			children = (
-				6688DEBC2B5DAC18004B2123 /* generated */,
 				6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */,
 				6629A1D62B4E538200FE2AB3 /* ContentView.swift */,
 				6629A1D82B4E538200FE2AB3 /* ImmersiveView.swift */,
+				6688DED62B5DF876004B2123 /* EmuView.swift */,
 				6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */,
 				6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */,
 				6629A1E12B4E538300FE2AB3 /* Info.plist */,
@@ -125,26 +124,6 @@
 				6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		6688DEBC2B5DAC18004B2123 /* generated */ = {
-			isa = PBXGroup;
-			children = (
-				6688DEBD2B5DAC18004B2123 /* virtualfriend_swift */,
-				6688DEC02B5DAC18004B2123 /* SwiftBridgeCore.h */,
-				6688DEC12B5DAC18004B2123 /* SwiftBridgeCore.swift */,
-			);
-			name = generated;
-			path = ../../virtualfriend_swift/generated;
-			sourceTree = "<group>";
-		};
-		6688DEBD2B5DAC18004B2123 /* virtualfriend_swift */ = {
-			isa = PBXGroup;
-			children = (
-				6688DEBE2B5DAC18004B2123 /* virtualfriend_swift.swift */,
-				6688DEBF2B5DAC18004B2123 /* virtualfriend_swift.h */,
-			);
-			path = virtualfriend_swift;
 			sourceTree = "<group>";
 		};
 		6688DECA2B5DAC33004B2123 /* generated */ = {
@@ -174,6 +153,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-Vision" */;
 			buildPhases = (
+				6688DED22B5DB65E004B2123 /* ShellScript */,
 				6629A1C92B4E538200FE2AB3 /* Sources */,
 				6629A1CA2B4E538200FE2AB3 /* Frameworks */,
 				6629A1CB2B4E538200FE2AB3 /* Resources */,
@@ -234,10 +214,31 @@
 				6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */,
 				6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */,
 				6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */,
+				6688DED52B5DBAD2004B2123 /* Mario's Tennis (Japan, USA).vb in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6688DED22B5DB65E004B2123 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd ../\n# Load Rust PATH\n. ~/.cargo/env\nmake vision\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6629A1C92B4E538200FE2AB3 /* Sources */ = {
@@ -246,9 +247,8 @@
 			files = (
 				6629A1D72B4E538200FE2AB3 /* ContentView.swift in Sources */,
 				6629A1D52B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift in Sources */,
-				6688DEC32B5DAC18004B2123 /* SwiftBridgeCore.swift in Sources */,
+				6688DED72B5DF876004B2123 /* EmuView.swift in Sources */,
 				6629A1D92B4E538200FE2AB3 /* ImmersiveView.swift in Sources */,
-				6688DEC22B5DAC18004B2123 /* virtualfriend_swift.swift in Sources */,
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
 			);
@@ -393,7 +393,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../virtualfriend/target/aarch64-apple-xros-sim/debug";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros-sim/debug";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -422,7 +422,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../virtualfriend/target/aarch64-apple-xros-sim/debug";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros-sim/debug";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";

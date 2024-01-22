@@ -25,8 +25,8 @@ pub struct VIP {
 
     vram: VRAM,
 
-    pub left_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
-    pub right_rendered_framebuffer: [u8; DISPLAY_PIXEL_LENGTH],
+    pub left_rendered_framebuffer: Vec<u8>,
+    pub right_rendered_framebuffer: Vec<u8>,
 
     interrupt_pending: VIPInterrupt,
     interrupt_enabled: VIPInterrupt,
@@ -102,11 +102,19 @@ bitfield! {
 
 impl VIP {
     pub fn new() -> Self {
+        let mut left_rendered_framebuffer = Vec::with_capacity(DISPLAY_PIXEL_LENGTH);
+        let mut right_rendered_framebuffer = Vec::with_capacity(DISPLAY_PIXEL_LENGTH);
+
+        for _ in 0..DISPLAY_PIXEL_LENGTH {
+            left_rendered_framebuffer.push(0);
+            right_rendered_framebuffer.push(0);
+        }
+
         VIP {
             current_display_clock_cycle: 0,
             vram: VRAM::new(),
-            left_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
-            right_rendered_framebuffer: [0; DISPLAY_PIXEL_LENGTH],
+            left_rendered_framebuffer,
+            right_rendered_framebuffer,
             interrupt_pending: VIPInterrupt(0),
             interrupt_enabled: VIPInterrupt(0),
             render_state: RenderState::new(),

@@ -1,14 +1,19 @@
 pub struct VRAM {
     // We map the entirety of VRAM due to overlapping sections
     // (upper background maps overlap with OAM and properties).
-    vram: [u16; 0x4_0000 / 2],
+    vram: Vec<u16>,
 }
 
 impl VRAM {
     pub fn new() -> Self {
-        VRAM {
-            vram: [0; 0x4_0000 / 2],
+        let length = 0x4_0000 / 2;
+        let mut vram = Vec::with_capacity(length);
+
+        for _ in 0..length {
+            vram.push(0);
         }
+
+        VRAM { vram }
     }
 
     pub fn get_u16(&self, address: usize) -> u16 {

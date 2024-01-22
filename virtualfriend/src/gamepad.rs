@@ -25,6 +25,7 @@ pub struct Gamepad {
     button_state: u16,
 }
 
+#[derive(Clone, Copy)]
 pub struct GamepadInputs {
     pub a_button: bool,
     pub b_button: bool,

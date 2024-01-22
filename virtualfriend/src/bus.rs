@@ -12,17 +12,17 @@ use crate::{
     },
 };
 
-pub struct Bus<'a> {
+pub struct Bus {
     wram: [u16; 0x1_0000 / 2],
     rom: ROM,
-    pub vip: &'a mut VIP,
-    vsu: &'a mut VSU,
+    pub vip: VIP,
+    vsu: VSU,
     // TODO: Remove pub
-    pub hardware: &'a mut Hardware,
+    pub hardware: Hardware,
 }
 
-impl<'a> Bus<'a> {
-    pub fn new(rom: ROM, vip: &'a mut VIP, vsu: &'a mut VSU, hardware: &'a mut Hardware) -> Self {
+impl Bus {
+    pub fn new(rom: ROM, vip: VIP, vsu: VSU, hardware: Hardware) -> Self {
         let mut wram = [0; 0x1_0000 / 2];
 
         // Randomize starting data

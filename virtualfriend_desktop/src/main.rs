@@ -14,27 +14,37 @@ use winit::{
     window::WindowBuilder,
 };
 
-use virtualfriend::gamepad::GamepadInputs;
-use virtualfriend::hardware::Hardware;
 use virtualfriend::rom::ROM;
 use virtualfriend::vip::VIP;
 use virtualfriend::{bus::Bus, vsu::VSU};
 use virtualfriend::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, vsu::traits::AudioFrame};
 use virtualfriend::{cpu_v810::CpuV810, vsu::traits::Sink};
+use virtualfriend::{gamepad::GamepadInputs, Frame};
+use virtualfriend::{hardware::Hardware, VirtualFriend};
 
 const DISPLAY_WIDTH: usize = 384;
 const DISPLAY_MARGIN: usize = 40;
-const DISPLAY_HEIGHT: usize = 240;
+const DISPLAY_HEIGHT: usize = 224;
 
 const COMBO_DISPLAY_WIDTH: usize = DISPLAY_WIDTH * 2 + DISPLAY_MARGIN;
 
 const WINDOW_WIDTH: usize = COMBO_DISPLAY_WIDTH * 3;
 const WINDOW_HEIGHT: usize = DISPLAY_HEIGHT * 3;
 
-struct Frame {
-    left: [u8; 384 * 224],
-    right: [u8; 384 * 224],
-    id: u64,
+struct ThreadFrame {
+    left: Vec<u8>,
+    right: Vec<u8>,
+    id: usize,
+}
+
+impl ThreadFrame {
+    fn from(value: Frame, id: usize) -> Self {
+        ThreadFrame {
+            left: value.left,
+            right: value.right,
+            id,
+        }
+    }
 }
 
 struct RGB {
@@ -94,11 +104,18 @@ fn main() {
         buffer[i * 4 + 3] = 0xFF;
     }
 
+    let mut initial_framebuffer = Vec::with_capacity(DISPLAY_HEIGHT * DISPLAY_WIDTH);
+
+    for _ in 0..DISPLAY_HEIGHT * DISPLAY_WIDTH {
+        initial_framebuffer.push(0);
+    }
+
     // Multithreading
     let mut last_frame_id = 0;
-    let (mut buffer_receiver, buffer_transmitter) = channel_starting_with::<Frame>(Frame {
-        left: [0; 384 * 224],
-        right: [0; 384 * 224],
+    let (mut buffer_receiver, buffer_transmitter) =
+        channel_starting_with::<ThreadFrame>(ThreadFrame {
+            left: initial_framebuffer.clone(),
+            right: initial_framebuffer.clone(),
         id: last_frame_id,
     });
     let (inputs_receiver, mut inputs_transmitter) =
@@ -253,84 +270,25 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
 }
 
 fn create_emulator(
-    buffer_transmitter: Updater<Frame>,
+    buffer_transmitter: Updater<ThreadFrame>,
     mut inputs_receiver: Receiver<GamepadInputs>,
 ) {
     thread::spawn(move || {
-        let rom = ROM::load_from_file(Path::new(
-            "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
-        ));
+        let mut virtualfriend = VirtualFriend::new(
+            "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb"
+                .into(),
+        );
 
-        let audio_driver = CpalDriver::new(41700, 100).unwrap();
-        let mut base_audio_sink = audio_driver.sink();
-        let mut emu_audio_sink = SimpleAudioFrameSink::new();
-
-        let mut cpu = CpuV810::new();
-
-        let mut vip = VIP::new();
-        let mut vsu = VSU::new();
-
-        let mut hardware = Hardware::new();
-        let mut bus = Bus::new(rom, &mut vip, &mut vsu, &mut hardware);
-
-        let mut frame_id = 1;
-
-        let mut inputs = inputs_receiver.latest();
-
-        // let mut log_file = OpenOptions::new()
-        //     .write(true)
-        //     .create(true)
-        //     .open("instructions.log")
-        //     .unwrap();
-
-        let mut cycle_count = 0;
-
-        // let mut writer = BufWriter::new(log_file);
-        let mut line_count = 0;
-
-        let mut frame_serviced = false;
+        let mut frame_id = 0;
 
         loop {
-            // cpu.log_instruction(Some(&mut writer), cycle_count, None);
-            line_count += 1;
+            let frame = virtualfriend.run_frame(inputs_receiver.latest().clone());
 
-            // if line_count == 60_400_000 {
-            //     println!("Halting");
-            //     return;
-            // }
-
-            let step_cycle_count = cpu.step(&mut bus);
-
-            cycle_count += step_cycle_count;
-
-            if let Some(request) = bus.step(step_cycle_count, &mut emu_audio_sink, &inputs) {
-                cpu.request_interrupt(request);
-                continue;
-            }
-
-            if bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-                if !frame_serviced {
-                    // Render framebuffer
-                    frame_serviced = true;
+            frame_id += 1;
 
                     buffer_transmitter
-                        .update(Frame {
-                            left: bus.vip.left_rendered_framebuffer.clone(),
-                            right: bus.vip.right_rendered_framebuffer.clone(),
-                            id: frame_id,
-                        })
-                        .unwrap();
-
-                    inputs = inputs_receiver.latest();
-
-                    frame_id += 1;
-                }
-            } else {
-                frame_serviced = false;
-            }
-
-            base_audio_sink.append(emu_audio_sink.inner.as_slices().0);
-            emu_audio_sink.inner.clear();
+                .update(ThreadFrame::from(frame, frame_id))
+                .expect("Could not update frame");
         }
     });
 }

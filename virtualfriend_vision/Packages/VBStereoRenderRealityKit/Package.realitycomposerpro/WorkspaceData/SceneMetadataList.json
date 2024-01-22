@@ -4,16 +4,6 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "VBStereoRenderRealityKit",
-        "HoldingCube"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root",
         "HoldingCube"
       ],
       {
@@ -33,6 +23,16 @@
         "Root",
         "HoldingCube",
         "StereoRenderMaterial"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "VBStereoRenderRealityKit",
+        "HoldingCube"
       ],
       {
         "isExpanded" : true,
