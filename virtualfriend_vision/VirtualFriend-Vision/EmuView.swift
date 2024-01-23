@@ -8,22 +8,27 @@
 import SwiftUI
 import RealityKit
 import VBStereoRenderRealityKit
+import Combine
 
 let PIXEL_WIDTH = 384
 let PIXEL_HEIGHT = 224
 let PIXEL_COUNT = PIXEL_WIDTH * PIXEL_HEIGHT
-let PIXEL_BYTE_COUNT = PIXEL_COUNT * 3
+let PIXEL_BYTE_COUNT = PIXEL_COUNT * 4
 
 struct EmuView: View {
     let queue: DispatchQueue
     let virtualFriend: VirtualFriend!
 
     @State var image: CGImage
-    @State var activeImage: CGImage
 
-    @State var toggle: Bool
+    let context = CIContext()
+
+    let drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: 384, height: 224, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
 
     var leftImage = UIImage(named: "Left")!
+    var rightImage = UIImage(named: "Right")!
+
+    @State private var cancellables = Set<AnyCancellable>()
 
     init() {
         self.queue = DispatchQueue(label: "emu", qos: .userInteractive)
@@ -49,9 +54,6 @@ struct EmuView: View {
                        shouldInterpolate: true,
                        intent: CGColorRenderingIntent.defaultIntent)!
         self.image = image
-        self.activeImage = image
-
-        self.toggle = false
 
         let url = Bundle.main.url(forResource: "Mario's Tennis (Japan, USA)", withExtension: "vb")
 
@@ -69,76 +71,73 @@ struct EmuView: View {
             // Add the initial RealityKit content
             if let scene = try? await Entity(named: "Scene", in: vBStereoRenderRealityKitBundle) {
                 content.add(scene)
-            }
-        } update: { content in
-            // Update the RealityKit content when SwiftUI state changes
-            if let scene = content.entities.first {
+
                 let cube = scene.findEntity(named: "HoldingCube") as? ModelEntity
-                var shader = cube?.model?.materials.first as? ShaderGraphMaterial
 
-                let image = self.toggle ? self.image : self.leftImage.cgImage!
-
-                do {
-                    print("Drawing image")
-                    let texture = try TextureResource.generate(from: image, withName: "leftTexture", options: TextureResource.CreateOptions.init(semantic: .raw))
-
-                    print(shader?.parameterNames)
-
-                    try shader?.setParameter(name: "Left_Image", value: .textureResource(texture))
-
-//                    try shader?.setParameter(name: "Color", value: self.toggle ? .color(.blue) : .color(.magenta))
-
-                    cube?.model?.materials = [shader!]
-                } catch let error {
-                    print("Failed \(error)")
+                guard var model = cube?.model, var material = model.materials.first as? ShaderGraphMaterial else {
+                    fatalError("Cannot load material")
                 }
 
+                let baseColor = CIImage(color: .red).cropped(to: CGRect(origin: .zero, size: .init(width: 384, height: 224)))
+                let image = context.createCGImage(baseColor, from: baseColor.extent)!
 
-                let uniformScale: Float = self.toggle ? 1.4 : 1.0
-                scene.transform.scale = [uniformScale, uniformScale, uniformScale]
+                do {
+                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .raw))
+
+                    texture.replace(withDrawables: self.drawableQueue)
+
+                    try material.setParameter(name: "Left_Image", value: .textureResource(texture))
+                } catch {
+                    fatalError(error.localizedDescription)
+                }
+
+                model.materials = [material]
+                cube?.model = model
             }
-        }.onAppear(perform: {
-//            self.queue.async {
-//                while (true) {
+        }
+        .onAppear(perform: {
+            self.queue.async {
+                while (true) {
 //                    let frame = self.virtualFriend.run_frame()
-//                    let cgImage = rustVecToCGImage(frame.left)
-//                    self.image = cgImage
-//                }
-//            }
+//                    let ciImage = rustVecToCIImage(frame.left)
+                    
+                    let ciImage = CIImage(image: self.leftImage)!
+                    // TODO: This should be flipped by Metal, not the CPU
+                    let transformedImage = ciImage.transformed(by: .init(scaleX: 1, y: -1))
+                    self.image = context.createCGImage(transformedImage, from: transformedImage.extent)!
+
+                    do {
+                        let drawable = try drawableQueue.nextDrawable()
+
+                        context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.displayP3)!)
+
+                        drawable.present()
+                    } catch {
+                        print(error.localizedDescription)
+                    }
+                }
+            }
         })
         Image(self.image, scale: 1.0, label: Text("Hi"))
-        Button("Transfer") {
-            self.activeImage = self.image
-        }
-        Toggle("Hi", isOn: $toggle)
     }
 }
 
-func rustVecToCGImage(_ vec: RustVec<UInt8>) -> CGImage {
-    var data = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
+func rustVecToCIImage(_ vec: RustVec<UInt8>) -> CIImage {
+    var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
 
     for i in 0..<PIXEL_COUNT {
         let value = vec[i]
 
-        data[i * 3] = value
-        data[i * 3 + 1] = 0
-        data[i * 3 + 2] = 0
+        bytes[i * 4] = value
+        bytes[i * 4 + 1] = 0
+        bytes[i * 4 + 2] = 0
+        // Alpha
+        bytes[i * 4 + 3] = 255
     }
 
-    let colorspace = CGColorSpaceCreateDeviceRGB()
-    let rgbData = CFDataCreate(nil, data, PIXEL_BYTE_COUNT)!
-    let provider = CGDataProvider(data: rgbData)!
-    return CGImage(width: PIXEL_WIDTH,
-                   height: PIXEL_HEIGHT,
-                   bitsPerComponent: 8,
-                   bitsPerPixel: 8 * 3,
-                   bytesPerRow: PIXEL_WIDTH * 3,
-                   space: colorspace,
-                   bitmapInfo: CGBitmapInfo(rawValue: 0),
-                   provider: provider,
-                   decode: nil,
-                   shouldInterpolate: true,
-                   intent: CGColorRenderingIntent.defaultIntent)!
+    let bitmapData = Data(bytes)
+
+    return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: .none)
 }
 
 #Preview {

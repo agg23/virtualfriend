@@ -36,16 +36,17 @@ def Xform "Root"
                     dictionary realitykit = {
                         float2 positionInSubgraph = (-734.13513, 98.77861)
                         float2 sizeInSubgraph = (146.5, 53)
-                        int stackingOrderInSubgraph = 1215
+                        int stackingOrderInSubgraph = 1228
                     }
                 }
             )
-            prepend token outputs:mtlx:surface.connect = </Root/HoldingCube/StereoRenderMaterial/PreviewSurface.outputs:out>
+            token outputs:mtlx:surface.connect = </Root/HoldingCube/StereoRenderMaterial/UnlitSurface.outputs:out>
             token outputs:realitykit:vertex
             token outputs:surface.connect = </Root/HoldingCube/StereoRenderMaterial/DefaultSurfaceShader.outputs:surface>
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["outputs:realitykit:vertex"]
             float2 ui:nodegraph:realitykit:subgraphOutputs:pos = (294.52734, 89.87109)
             float2 ui:nodegraph:realitykit:subgraphOutputs:size = (181.5, 99)
-            int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 1215
+            int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 1246
 
             def Shader "DefaultSurfaceShader" (
                 active = false
@@ -55,24 +56,6 @@ def Xform "Root"
                 color3f inputs:diffuseColor = (1, 1, 1)
                 float inputs:roughness = 0.75
                 token outputs:surface
-            }
-
-            def Shader "PreviewSurface"
-            {
-                uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
-                float inputs:clearcoat
-                float inputs:clearcoatRoughness
-                color3f inputs:diffuseColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
-                color3f inputs:emissiveColor
-                float inputs:metallic
-                float3 inputs:normal
-                float inputs:opacity
-                float inputs:roughness
-                token outputs:out
-                float2 ui:nodegraph:node:pos = (39.527344, 85.37109)
-                float2 ui:nodegraph:node:size = (148.5, 199)
-                int ui:nodegraph:node:stackingOrder = 1221
-                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = []
             }
 
             def Shader "Image"
@@ -89,7 +72,7 @@ def Xform "Root"
                 color3f outputs:out
                 float2 ui:nodegraph:node:pos = (-462.6278, 2.1553955)
                 float2 ui:nodegraph:node:size = (148.5, 199)
-                int ui:nodegraph:node:stackingOrder = 1215
+                int ui:nodegraph:node:stackingOrder = 1239
                 string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:default"]
             }
 
@@ -122,8 +105,22 @@ def Xform "Root"
                 color3f outputs:out
                 float2 ui:nodegraph:node:pos = (-205.534, 56.090256)
                 float2 ui:nodegraph:node:size = (237, 145)
-                int ui:nodegraph:node:stackingOrder = 1215
-                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
+                int ui:nodegraph:node:stackingOrder = 1254
+                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono", "outputs:out"]
+            }
+
+            def Shader "UnlitSurface"
+            {
+                uniform token info:id = "ND_realitykit_unlit_surfaceshader"
+                bool inputs:applyPostProcessToneMap = 0
+                color3f inputs:color.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                bool inputs:hasPremultipliedAlpha
+                float inputs:opacity
+                float inputs:opacityThreshold
+                token outputs:out
+                float2 ui:nodegraph:node:pos = (48.933594, 132.60547)
+                float2 ui:nodegraph:node:size = (194.5, 181)
+                int ui:nodegraph:node:stackingOrder = 1258
             }
         }
     }
