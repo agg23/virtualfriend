@@ -42,7 +42,9 @@ struct EmuView: View {
         .onAppear(perform: {
             self.queue.async {
                 while (true) {
-                    let frame = self.virtualFriend.run_frame()
+                            let inputs = pollInput()
+
+                            let frame = self.virtualFriend.run_frame(inputs)
                     let leftImage = rustVecToCIImage(frame.left)
                     let rightImage = rustVecToCIImage(frame.right)
 
@@ -56,6 +58,15 @@ struct EmuView: View {
                 }
             }
         })
+    }
+
+    func pollInput() -> FFIGamepadInputs {
+        let input = GCController.current?.input.capture()
+
+        let a = input?.buttons[.a]?.pressedInput.isPressed ?? false
+        let b = input?.buttons[.b]?.pressedInput.isPressed ?? false
+
+        return FFIGamepadInputs(a_button: a, b_button: b)
     }
 }
 

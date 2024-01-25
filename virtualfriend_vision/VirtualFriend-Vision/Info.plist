@@ -11,5 +11,14 @@
 		<key>UISceneConfigurations</key>
 		<dict/>
 	</dict>
+	<key>GCSupportsControllerUserInteraction</key>
+	<true/>
+	<key>GCSupportedGameControllers</key>
+	<array>
+		<dict>
+			<key>ProfileName</key>
+			<string>ExtendedGamepad</string>
+		</dict>
+	</array>
 </dict>
 </plist>

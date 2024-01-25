@@ -1,4 +1,4 @@
-use ffi::FFIFrame;
+use ffi::{FFIFrame, FFIGamepadInputs};
 use virtualfriend::{gamepad::GamepadInputs, Frame};
 
 #[swift_bridge::bridge]
@@ -9,13 +9,19 @@ mod ffi {
         right: Vec<u8>,
     }
 
+    #[swift_bridge(swift_repr = "struct")]
+    struct FFIGamepadInputs {
+        a_button: bool,
+        b_button: bool,
+    }
+
     extern "Rust" {
         type VirtualFriend;
 
         #[swift_bridge(init)]
         fn new(rom_path: String) -> VirtualFriend;
 
-        fn run_frame(&mut self) -> FFIFrame;
+        fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
     }
 }
 
@@ -30,13 +36,8 @@ impl VirtualFriend {
         }
     }
 
-    fn run_frame(&mut self) -> FFIFrame {
-        self.core
-            .run_frame(GamepadInputs {
-                a_button: false,
-                b_button: false,
-            })
-            .into()
+    fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
+        self.core.run_frame(inputs.into()).into()
     }
 }
 
@@ -48,5 +49,15 @@ impl From<Frame> for FFIFrame {
             left: value.left,
             right: value.right,
         }
+    }
+}
+
+impl FFIGamepadInputs {}
+
+impl From<FFIGamepadInputs> for GamepadInputs {
+    fn from(value: FFIGamepadInputs) -> Self {
+        let FFIGamepadInputs { a_button, b_button } = value;
+
+        GamepadInputs { a_button, b_button }
     }
 }
