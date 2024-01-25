@@ -22,12 +22,12 @@ def Xform "Root"
         {
             over "StereoRenderMaterial"
             {
-                asset inputs:Left_Image (
+                asset inputs:Left_Image = None (
                     customData = {
                         dictionary realitykit = {
                             float2 positionInSubgraph = (-940.77747, 46.325825)
                             float2 sizeInSubgraph = (138.5, 53)
-                            int stackingOrderInSubgraph = 720
+                            int stackingOrderInSubgraph = 724
                         }
                     }
                 )
@@ -41,6 +41,7 @@ def Xform "Root"
                     }
                 )
                 float2 ui:nodegraph:realitykit:subgraphOutputs:size = (181.5, 99)
+                int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 724
 
                 over "Image"
                 {
@@ -59,7 +60,10 @@ def Xform "Root"
 
                 over "PreviewSurface"
                 {
+                    color3f inputs:diffuseColor.connect = </Root/VBStereoRenderRealityKit/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                    color3f inputs:emissiveColor.connect = </Root/VBStereoRenderRealityKit/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
                     float2 ui:nodegraph:node:size = (159.5, 307)
+                    int ui:nodegraph:node:stackingOrder = 723
                 }
             }
         }

@@ -23,7 +23,7 @@ def Xform "Root"
                     dictionary realitykit = {
                         float2 positionInSubgraph = (-940.77747, 46.325825)
                         float2 sizeInSubgraph = (138.5, 53)
-                        int stackingOrderInSubgraph = 720
+                        int stackingOrderInSubgraph = 724
                     }
                 }
             )
@@ -57,6 +57,7 @@ def Xform "Root"
             def Shader "PreviewSurface"
             {
                 uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
+                float inputs:clearcoat
                 float inputs:clearcoatRoughness
                 color3f inputs:diffuseColor.connect = None
                 color3f inputs:emissiveColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>

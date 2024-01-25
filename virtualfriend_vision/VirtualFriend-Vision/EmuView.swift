@@ -19,40 +19,12 @@ struct EmuView: View {
     let queue: DispatchQueue
     let virtualFriend: VirtualFriend!
 
-    @State var image: CGImage
-
     let context = CIContext()
 
-    let drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: 384, height: 224, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
-
-    var leftImage = UIImage(named: "Untitled")!
-
-    @State private var cancellables = Set<AnyCancellable>()
+    @StateObject var streamingStereoImage = StreamingStereoImage(image: StereoImage(left: nil, right: nil))
 
     init() {
         self.queue = DispatchQueue(label: "emu", qos: .userInteractive)
-
-        var data = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
-
-        for i in 0..<PIXEL_BYTE_COUNT {
-            data[i] = 0
-        }
-
-        let colorspace = CGColorSpaceCreateDeviceRGB()
-        let rgbData = CFDataCreate(nil, data, PIXEL_BYTE_COUNT)!
-        let provider = CGDataProvider(data: rgbData)!
-        let image = CGImage(width: PIXEL_WIDTH,
-                       height: PIXEL_HEIGHT,
-                       bitsPerComponent: 8,
-                       bitsPerPixel: 8 * 3,
-                       bytesPerRow: PIXEL_WIDTH * 3,
-                       space: colorspace,
-                       bitmapInfo: CGBitmapInfo(rawValue: 0),
-                       provider: provider,
-                       decode: nil,
-                       shouldInterpolate: true,
-                       intent: CGColorRenderingIntent.defaultIntent)!
-        self.image = image
 
         let url = Bundle.main.url(forResource: "Mario's Tennis (Japan, USA)", withExtension: "vb")
 
@@ -66,86 +38,24 @@ struct EmuView: View {
     }
 
     var body: some View {
-        RealityView { content in
-            // Add the initial RealityKit content
-            if let scene = try? await Entity(named: "Scene", in: vBStereoRenderRealityKitBundle) {
-                content.add(scene)
-
-//                let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
-//                let screen = cube?.children.first(where: { $0.name == "HoldingCube" })
-//
-//                let mesh = screen?.children.first(where: { $0 is ModelEntity }) as? ModelEntity
-
-                let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
-                let mesh = cube?.children.first(where: { $0.name == "HoldingCube" }) as? ModelEntity
-
-                print(mesh)
-
-                guard var model = mesh?.model, var material = model.materials.first as? ShaderGraphMaterial else {
-                    fatalError("Cannot load material")
-                }
-                print(material.name)
-
-                let baseColor = CIImage(color: .red).cropped(to: CGRect(origin: .zero, size: .init(width: 384, height: 224)))
-                let image = context.createCGImage(baseColor, from: baseColor.extent)!
-
-                do {
-                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
-
-                    texture.replace(withDrawables: self.drawableQueue)
-
-                    try material.setParameter(name: "Left_Image", value: .textureResource(texture))
-                } catch {
-                    fatalError(error.localizedDescription)
-                }
-
-                model.materials = [material]
-                mesh?.model = model
-            }
-        }
+        StreamingStereoImageView(width: 384, height: 224, stereoImage: self.streamingStereoImage)
         .onAppear(perform: {
             self.queue.async {
                 while (true) {
                     let frame = self.virtualFriend.run_frame()
-                    let ciImage = rustVecToCIImage(frame.left)
-                    
+                    let leftImage = rustVecToCIImage(frame.left)
+                    let rightImage = rustVecToCIImage(frame.right)
+
                     // TODO: This should be flipped by Metal, not the CPU
-                    let transformedImage = ciImage.transformed(by: .init(scaleX: 1, y: -1))
-                    self.image = context.createCGImage(transformedImage, from: transformedImage.extent)!
+                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
+                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
 
-                    do {
-                        let drawable = try drawableQueue.nextDrawable()
-
-                        context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-
-                        drawable.present()
-                    } catch {
-                        print(error.localizedDescription)
+                    DispatchQueue.main.async {
+                        self.streamingStereoImage.update(left: leftTransformedImage, right: rightTransformedImage)
                     }
                 }
             }
-
-//            Timer.scheduledTimer(withTimeInterval: 5, repeats: true, block: { _ in
-//                print("Starting")
-//                let ciImage = CIImage(image: self.leftImage)!
-//                // TODO: This should be flipped by Metal, not the CPU
-//                let transformedImage = ciImage.transformed(by: .init(scaleX: 1, y: -1))
-//                self.image = context.createCGImage(transformedImage, from: transformedImage.extent)!
-//
-//                do {
-//                    let drawable = try drawableQueue.nextDrawable()
-//
-//                    print(ciImage.colorSpace)
-//                    context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-//
-//                    drawable.present()
-//                    print("Update")
-//                } catch {
-//                    print(error.localizedDescription)
-//                }
-//            })
         })
-        Image(self.image, scale: 1.0, label: Text("Hi"))
     }
 }
 

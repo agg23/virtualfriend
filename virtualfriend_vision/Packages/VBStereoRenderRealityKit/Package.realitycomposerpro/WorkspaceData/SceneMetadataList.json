@@ -24,16 +24,6 @@
       [
         "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
         "Root",
-        "HoldingCube",
-        "StereoRenderMaterial"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
-        "Root",
         "HoldingCube"
       ],
       {
@@ -47,6 +37,16 @@
       {
         "isExpanded" : true,
         "isLocked" : false
+      },
+      [
+        "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
+        "Root",
+        "HoldingCube",
+        "StereoRenderMaterial"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
       }
     ]
   },
@@ -54,8 +54,7 @@
     "objectMetadataList" : [
       [
         "A7F381D7-DA61-4240-9F27-0C7A048E80B0",
-        "Root",
-        "Cylinder"
+        "Root"
       ],
       {
         "isExpanded" : true,
@@ -63,7 +62,8 @@
       },
       [
         "A7F381D7-DA61-4240-9F27-0C7A048E80B0",
-        "Root"
+        "Root",
+        "Cylinder"
       ],
       {
         "isExpanded" : true,
@@ -73,6 +73,23 @@
   },
   "B87E11A6-CE01-41BF-B1BF-8D95453BC509" : {
     "objectMetadataList" : [
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Screen",
+        "Edge"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Edge_001"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
       [
         "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
         "Curve_002"
@@ -96,23 +113,6 @@
       {
         "isExpanded" : true,
         "isLocked" : false
-      },
-      [
-        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
-        "Screen",
-        "Edge"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
-        "Edge_001"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
       }
     ]
   },
@@ -121,16 +121,8 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "untitled"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root",
-        "Eyepiece"
+        "Eyepiece",
+        "Screen"
       ],
       {
         "isExpanded" : true,
@@ -148,6 +140,7 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
+        "VBStereoRenderRealityKit",
         "HoldingCube"
       ],
       {
@@ -157,16 +150,7 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "Eyepiece",
-        "Screen"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root"
+        "Eyepiece"
       ],
       {
         "isExpanded" : true,
@@ -183,8 +167,35 @@
       },
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "untitled"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
         "VBStereoRenderRealityKit",
+        "HoldingCube",
+        "StereoRenderMaterial"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
         "HoldingCube"
       ],
       {
