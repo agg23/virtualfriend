@@ -59,19 +59,18 @@ def Xform "Root"
                 uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
                 float inputs:clearcoat
                 float inputs:clearcoatRoughness
-                color3f inputs:diffuseColor.connect = None
+                color3f inputs:diffuseColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
                 color3f inputs:emissiveColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
-                float inputs:ior
+                float inputs:ior = 0
                 float inputs:metallic
                 float3 inputs:normal
-                float inputs:occlusion
                 float inputs:opacity
                 float inputs:opacityThreshold
-                float inputs:roughness
+                float inputs:roughness = 1
                 token outputs:out
                 float2 ui:nodegraph:node:pos = (-173.94922, 127.71875)
                 float2 ui:nodegraph:node:size = (159.5, 307)
-                int ui:nodegraph:node:stackingOrder = 720
+                int ui:nodegraph:node:stackingOrder = 723
                 string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor"]
             }
 

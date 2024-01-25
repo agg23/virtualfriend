@@ -44,6 +44,10 @@ struct StreamingStereoImageView: View {
                 content.add(scene)
 
                 let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
+
+                // Float display slightly above window
+                cube?.position = [0.0, 0.0, -0.45]
+
                 let mesh = cube?.children.first(where: { $0.name == "HoldingCube" }) as? ModelEntity
 
                 guard var model = mesh?.model, var material = model.materials.first as? ShaderGraphMaterial else {

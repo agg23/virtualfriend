@@ -159,7 +159,9 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "Cone"
+        "VBStereoRenderRealityKit",
+        "HoldingCube",
+        "StereoRenderMaterial"
       ],
       {
         "isExpanded" : true,
@@ -177,17 +179,6 @@
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
         "untitled"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root",
-        "VBStereoRenderRealityKit",
-        "HoldingCube",
-        "StereoRenderMaterial"
       ],
       {
         "isExpanded" : true,
