@@ -1,5 +1,10 @@
 {
   "pathsToIds" : {
-    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/Scene.usda" : "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85"
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/Eyepiece.usdc" : "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/Scene.usda" : "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/Test.usda" : "F9E2508F-D8C9-4649-9B5D-6AE7F07894DE",
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/untitled.usdc" : "3DA0F112-0926-429E-A286-FA5A0C61C701",
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/Untitled%20Scene.usda" : "A7F381D7-DA61-4240-9F27-0C7A048E80B0",
+    "VBStereoRenderRealityKit\/Sources\/VBStereoRenderRealityKit\/VBStereoRenderRealityKit.rkassets\/VBStereoRenderRealityKit.usda" : "5001C8E0-26AC-4CA2-B51E-C4FA21A25681"
   }
 }

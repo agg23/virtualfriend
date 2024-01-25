@@ -57,15 +57,21 @@ def Xform "Root"
             def Shader "PreviewSurface"
             {
                 uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
-                color3f inputs:diffuseColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                float inputs:clearcoatRoughness
+                color3f inputs:diffuseColor.connect = None
+                color3f inputs:emissiveColor.connect = </Root/HoldingCube/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+                float inputs:ior
                 float inputs:metallic
                 float3 inputs:normal
+                float inputs:occlusion
                 float inputs:opacity
+                float inputs:opacityThreshold
                 float inputs:roughness
                 token outputs:out
                 float2 ui:nodegraph:node:pos = (-173.94922, 127.71875)
-                float2 ui:nodegraph:node:size = (148.5, 199)
-                int ui:nodegraph:node:stackingOrder = 718
+                float2 ui:nodegraph:node:size = (159.5, 307)
+                int ui:nodegraph:node:stackingOrder = 720
+                string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor"]
             }
 
             def Shader "Image"
@@ -98,7 +104,7 @@ def Xform "Root"
                 color3f outputs:out
                 float2 ui:nodegraph:node:pos = (-433.46368, 149.68791)
                 float2 ui:nodegraph:node:size = (237, 145)
-                int ui:nodegraph:node:stackingOrder = 712
+                int ui:nodegraph:node:stackingOrder = 722
                 string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
             }
 

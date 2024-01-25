@@ -25,8 +25,7 @@ struct EmuView: View {
 
     let drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: 384, height: 224, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
 
-    var leftImage = UIImage(named: "Left")!
-    var rightImage = UIImage(named: "Right")!
+    var leftImage = UIImage(named: "Untitled")!
 
     @State private var cancellables = Set<AnyCancellable>()
 
@@ -72,17 +71,26 @@ struct EmuView: View {
             if let scene = try? await Entity(named: "Scene", in: vBStereoRenderRealityKitBundle) {
                 content.add(scene)
 
-                let cube = scene.findEntity(named: "HoldingCube") as? ModelEntity
+//                let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
+//                let screen = cube?.children.first(where: { $0.name == "HoldingCube" })
+//
+//                let mesh = screen?.children.first(where: { $0 is ModelEntity }) as? ModelEntity
 
-                guard var model = cube?.model, var material = model.materials.first as? ShaderGraphMaterial else {
+                let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
+                let mesh = cube?.children.first(where: { $0.name == "HoldingCube" }) as? ModelEntity
+
+                print(mesh)
+
+                guard var model = mesh?.model, var material = model.materials.first as? ShaderGraphMaterial else {
                     fatalError("Cannot load material")
                 }
+                print(material.name)
 
                 let baseColor = CIImage(color: .red).cropped(to: CGRect(origin: .zero, size: .init(width: 384, height: 224)))
                 let image = context.createCGImage(baseColor, from: baseColor.extent)!
 
                 do {
-                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .raw))
+                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
 
                     texture.replace(withDrawables: self.drawableQueue)
 
@@ -92,16 +100,15 @@ struct EmuView: View {
                 }
 
                 model.materials = [material]
-                cube?.model = model
+                mesh?.model = model
             }
         }
         .onAppear(perform: {
             self.queue.async {
                 while (true) {
-//                    let frame = self.virtualFriend.run_frame()
-//                    let ciImage = rustVecToCIImage(frame.left)
+                    let frame = self.virtualFriend.run_frame()
+                    let ciImage = rustVecToCIImage(frame.left)
                     
-                    let ciImage = CIImage(image: self.leftImage)!
                     // TODO: This should be flipped by Metal, not the CPU
                     let transformedImage = ciImage.transformed(by: .init(scaleX: 1, y: -1))
                     self.image = context.createCGImage(transformedImage, from: transformedImage.extent)!
@@ -109,7 +116,7 @@ struct EmuView: View {
                     do {
                         let drawable = try drawableQueue.nextDrawable()
 
-                        context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.displayP3)!)
+                        context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 
                         drawable.present()
                     } catch {
@@ -117,6 +124,26 @@ struct EmuView: View {
                     }
                 }
             }
+
+//            Timer.scheduledTimer(withTimeInterval: 5, repeats: true, block: { _ in
+//                print("Starting")
+//                let ciImage = CIImage(image: self.leftImage)!
+//                // TODO: This should be flipped by Metal, not the CPU
+//                let transformedImage = ciImage.transformed(by: .init(scaleX: 1, y: -1))
+//                self.image = context.createCGImage(transformedImage, from: transformedImage.extent)!
+//
+//                do {
+//                    let drawable = try drawableQueue.nextDrawable()
+//
+//                    print(ciImage.colorSpace)
+//                    context.render(transformedImage, to: drawable.texture, commandBuffer: .none, bounds: transformedImage.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+//
+//                    drawable.present()
+//                    print("Update")
+//                } catch {
+//                    print(error.localizedDescription)
+//                }
+//            })
         })
         Image(self.image, scale: 1.0, label: Text("Hi"))
     }

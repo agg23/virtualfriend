@@ -1,10 +1,164 @@
 {
+  "3DA0F112-0926-429E-A286-FA5A0C61C701" : {
+    "objectMetadataList" : [
+      [
+        "3DA0F112-0926-429E-A286-FA5A0C61C701",
+        "Plane"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "3DA0F112-0926-429E-A286-FA5A0C61C701",
+        "Curve"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
+  "5001C8E0-26AC-4CA2-B51E-C4FA21A25681" : {
+    "objectMetadataList" : [
+      [
+        "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
+        "Root",
+        "HoldingCube",
+        "StereoRenderMaterial"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
+        "Root",
+        "HoldingCube"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
+  "A7F381D7-DA61-4240-9F27-0C7A048E80B0" : {
+    "objectMetadataList" : [
+      [
+        "A7F381D7-DA61-4240-9F27-0C7A048E80B0",
+        "Root",
+        "Cylinder"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "A7F381D7-DA61-4240-9F27-0C7A048E80B0",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
+  "B87E11A6-CE01-41BF-B1BF-8D95453BC509" : {
+    "objectMetadataList" : [
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Curve_002"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Screen"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Screen",
+        "Edge"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
+        "Edge_001"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
   "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85" : {
     "objectMetadataList" : [
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
+        "untitled"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "Eyepiece"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "VBStereoRenderRealityKit"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
         "HoldingCube"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "Eyepiece",
+        "Screen"
       ],
       {
         "isExpanded" : true,
@@ -21,8 +175,7 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "HoldingCube",
-        "StereoRenderMaterial"
+        "Cone"
       ],
       {
         "isExpanded" : true,
@@ -33,6 +186,27 @@
         "Root",
         "VBStereoRenderRealityKit",
         "HoldingCube"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  },
+  "F9E2508F-D8C9-4649-9B5D-6AE7F07894DE" : {
+    "objectMetadataList" : [
+      [
+        "F9E2508F-D8C9-4649-9B5D-6AE7F07894DE",
+        "Root",
+        "Cylinder"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "F9E2508F-D8C9-4649-9B5D-6AE7F07894DE",
+        "Root"
       ],
       {
         "isExpanded" : true,
