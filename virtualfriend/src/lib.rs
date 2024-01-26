@@ -18,6 +18,8 @@ pub mod cpu_v810;
 pub mod gamepad;
 pub mod hardware;
 pub mod interrupt;
+#[macro_use]
+mod log;
 pub mod rom;
 pub mod timer;
 pub mod util;
