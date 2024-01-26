@@ -29,6 +29,22 @@ pub struct Gamepad {
 pub struct GamepadInputs {
     pub a_button: bool,
     pub b_button: bool,
+
+    pub right_trigger: bool,
+    pub left_trigger: bool,
+
+    pub right_dpad_up: bool,
+    pub right_dpad_right: bool,
+    pub right_dpad_left: bool,
+    pub right_dpad_down: bool,
+
+    pub left_dpad_up: bool,
+    pub left_dpad_right: bool,
+    pub left_dpad_left: bool,
+    pub left_dpad_down: bool,
+
+    pub start: bool,
+    pub select: bool,
 }
 
 impl Gamepad {
@@ -52,6 +68,18 @@ impl Gamepad {
                     self.hardware_read_counter = 0;
 
                     let button_value = match self.hardware_read_button_index {
+                        0 => inputs.right_dpad_down,
+                        1 => inputs.right_dpad_left,
+                        2 => inputs.select,
+                        3 => inputs.start,
+                        4 => inputs.left_dpad_up,
+                        5 => inputs.left_dpad_down,
+                        6 => inputs.left_dpad_left,
+                        7 => inputs.left_dpad_right,
+                        8 => inputs.right_dpad_right,
+                        9 => inputs.right_dpad_up,
+                        10 => inputs.left_trigger,
+                        11 => inputs.right_trigger,
                         12 => inputs.b_button,
                         13 => inputs.a_button,
                         _ => false,

@@ -231,6 +231,22 @@ fn main() {
                     let mut inputs = GamepadInputs {
                         a_button: false,
                         b_button: false,
+
+                        right_trigger: false,
+                        left_trigger: false,
+
+                        right_dpad_up: false,
+                        right_dpad_right: false,
+                        right_dpad_left: false,
+                        right_dpad_down: false,
+
+                        left_dpad_right: false,
+                        left_dpad_left: false,
+                        left_dpad_down: false,
+                        left_dpad_up: false,
+
+                        start: false,
+                        select: false,
                     };
 
                     match event.key_without_modifiers().as_ref() {
