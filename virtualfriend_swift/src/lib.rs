@@ -13,6 +13,22 @@ mod ffi {
     struct FFIGamepadInputs {
         a_button: bool,
         b_button: bool,
+
+        right_trigger: bool,
+        left_trigger: bool,
+
+        right_dpad_up: bool,
+        right_dpad_right: bool,
+        right_dpad_left: bool,
+        right_dpad_down: bool,
+
+        left_dpad_up: bool,
+        left_dpad_right: bool,
+        left_dpad_left: bool,
+        left_dpad_down: bool,
+
+        start: bool,
+        select: bool,
     }
 
     extern "Rust" {
@@ -56,8 +72,38 @@ impl FFIGamepadInputs {}
 
 impl From<FFIGamepadInputs> for GamepadInputs {
     fn from(value: FFIGamepadInputs) -> Self {
-        let FFIGamepadInputs { a_button, b_button } = value;
+        let FFIGamepadInputs {
+            a_button,
+            b_button,
+            right_trigger,
+            left_trigger,
+            right_dpad_up,
+            right_dpad_right,
+            right_dpad_left,
+            right_dpad_down,
+            left_dpad_up,
+            left_dpad_right,
+            left_dpad_left,
+            left_dpad_down,
+            start,
+            select,
+        } = value;
 
-        GamepadInputs { a_button, b_button }
+        GamepadInputs {
+            a_button,
+            b_button,
+            right_trigger,
+            left_trigger,
+            right_dpad_up,
+            right_dpad_right,
+            right_dpad_left,
+            right_dpad_down,
+            left_dpad_up,
+            left_dpad_right,
+            left_dpad_left,
+            left_dpad_down,
+            start,
+            select,
+        }
     }
 }

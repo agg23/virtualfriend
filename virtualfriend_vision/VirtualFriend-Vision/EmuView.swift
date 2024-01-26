@@ -31,6 +31,7 @@ struct EmuView: View {
         self.queue = DispatchQueue(label: "emu", qos: .userInteractive)
 
         let url = Bundle.main.url(forResource: "Mario's Tennis (Japan, USA)", withExtension: "vb")
+//        let url = Bundle.main.url(forResource: "test1", withExtension: "vb")
 
         guard let url = url else {
             assertionFailure("Could not find embedded ROM")
@@ -75,6 +76,38 @@ struct EmuView: View {
     }
 
     func pollInput() -> FFIGamepadInputs {
+        let keyboard = pollKeyboardInput()
+        let controller = pollControllerInput()
+
+        return keyboard.merge(controller)
+    }
+
+    func pollKeyboardInput() -> FFIGamepadInputs {
+        let keyboard = GCKeyboard.coalesced?.keyboardInput
+
+        let a = keyboard?.button(forKeyCode: .spacebar)?.isPressed ?? false
+        let b = keyboard?.button(forKeyCode: .keyC)?.isPressed ?? false
+
+        let leftTrigger = keyboard?.button(forKeyCode: .one)?.isPressed ?? false
+        let rightTrigger = keyboard?.button(forKeyCode: .three)?.isPressed ?? false
+
+        let rightDpadDown = keyboard?.button(forKeyCode: .keyK)?.isPressed ?? false
+        let rightDpadUp = keyboard?.button(forKeyCode: .keyI)?.isPressed ?? false
+        let rightDpadLeft = keyboard?.button(forKeyCode: .keyJ)?.isPressed ?? false
+        let rightDpadRight = keyboard?.button(forKeyCode: .keyL)?.isPressed ?? false
+
+        let leftDpadDown = keyboard?.button(forKeyCode: .keyS)?.isPressed ?? false
+        let leftDpadUp = keyboard?.button(forKeyCode: .keyW)?.isPressed ?? false
+        let leftDpadLeft = keyboard?.button(forKeyCode: .keyA)?.isPressed ?? false
+        let leftDpadRight = keyboard?.button(forKeyCode: .keyD)?.isPressed ?? false
+
+        let start = keyboard?.button(forKeyCode: .keyQ)?.isPressed ?? false
+        let select = keyboard?.button(forKeyCode: .keyE)?.isPressed ?? false
+
+        return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
+    }
+
+    func pollControllerInput() -> FFIGamepadInputs {
         let input = GCController.current?.input.capture()
 
         let a = input?.buttons[.a]?.pressedInput.isPressed ?? false
@@ -85,22 +118,19 @@ struct EmuView: View {
 
         let sticks = GCController.current?.extendedGamepad?.capture()
 
+        // TODO: These controls are broken in the simulator due to https://developer.apple.com/forums/thread/734774
         let rightDpadDown = sticks?.rightThumbstick.down.isPressed ?? false
         let rightDpadUp = sticks?.rightThumbstick.up.isPressed ?? false
         let rightDpadLeft = sticks?.rightThumbstick.left.isPressed ?? false
         let rightDpadRight = sticks?.rightThumbstick.right.isPressed ?? false
 
-        let dpad = input?.dpads[.directionPad]
-        let leftDpadRight = dpad?.right.isPressed ?? false
-        let leftDpadLeft = dpad?.left.isPressed ?? false
-        let leftDpadUp = dpad?.up.isPressed ?? false
-        let leftDpadDown = dpad?.down.isPressed ?? false
+        let leftDpadRight = sticks?.dpad.right.isPressed ?? false
+        let leftDpadLeft = sticks?.dpad.left.isPressed ?? false
+        let leftDpadUp = sticks?.dpad.up.isPressed ?? false
+        let leftDpadDown = sticks?.dpad.down.isPressed ?? false
 
-//        let start = sticks?.buttonOptions?.isPressed ?? false
-//        let select = input?.buttons[.options]?.pressedInput.isPressed ?? false
-        // TODO: I can't get the proper options and menu buttons to work
-        let start = input?.buttons[.y]?.pressedInput.isPressed ?? false
-        let select = input?.buttons[.x]?.pressedInput.isPressed ?? false
+        let start = sticks?.buttonMenu.isPressed ?? false
+        let select = sticks?.buttonOptions?.isPressed ?? false
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
     }

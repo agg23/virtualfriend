@@ -9,7 +9,7 @@ use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    keyboard::Key,
+    keyboard::{Key, NamedKey},
     platform::modifier_supplement::KeyEventExtModifierSupplement,
     window::WindowBuilder,
 };
@@ -122,6 +122,22 @@ fn main() {
         channel_starting_with::<GamepadInputs>(GamepadInputs {
             a_button: false,
             b_button: false,
+
+            right_trigger: false,
+            left_trigger: false,
+
+            right_dpad_up: false,
+            right_dpad_right: false,
+            right_dpad_left: false,
+            right_dpad_down: false,
+
+            left_dpad_right: false,
+            left_dpad_left: false,
+            left_dpad_down: false,
+            left_dpad_up: false,
+
+            start: false,
+            select: false,
         });
 
     create_emulator(buffer_transmitter, inputs_receiver);
@@ -136,6 +152,27 @@ fn main() {
         red: 0,
         green: 0,
         blue: 0xFF,
+    };
+
+    let mut inputs = GamepadInputs {
+        a_button: false,
+        b_button: false,
+
+        right_trigger: false,
+        left_trigger: false,
+
+        right_dpad_up: false,
+        right_dpad_right: false,
+        right_dpad_left: false,
+        right_dpad_down: false,
+
+        left_dpad_right: false,
+        left_dpad_left: false,
+        left_dpad_down: false,
+        left_dpad_up: false,
+
+        start: false,
+        select: false,
     };
 
     event_loop
@@ -228,33 +265,50 @@ fn main() {
                         return;
                     }
 
-                    let mut inputs = GamepadInputs {
-                        a_button: false,
-                        b_button: false,
-
-                        right_trigger: false,
-                        left_trigger: false,
-
-                        right_dpad_up: false,
-                        right_dpad_right: false,
-                        right_dpad_left: false,
-                        right_dpad_down: false,
-
-                        left_dpad_right: false,
-                        left_dpad_left: false,
-                        left_dpad_down: false,
-                        left_dpad_up: false,
-
-                        start: false,
-                        select: false,
-                    };
+                    let pressed = event.state == ElementState::Pressed;
 
                     match event.key_without_modifiers().as_ref() {
                         Key::Character("x") => {
-                            inputs.a_button = event.state == ElementState::Pressed;
+                            inputs.a_button = pressed;
                         }
                         Key::Character("z") => {
-                            inputs.b_button = event.state == ElementState::Pressed;
+                            inputs.b_button = pressed;
+                        }
+                        Key::Named(NamedKey::Enter) => {
+                            inputs.start = pressed;
+                        }
+                        Key::Named(NamedKey::Tab) => {
+                            inputs.select = pressed;
+                        }
+                        Key::Named(NamedKey::ArrowUp) => {
+                            inputs.left_dpad_up = pressed;
+                        }
+                        Key::Named(NamedKey::ArrowDown) => {
+                            inputs.left_dpad_down = pressed;
+                        }
+                        Key::Named(NamedKey::ArrowLeft) => {
+                            inputs.left_dpad_left = pressed;
+                        }
+                        Key::Named(NamedKey::ArrowRight) => {
+                            inputs.left_dpad_right = pressed;
+                        }
+                        Key::Character("i") => {
+                            inputs.right_dpad_up = pressed;
+                        }
+                        Key::Character("k") => {
+                            inputs.right_dpad_down = pressed;
+                        }
+                        Key::Character("j") => {
+                            inputs.right_dpad_left = pressed;
+                        }
+                        Key::Character("l") => {
+                            inputs.right_dpad_right = pressed;
+                        }
+                        Key::Character("q") => {
+                            inputs.left_trigger = pressed;
+                        }
+                        Key::Character("w") => {
+                            inputs.right_trigger = pressed;
                         }
                         _ => {}
                     }
