@@ -418,6 +418,8 @@
 				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-Vision/Preview Content\"";
 				DEVELOPMENT_TEAM = 8GHG7MV8H4;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = "";
+				"EXCLUDED_ARCHS[sdk=*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
@@ -447,6 +449,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-Vision/Preview Content\"";
 				DEVELOPMENT_TEAM = 8GHG7MV8H4;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";

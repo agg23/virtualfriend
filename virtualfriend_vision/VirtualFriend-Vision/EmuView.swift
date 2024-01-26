@@ -48,22 +48,24 @@ struct EmuView: View {
                 .onAppear(perform: {
                     self.queue.async {
                         while (true) {
-                            let inputs = pollInput()
+                            autoreleasepool {
+                                let inputs = pollInput()
 
-                            let frame = self.virtualFriend.run_frame(inputs)
-                            let leftImage = rustVecToCIImage(frame.left)
-                            let rightImage = rustVecToCIImage(frame.right)
+                                let frame = self.virtualFriend.run_frame(inputs)
+                                let leftImage = rustVecToCIImage(frame.left)
+                                let rightImage = rustVecToCIImage(frame.right)
 
-                            DispatchQueue.main.async {
-                                self.image = UIImage(cgImage: context.createCGImage(leftImage, from: leftImage.extent)!)
-                            }
+                                DispatchQueue.main.async {
+                                    self.image = UIImage(cgImage: context.createCGImage(leftImage, from: leftImage.extent)!)
+                                }
 
-                            // TODO: This should be flipped by Metal, not the CPU
-                            let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
-                            let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
+                                // TODO: This should be flipped by Metal, not the CPU
+                                let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
+                                let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
 
-                            DispatchQueue.main.async {
-                                self.streamingStereoImage.update(left: leftTransformedImage, right: rightTransformedImage)
+                                DispatchQueue.main.async {
+                                    self.streamingStereoImage.update(left: leftTransformedImage, right: rightTransformedImage)
+                                }
                             }
                         }
                     }

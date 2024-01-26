@@ -18,8 +18,6 @@ struct ContentView: View {
     @Environment(\.openImmersiveSpace) var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
 
-    var image = UIImage(named: "Left")!
-
     var body: some View {
         VStack {
             VStack (spacing: 12) {
