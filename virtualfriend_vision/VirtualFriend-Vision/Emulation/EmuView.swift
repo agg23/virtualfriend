@@ -12,11 +12,6 @@ import Combine
 
 import GameController
 
-let PIXEL_WIDTH = 384
-let PIXEL_HEIGHT = 224
-let PIXEL_COUNT = PIXEL_WIDTH * PIXEL_HEIGHT
-let PIXEL_BYTE_COUNT = PIXEL_COUNT * 4
-
 struct EmuView: View {
     let queue: DispatchQueue
     let virtualFriend: VirtualFriend!
@@ -136,24 +131,6 @@ struct EmuView: View {
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
     }
-}
-
-func rustVecToCIImage(_ vec: RustVec<UInt8>) -> CIImage {
-    var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
-
-    for i in 0..<PIXEL_COUNT {
-        let value = vec[i]
-
-        bytes[i * 4] = value
-        bytes[i * 4 + 1] = 0
-        bytes[i * 4 + 2] = 0
-        // Alpha
-        bytes[i * 4 + 3] = 255
-    }
-
-    let bitmapData = Data(bytes)
-
-    return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 }
 
 #Preview {

@@ -11,25 +11,17 @@ import RealityKit
 struct FilePickerView: View {
     @State var toggle: Bool
 
-    let stereoImage: StreamingStereoImage
-
     init() {
         self.toggle = false
-
-        let image = UIImage(named: "Blank Image")!
-
-        let ciImage = CIImage(cgImage: image.cgImage!)
-
-        self.stereoImage = StreamingStereoImage(image: StereoImage(left: ciImage, right: ciImage))
     }
 
     var body: some View {
         Grid {
             ForEach(0..<3) { _ in
                 GridRow {
-                    StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
-                    StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
-                    StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
+                    FilePickerEntry()
+                    FilePickerEntry()
+                    FilePickerEntry()
                 }
             }
         }

@@ -1,5 +1,5 @@
-use ffi::{FFIFrame, FFIGamepadInputs};
-use virtualfriend::{gamepad::GamepadInputs, Frame};
+use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest};
+use virtualfriend::{gamepad::GamepadInputs, manifest::Manifest, Frame};
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -31,6 +31,12 @@ mod ffi {
         select: bool,
     }
 
+    #[swift_bridge(swift_repr = "struct")]
+    struct FFIManifest {
+        left_frame: Vec<u8>,
+        right_frame: Vec<u8>,
+    }
+
     extern "Rust" {
         type VirtualFriend;
 
@@ -38,6 +44,10 @@ mod ffi {
         fn new(rom_path: String) -> VirtualFriend;
 
         fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
+    }
+
+    extern "Rust" {
+        fn load_manifest(manifest_path: String) -> Option<FFIManifest>;
     }
 }
 
@@ -55,6 +65,10 @@ impl VirtualFriend {
     fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
         self.core.run_frame(inputs.into()).into()
     }
+}
+
+fn load_manifest(manifest_path: String) -> Option<FFIManifest> {
+    Manifest::load(manifest_path).and_then(|m| Some(m.into()))
 }
 
 impl FFIFrame {}
@@ -104,6 +118,17 @@ impl From<FFIGamepadInputs> for GamepadInputs {
             left_dpad_down,
             start,
             select,
+        }
+    }
+}
+
+impl FFIManifest {}
+
+impl From<Manifest> for FFIManifest {
+    fn from(value: Manifest) -> Self {
+        FFIManifest {
+            left_frame: value.left_frame,
+            right_frame: value.right_frame,
         }
     }
 }

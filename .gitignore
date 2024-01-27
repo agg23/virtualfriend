@@ -3,6 +3,7 @@
 
 **/romfs
 *.vb
+*.vf
 
 *.log
 *.dump

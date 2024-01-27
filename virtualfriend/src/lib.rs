@@ -20,6 +20,7 @@ pub mod hardware;
 pub mod interrupt;
 #[macro_use]
 mod log;
+pub mod manifest;
 pub mod rom;
 pub mod timer;
 pub mod util;
