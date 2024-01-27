@@ -13,7 +13,6 @@
 		661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 661265CB2B54533800D1B343 /* libresolv.tbd */; };
 		6629A1D52B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */; };
 		6629A1D72B4E538200FE2AB3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D62B4E538200FE2AB3 /* ContentView.swift */; };
-		6629A1D92B4E538200FE2AB3 /* ImmersiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D82B4E538200FE2AB3 /* ImmersiveView.swift */; };
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
@@ -24,6 +23,8 @@
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
 		66C60F032B63382D00C1FDF4 /* test1.vb in Resources */ = {isa = PBXBuildFile; fileRef = 66C60F022B63382D00C1FDF4 /* test1.vb */; };
 		66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */; };
+		66C60F082B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf in Resources */ = {isa = PBXBuildFile; fileRef = 66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */; };
+		66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,7 +38,6 @@
 		6629A1CD2B4E538200FE2AB3 /* VirtualFriend-Vision.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VirtualFriend-Vision.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualFriend_VisionApp.swift; sourceTree = "<group>"; };
 		6629A1D62B4E538200FE2AB3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		6629A1D82B4E538200FE2AB3 /* ImmersiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveView.swift; sourceTree = "<group>"; };
 		6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */ = {isa = PBXFileReference; lastKnownFileType = file.skybox; path = ImageBasedLighting.skybox; sourceTree = "<group>"; };
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -53,6 +53,8 @@
 		6688DED62B5DF876004B2123 /* EmuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuView.swift; sourceTree = "<group>"; };
 		66C60F022B63382D00C1FDF4 /* test1.vb */ = {isa = PBXFileReference; lastKnownFileType = file; path = test1.vb; sourceTree = "<group>"; };
 		66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIGamepadInputs.swift; sourceTree = "<group>"; };
+		66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Mario's Tennis (Japan, USA).vf"; sourceTree = "<group>"; };
+		66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +96,7 @@
 		6629A1C42B4E538200FE2AB3 = {
 			isa = PBXGroup;
 			children = (
+				66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */,
 				66C60F022B63382D00C1FDF4 /* test1.vb */,
 				6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */,
 				6688DECA2B5DAC33004B2123 /* generated */,
@@ -117,9 +120,9 @@
 			children = (
 				66C60F042B63545C00C1FDF4 /* ffi */,
 				6609555E2B621FE200A47B1B /* StreamingStereoImage */,
+				66C60F092B643A3500C1FDF4 /* File Picker */,
 				6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */,
 				6629A1D62B4E538200FE2AB3 /* ContentView.swift */,
-				6629A1D82B4E538200FE2AB3 /* ImmersiveView.swift */,
 				6688DED62B5DF876004B2123 /* EmuView.swift */,
 				6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */,
 				6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */,
@@ -172,6 +175,14 @@
 				66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */,
 			);
 			path = ffi;
+			sourceTree = "<group>";
+		};
+		66C60F092B643A3500C1FDF4 /* File Picker */ = {
+			isa = PBXGroup;
+			children = (
+				66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */,
+			);
+			path = "File Picker";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,6 +251,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */,
+				66C60F082B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf in Resources */,
 				6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */,
 				6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */,
 				66C60F032B63382D00C1FDF4 /* test1.vb in Resources */,
@@ -279,7 +291,7 @@
 				6688DED72B5DF876004B2123 /* EmuView.swift in Sources */,
 				6609555D2B62175E00A47B1B /* StreamingStereoImageView.swift in Sources */,
 				660955622B62202700A47B1B /* StreamingStereoImage.swift in Sources */,
-				6629A1D92B4E538200FE2AB3 /* ImmersiveView.swift in Sources */,
+				66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */,
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,

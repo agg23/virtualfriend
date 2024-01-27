@@ -20,17 +20,13 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            VStack (spacing: 12) {
-                EmuView()
-                Toggle("Enlarge RealityView Content", isOn: $enlarge)
-                    .font(.title)
-
-                Toggle("Show ImmersiveSpace", isOn: $showImmersiveSpace)
-                    .font(.title)
-            }
-            .frame(width: 360)
-            .padding(36)
-            .glassBackgroundEffect()
+            RealityView(make: { content in
+                if let scene = try? await Entity(named: "Scene", in: vBStereoRenderRealityKitBundle) {
+                    content.add(scene)
+                }
+                let cube = ModelEntity(mesh: .generateBox(size: 0.3))
+                content.add(cube)
+            })
         }
     }
 }

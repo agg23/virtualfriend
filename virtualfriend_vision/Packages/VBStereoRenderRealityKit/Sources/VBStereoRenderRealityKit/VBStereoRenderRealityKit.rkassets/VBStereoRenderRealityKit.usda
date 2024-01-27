@@ -85,6 +85,7 @@ def Xform "Root"
                     colorSpace = "srgb_texture"
                 )
                 asset inputs:file.connect = </Root/HoldingCube/StereoRenderMaterial.inputs:Left_Image>
+                string inputs:filtertype
                 float2 inputs:texcoord
                 string inputs:uaddressmode = "periodic"
                 string inputs:vaddressmode = "periodic"
