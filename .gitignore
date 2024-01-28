@@ -1,9 +1,9 @@
 /target
 **/generated
+**/node_modules
 
 **/romfs
 *.vb
-*.vf
 
 *.log
 *.dump

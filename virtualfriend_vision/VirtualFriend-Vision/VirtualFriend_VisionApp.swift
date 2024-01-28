@@ -25,12 +25,6 @@ struct VirtualFriend_VisionApp: App {
         WindowGroup(id: "test") {
 //            ContentView()
             FilePickerView()
-            Text("test")
-            Button(action: {
-                openWindow(id: "filepicker")
-            }) {
-                Text("Open")
-            }
 //            EmuView()
         }
 //        .defaultSize(CGSize(width: 1000, height: 1000))

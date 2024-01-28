@@ -1,5 +1,9 @@
-use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest};
-use virtualfriend::{gamepad::GamepadInputs, manifest::Manifest, Frame};
+use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata};
+use virtualfriend::{
+    gamepad::GamepadInputs,
+    manifest::{Manifest, Metadata},
+    Frame,
+};
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -32,9 +36,22 @@ mod ffi {
     }
 
     #[swift_bridge(swift_repr = "struct")]
+    struct FFIMetadata {
+        title: String,
+
+        developer: String,
+        publisher: String,
+        year: String,
+
+        region: Vec<String>,
+    }
+
+    #[swift_bridge(swift_repr = "struct")]
     struct FFIManifest {
         left_frame: Vec<u8>,
         right_frame: Vec<u8>,
+
+        metadata: Option<FFIMetadata>,
     }
 
     extern "Rust" {
@@ -129,6 +146,30 @@ impl From<Manifest> for FFIManifest {
         FFIManifest {
             left_frame: value.left_frame,
             right_frame: value.right_frame,
+
+            metadata: value.metadata.map(|m| m.into()),
+        }
+    }
+}
+
+impl FFIMetadata {}
+
+impl From<Metadata> for FFIMetadata {
+    fn from(value: Metadata) -> Self {
+        let Metadata {
+            title,
+            developer,
+            publisher,
+            year,
+            region,
+        } = value;
+
+        FFIMetadata {
+            title,
+            developer,
+            publisher,
+            year,
+            region,
         }
     }
 }

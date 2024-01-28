@@ -24,6 +24,8 @@ struct FilePickerView: View {
 
                 let filteredUrls = urls.filter { url in
                     url.pathExtension == "vb"
+                }.sorted { a, b in
+                    a.lastPathComponent < b.lastPathComponent
                 }
 
                 return filteredUrls.map { url in
@@ -70,15 +72,6 @@ struct FilePickerView: View {
                         FilePickerEntry(fileUrl: file.0, hash: file.1)
                     }
                 }
-//                Grid {
-//                    ForEach(0..<3) { _ in
-//                        GridRow {
-//                            FilePickerEntry()
-//                            FilePickerEntry()
-//                            FilePickerEntry()
-//                        }
-//                    }
-//                }
             }
         }
         .fileImporter(isPresented: $selectFolder, allowedContentTypes: [.folder]) { result in
@@ -89,16 +82,6 @@ struct FilePickerView: View {
                 print("\(failure)")
             }
         }
-
-//            VStack (spacing: 12) {
-//                Text("Test")
-//                Toggle(isOn: $toggle, label: {
-//                    Text("Toggle")
-//                })
-//            }
-//            .frame(width: 600)
-//            .padding(36)
-//            .glassBackgroundEffect()
     }
 }
 

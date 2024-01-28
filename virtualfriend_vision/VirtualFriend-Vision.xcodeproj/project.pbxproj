@@ -16,14 +16,13 @@
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
+		66635BA12B66D002004FD096 /* manifests in Resources */ = {isa = PBXBuildFile; fileRef = 66635BA02B66D002004FD096 /* manifests */; };
+		66635BA32B66D1F6004FD096 /* Files.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66635BA22B66D1F6004FD096 /* Files.swift */; };
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
 		6688DED42B5DBA98004B2123 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */; };
-		6688DED52B5DBAD2004B2123 /* Mario's Tennis (Japan, USA).vb in Resources */ = {isa = PBXBuildFile; fileRef = 6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */; };
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
-		66C60F032B63382D00C1FDF4 /* test1.vb in Resources */ = {isa = PBXBuildFile; fileRef = 66C60F022B63382D00C1FDF4 /* test1.vb */; };
 		66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */; };
-		66C60F082B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf in Resources */ = {isa = PBXBuildFile; fileRef = 66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */; };
 		66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */; };
 		66C60F0E2B6595CE00C1FDF4 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */; };
 		66C60F102B6596DE00C1FDF4 /* FilePickerEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0F2B6596DE00C1FDF4 /* FilePickerEntry.swift */; };
@@ -45,18 +44,17 @@
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		6629A1E12B4E538300FE2AB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		66635BA02B66D002004FD096 /* manifests */ = {isa = PBXFileReference; lastKnownFileType = folder; name = manifests; path = ../../manifests; sourceTree = "<group>"; };
+		66635BA22B66D1F6004FD096 /* Files.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Files.swift; sourceTree = "<group>"; };
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66654C072B5B3F97008E283D /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
-		6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Mario's Tennis (Japan, USA).vb"; sourceTree = "<group>"; };
 		6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
 		6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
 		6688DECE2B5DAC33004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
 		6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftBridgeCore.swift; sourceTree = "<group>"; };
 		6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-xros-sim/debug/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
 		6688DED62B5DF876004B2123 /* EmuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuView.swift; sourceTree = "<group>"; };
-		66C60F022B63382D00C1FDF4 /* test1.vb */ = {isa = PBXFileReference; lastKnownFileType = file; path = test1.vb; sourceTree = "<group>"; };
 		66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIGamepadInputs.swift; sourceTree = "<group>"; };
-		66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Mario's Tennis (Japan, USA).vf"; sourceTree = "<group>"; };
 		66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerView.swift; sourceTree = "<group>"; };
 		66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		66C60F0F2B6596DE00C1FDF4 /* FilePickerEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerEntry.swift; sourceTree = "<group>"; };
@@ -102,9 +100,6 @@
 		6629A1C42B4E538200FE2AB3 = {
 			isa = PBXGroup;
 			children = (
-				66C60F072B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf */,
-				66C60F022B63382D00C1FDF4 /* test1.vb */,
-				6688DEBB2B5DA7C5004B2123 /* Mario's Tennis (Japan, USA).vb */,
 				6688DECA2B5DAC33004B2123 /* generated */,
 				6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */,
 				6629A1D02B4E538200FE2AB3 /* Packages */,
@@ -124,6 +119,7 @@
 		6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */ = {
 			isa = PBXGroup;
 			children = (
+				66635BA02B66D002004FD096 /* manifests */,
 				66C60F042B63545C00C1FDF4 /* ffi */,
 				6609555E2B621FE200A47B1B /* StreamingStereoImage */,
 				66C60F092B643A3500C1FDF4 /* File Picker */,
@@ -206,6 +202,7 @@
 			isa = PBXGroup;
 			children = (
 				66C60F2C2B66BA7F00C1FDF4 /* Hash.swift */,
+				66635BA22B66D1F6004FD096 /* Files.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -276,11 +273,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */,
-				66C60F082B643A1400C1FDF4 /* Mario's Tennis (Japan, USA).vf in Resources */,
 				6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */,
 				6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */,
-				66C60F032B63382D00C1FDF4 /* test1.vb in Resources */,
-				6688DED52B5DBAD2004B2123 /* Mario's Tennis (Japan, USA).vb in Resources */,
+				66635BA12B66D002004FD096 /* manifests in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +316,7 @@
 				66C60F0E2B6595CE00C1FDF4 /* Utilities.swift in Sources */,
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
+				66635BA32B66D1F6004FD096 /* Files.swift in Sources */,
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerEntry.swift in Sources */,
 			);

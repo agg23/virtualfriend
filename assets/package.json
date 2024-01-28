@@ -1,0 +1,15 @@
+{
+  "name": "converttovf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "convertToVf.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "get-pixels": "^3.3.3"
+  }
+}
