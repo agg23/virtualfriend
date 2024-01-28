@@ -10,7 +10,13 @@ import SwiftUI
 struct FilePickerEntry: View {
     let stereoImage: StreamingStereoImage
 
-    init() {
+    @Binding var fileUrl: URL
+    @Binding var hash: String?
+
+    init(fileUrl: Binding<URL>, hash: Binding<String?>) {
+        self._fileUrl = fileUrl
+        self._hash = hash
+
         let url = Bundle.main.url(forResource: "Mario's Tennis (Japan, USA)", withExtension: "vf")
 
         guard let url = url else {
@@ -33,13 +39,15 @@ struct FilePickerEntry: View {
     var body: some View {
         VStack {
             StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
-            Text("Mario's Tennis")
-                .font(.title)
-            Text("Nintendo")
+                .frame(width: 400, height: 300)
+            Text(hash ?? "")
+//            Text("Mario's Tennis")
+//                .font(.title)
+//            Text("Nintendo")
         }
     }
 }
 
 #Preview {
-    FilePickerEntry()
+    FilePickerEntry(fileUrl: .constant(URL(string: "hi")!), hash: .constant("foo"))
 }

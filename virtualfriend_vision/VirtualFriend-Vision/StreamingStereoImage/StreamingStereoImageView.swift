@@ -180,8 +180,8 @@ class RenderBuffer {
             do {
                 self.leftDrawable = try self.leftQueue.nextDrawable()
             } catch {
-                print("\(error)")
                 // Try next step
+                // print("\(error)")
             }
         }
 
@@ -189,8 +189,8 @@ class RenderBuffer {
             do {
                 self.rightDrawable = try self.rightQueue.nextDrawable()
             } catch {
-                print("\(error)")
                 // Try next step
+                // print("\(error)")
             }
         }
 
