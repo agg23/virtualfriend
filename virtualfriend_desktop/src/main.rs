@@ -1,8 +1,13 @@
-mod cpal_driver;
+mod audio_driver;
 
-use std::{collections::VecDeque, path::Path, thread};
+use std::{
+    collections::VecDeque,
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+    thread,
+};
 
-use cpal_driver::CpalDriver;
 use pixels::{Pixels, SurfaceTexture};
 use single_value_channel::{channel_starting_with, Receiver, Updater};
 use winit::{
@@ -14,13 +19,9 @@ use winit::{
     window::WindowBuilder,
 };
 
-use virtualfriend::rom::ROM;
-use virtualfriend::vip::VIP;
-use virtualfriend::{bus::Bus, vsu::VSU};
-use virtualfriend::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, vsu::traits::AudioFrame};
-use virtualfriend::{cpu_v810::CpuV810, vsu::traits::Sink};
+use virtualfriend::vsu::traits::{AudioFrame, Sink};
+use virtualfriend::VirtualFriend;
 use virtualfriend::{gamepad::GamepadInputs, Frame};
-use virtualfriend::{hardware::Hardware, VirtualFriend};
 
 const DISPLAY_WIDTH: usize = 384;
 const DISPLAY_MARGIN: usize = 40;
@@ -116,8 +117,8 @@ fn main() {
         channel_starting_with::<ThreadFrame>(ThreadFrame {
             left: initial_framebuffer.clone(),
             right: initial_framebuffer.clone(),
-        id: last_frame_id,
-    });
+            id: last_frame_id,
+        });
     let (inputs_receiver, mut inputs_transmitter) =
         channel_starting_with::<GamepadInputs>(GamepadInputs {
             a_button: false,
@@ -140,7 +141,14 @@ fn main() {
             select: false,
         });
 
-    create_emulator(buffer_transmitter, inputs_receiver);
+    let rom_path =
+        Path::new("/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb");
+
+    create_emulator(
+        buffer_transmitter,
+        inputs_receiver,
+        rom_path.to_str().unwrap().into(),
+    );
 
     let red_base = RGB {
         red: 0xFF,
@@ -175,6 +183,8 @@ fn main() {
         select: false,
     };
 
+    let mut capture_next_frame = false;
+
     event_loop
         .run(move |event, window_target| {
             window_target.set_control_flow(ControlFlow::Poll);
@@ -182,7 +192,7 @@ fn main() {
             let latest_frame = buffer_receiver.latest();
             if latest_frame.id != last_frame_id {
                 last_frame_id = latest_frame.id;
-                println!("Drawing frame");
+                // println!("Drawing frame");
                 window.request_redraw();
             }
 
@@ -195,53 +205,66 @@ fn main() {
 
                     let frame = buffer_receiver.latest();
 
-                    // for i in 0..frame.left.len() {
-                    //     let value = frame.left[i];
+                    if capture_next_frame {
+                        capture_next_frame = false;
 
-                    //     let y = i / DISPLAY_WIDTH;
-                    //     let x = i % DISPLAY_WIDTH;
+                        let mut base_path = PathBuf::from(rom_path);
+                        base_path.set_extension("vf");
 
-                    //     let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
+                        let mut file = File::create(base_path).unwrap();
 
-                    //     // Only set red
-                    //     buffer[base_address] = value;
-                    //     // buffer[base_address + 1] = value;
-                    //     // buffer[base_address + 2] = value;
-                    // }
-
-                    // for i in 0..frame.right.len() {
-                    //     let value = frame.right[i];
-
-                    //     let y = i / DISPLAY_WIDTH;
-                    //     let x = i % DISPLAY_WIDTH;
-
-                    //     let base_address =
-                    //         (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
-
-                    //     // Only set red
-                    //     buffer[base_address] = value;
-                    //     // buffer[base_address + 1] = value;
-                    //     // buffer[base_address + 2] = value;
-                    // }
+                        file.write(frame.left.as_slice());
+                        file.write(frame.right.as_slice());
+                    }
 
                     for i in 0..frame.left.len() {
-                        let left_value = frame.left[i];
-                        let right_value = frame.right[i];
+                        let value = frame.left[i];
 
                         let y = i / DISPLAY_WIDTH;
                         let x = i % DISPLAY_WIDTH;
 
                         let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
 
-                        let color = red_base.mix(left_value, right_value, &blue_base);
-
                         // Only set red
-                        buffer[base_address] = color.red;
-                        buffer[base_address + 1] = color.green;
-                        buffer[base_address + 2] = color.blue;
+                        buffer[base_address] = value;
+                        // buffer[base_address + 1] = value;
+                        // buffer[base_address + 2] = value;
                     }
 
-                    println!("Updaing buffer");
+                    for i in 0..frame.right.len() {
+                        let value = frame.right[i];
+
+                        let y = i / DISPLAY_WIDTH;
+                        let x = i % DISPLAY_WIDTH;
+
+                        let base_address =
+                            (y * COMBO_DISPLAY_WIDTH + DISPLAY_WIDTH + DISPLAY_MARGIN + x) * 4;
+
+                        // Only set red
+                        buffer[base_address] = value;
+                        // buffer[base_address + 1] = value;
+                        // buffer[base_address + 2] = value;
+                    }
+
+                    // For stereoscopic 3D
+                    // for i in 0..frame.left.len() {
+                    //     let left_value = frame.left[i];
+                    //     let right_value = frame.right[i];
+
+                    //     let y = i / DISPLAY_WIDTH;
+                    //     let x = i % DISPLAY_WIDTH;
+
+                    //     let base_address = (y * COMBO_DISPLAY_WIDTH + x) * 4;
+
+                    //     let color = red_base.mix(left_value, right_value, &blue_base);
+
+                    //     // Only set red
+                    //     buffer[base_address] = color.red;
+                    //     buffer[base_address + 1] = color.green;
+                    //     buffer[base_address + 2] = color.blue;
+                    // }
+
+                    // println!("Updaing buffer");
                     pixels.render().unwrap();
                 }
                 Event::WindowEvent {
@@ -310,6 +333,9 @@ fn main() {
                         Key::Character("w") => {
                             inputs.right_trigger = pressed;
                         }
+                        Key::Character("c") => {
+                            capture_next_frame = true;
+                        }
                         _ => {}
                     }
 
@@ -342,12 +368,10 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
 fn create_emulator(
     buffer_transmitter: Updater<ThreadFrame>,
     mut inputs_receiver: Receiver<GamepadInputs>,
+    rom_path: String,
 ) {
     thread::spawn(move || {
-        let mut virtualfriend = VirtualFriend::new(
-            "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb"
-                .into(),
-        );
+        let mut virtualfriend = VirtualFriend::new(rom_path);
 
         let mut frame_id = 0;
 
@@ -356,7 +380,7 @@ fn create_emulator(
 
             frame_id += 1;
 
-                    buffer_transmitter
+            buffer_transmitter
                 .update(ThreadFrame::from(frame, frame_id))
                 .expect("Could not update frame");
         }
