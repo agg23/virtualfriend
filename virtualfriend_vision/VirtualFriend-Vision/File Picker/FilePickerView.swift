@@ -8,6 +8,11 @@
 import SwiftUI
 import RealityKit
 
+let IMAGE_WIDTH = 420.0
+let IMAGE_HEIGHT = 224.0
+
+let GRID_SPACING = 40.0
+
 struct FilePickerView: View {
     @AppStorage("romDirectory") var romDirectory: String?
 
@@ -43,9 +48,9 @@ struct FilePickerView: View {
     }
 
     private let columns = [
-        GridItem(.fixed(400), spacing: 40, alignment: nil),
-        GridItem(.fixed(400), spacing: 40, alignment: nil),
-        GridItem(.fixed(400), spacing: 40, alignment: nil)
+        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
+        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
+        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil)
     ]
 
     init() {
@@ -67,9 +72,9 @@ struct FilePickerView: View {
                     Text("Choose folder")
                 }
             } else {
-                LazyVGrid(columns: self.columns, spacing: 100) {
+                LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
                     ForEach(self.directoryContents, id: \.0) { file in
-                        FilePickerEntry(fileUrl: file.0, hash: file.1)
+                        FilePickerEntry(fileUrl: file.0, hash: file.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
                     }
                 }
             }

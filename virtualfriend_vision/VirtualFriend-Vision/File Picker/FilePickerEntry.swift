@@ -10,14 +10,20 @@ import SwiftUI
 struct FilePickerEntry: View {
     let stereoImage: StreamingStereoImage
 
+    let imageWidth: CGFloat
+    let imageHeight: CGFloat
+
     @Binding var fileUrl: URL
     @Binding var hash: String?
 
     let metadata: FFIMetadata?
 
-    init(fileUrl: Binding<URL>, hash: Binding<String?>) {
+    init(fileUrl: Binding<URL>, hash: Binding<String?>, imageWidth: CGFloat, imageHeight: CGFloat) {
         self._fileUrl = fileUrl
         self._hash = hash
+
+        self.imageWidth = imageWidth
+        self.imageHeight = imageHeight
 
         guard let manifest = FilePickerEntry.getManifest(hash: hash.wrappedValue) else {
             let manifest = FilePickerEntry.getUnknownManifest()
@@ -32,17 +38,35 @@ struct FilePickerEntry: View {
     }
 
     var body: some View {
-        VStack {
-            StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
-                .frame(width: 400, height: 300)
-            Text(self.metadata?.title.toString() ?? fileUrl.deletingPathExtension().lastPathComponent)
-                .font(.title)
-            if let metadata = self.metadata {
-                Text(metadata.publisher.toString() + " " + metadata.year.toString())
-            } else {
-                // Placeholder
-                // TODO: There should be something better that can be done here
-                Text(" ")
+        ZStack {
+            Button {
+                print(self.fileUrl.lastPathComponent)
+            } label: {
+                VStack {
+                    // Placeholder of the size of the StreamingStereoImageView
+                    Color(.clear)
+                        .frame(width: self.imageWidth, height: self.imageHeight)
+                    Text(self.metadata?.title.toString() ?? fileUrl.deletingPathExtension().lastPathComponent)
+                        .font(.title)
+                    if let metadata = self.metadata {
+                        Text(metadata.publisher.toString() + " " + metadata.year.toString())
+                    } else {
+                        // Placeholder
+                        // TODO: There should be something better that can be done here
+                        Text(" ")
+                    }
+                }
+            }
+            .buttonBorderShape(.roundedRectangle)
+
+            VStack {
+//                ZStack {
+//                    Color(.green)
+//                        .frame(width: self.imageWidth, height: self.imageHeight)
+                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
+                    .frame(width: self.imageWidth, height: self.imageHeight)
+//                }
+                Spacer()
             }
         }
     }
@@ -94,5 +118,5 @@ struct FilePickerEntry: View {
 }
 
 #Preview {
-    FilePickerEntry(fileUrl: .constant(URL(string: "hi")!), hash: .constant("foo"))
+    FilePickerEntry(fileUrl: .constant(URL(string: "hi")!), hash: .constant("foo"), imageWidth: 480, imageHeight: 300)
 }

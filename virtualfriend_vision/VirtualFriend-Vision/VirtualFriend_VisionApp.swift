@@ -28,6 +28,9 @@ struct VirtualFriend_VisionApp: App {
 //            EmuView()
         }
 //        .defaultSize(CGSize(width: 1000, height: 1000))
+        // Use depth to restrict the size of RealityView. Not restricting it will result in the
+        // window displaying back by an additional `depth`
         .defaultSize(width: 1, height: 1, depth: 0.1, in: .meters)
+        .defaultSize(width: 1400, height: 1100)
     }
 }
