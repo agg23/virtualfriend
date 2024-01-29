@@ -53,7 +53,7 @@ struct StreamingStereoImageView: View {
 
     var body: some View {
         RealityView { content in
-            if let scene = try? await Entity(named: "Scene", in: vBStereoRenderRealityKitBundle) {
+            if let scene = await StereoImageScene.shared.scene {
                 content.add(scene)
 
                 let cube = scene.findEntity(named: "VBStereoRenderRealityKit")
