@@ -59,7 +59,7 @@ struct FilePickerEntry: View {
                     }
                 }
             }
-            .buttonBorderShape(.roundedRectangle)
+            .buttonBorderShape(.roundedRectangle(radius: 20.0))
 
             VStack {
 //                ZStack {
