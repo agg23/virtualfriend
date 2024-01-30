@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct FilePickerEntry: View {
+    @Environment(\.openWindow) var openWindow
+
     let stereoImage: StreamingStereoImage
 
     let imageWidth: CGFloat
@@ -40,7 +42,7 @@ struct FilePickerEntry: View {
     var body: some View {
         ZStack {
             Button {
-                print(self.fileUrl.lastPathComponent)
+                openWindow(id: "emu", value: self.fileUrl)
             } label: {
                 VStack {
                     // Placeholder of the size of the StreamingStereoImageView

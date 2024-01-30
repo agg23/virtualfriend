@@ -13,28 +13,21 @@ import Combine
 import GameController
 
 struct EmuView: View {
-    let queue: DispatchQueue
-    let virtualFriend: VirtualFriend!
+    let queue = DispatchQueue(label: "emu", qos: .userInteractive)
 
     let context = CIContext()
 
+    @Binding var fileUrl: URL?
+
     @StateObject var streamingStereoImage = StreamingStereoImage(image: StereoImage(left: nil, right: nil))
+    @State var virtualFriend: VirtualFriend?
 
     @State var image: UIImage?
 
-    init() {
-        self.queue = DispatchQueue(label: "emu", qos: .userInteractive)
+    init(fileUrl: Binding<URL?>) {
+        self._fileUrl = fileUrl
 
-        let url = Bundle.main.url(forResource: "Mario's Tennis (Japan, USA)", withExtension: "vb")
-//        let url = Bundle.main.url(forResource: "test1", withExtension: "vb")
-
-        guard let url = url else {
-            assertionFailure("Could not find embedded ROM")
-            self.virtualFriend = nil
-            return
-        }
-
-        self.virtualFriend = VirtualFriend(url.path(percentEncoded: false))
+        self.virtualFriend = VirtualFriend(fileUrl.wrappedValue!.path(percentEncoded: false))
     }
 
     var body: some View {
@@ -46,7 +39,9 @@ struct EmuView: View {
                             autoreleasepool {
                                 let inputs = pollInput()
 
-                                let frame = self.virtualFriend.run_frame(inputs)
+                                guard let frame = self.virtualFriend?.run_frame(inputs) else {
+                                    return
+                                }
                                 let leftImage = rustVecToCIImage(frame.left)
                                 let rightImage = rustVecToCIImage(frame.right)
 
@@ -69,6 +64,13 @@ struct EmuView: View {
             if let image = image {
                 Image(uiImage: image)
             }
+        }
+        .onChange(of: self.fileUrl) {
+            self.virtualFriend = VirtualFriend(self.fileUrl!.path(percentEncoded: false))
+        }
+        .onAppear {
+            // I'm not sure why init doesn't cover this
+            self.virtualFriend = VirtualFriend(self.fileUrl!.path(percentEncoded: false))
         }
     }
 
@@ -134,5 +136,5 @@ struct EmuView: View {
 }
 
 #Preview {
-    EmuView()
+    EmuView(fileUrl: .constant(nil))
 }

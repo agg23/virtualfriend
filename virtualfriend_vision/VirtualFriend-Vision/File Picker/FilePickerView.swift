@@ -16,7 +16,7 @@ let GRID_SPACING = 40.0
 struct FilePickerView: View {
     @AppStorage("romDirectory") var romDirectory: String?
 
-    @State var selectFolder: Bool
+    @State var selectFolder = false
 
     private var directoryContents: Binding<[(URL, String?)]> {
         Binding {
@@ -52,10 +52,6 @@ struct FilePickerView: View {
         GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
         GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil)
     ]
-
-    init() {
-        self.selectFolder = false
-    }
 
     var body: some View {
         VStack {
