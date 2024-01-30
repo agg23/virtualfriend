@@ -23,5 +23,6 @@ struct VirtualFriend_VisionApp: App {
             EmuView(fileUrl: url)
         }
         .windowStyle(.volumetric)
+        .defaultSize(width: 2, height: 2, depth: 0.1, in: .meters)
     }
 }

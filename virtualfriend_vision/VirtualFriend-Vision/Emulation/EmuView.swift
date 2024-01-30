@@ -32,7 +32,7 @@ struct EmuView: View {
 
     var body: some View {
         VStack {
-            StreamingStereoImageView(width: 384, height: 224, stereoImage: self.streamingStereoImage)
+            StreamingStereoImageView(width: 384, height: 224, stereoImage: self.streamingStereoImage, scale: 5.0)
                 .onAppear(perform: {
                     self.queue.async {
                         while (true) {
@@ -60,10 +60,9 @@ struct EmuView: View {
                         }
                     }
                 })
-
-            if let image = image {
-                Image(uiImage: image)
-            }
+//            if let image = image {
+//                Image(uiImage: image)
+//            }
         }
         .onChange(of: self.fileUrl) {
             self.virtualFriend = VirtualFriend(self.fileUrl!.path(percentEncoded: false))
