@@ -27,7 +27,7 @@ struct EmuView: View {
     init(fileUrl: Binding<URL?>) {
         self._fileUrl = fileUrl
 
-        self.virtualFriend = VirtualFriend(fileUrl.wrappedValue!.path(percentEncoded: false))
+        loadEmulator()
     }
 
     var body: some View {
@@ -65,13 +65,38 @@ struct EmuView: View {
 //            }
         }
         .onChange(of: self.fileUrl) {
-            self.virtualFriend = VirtualFriend(self.fileUrl!.path(percentEncoded: false))
+            loadEmulator()
         }
         .onAppear {
             // I'm not sure why init doesn't cover this
-            self.virtualFriend = VirtualFriend(self.fileUrl!.path(percentEncoded: false))
+            loadEmulator()
         }
     }
+
+    func loadEmulator() {
+        let _ = self.fileUrl!.startAccessingSecurityScopedResource()
+
+        let data: Data
+
+        do {
+            data = try Data(contentsOf: self.fileUrl!)
+        } catch {
+            print(error)
+            return
+        }
+
+        let array = data.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [UInt8] in
+            let buffer = pointer.bindMemory(to: UInt8.self)
+            return buffer.map { UInt8($0) }
+        }
+
+        self.virtualFriend = array.withUnsafeBufferPointer { pointer in
+            return VirtualFriend(pointer)
+        }
+
+        self.fileUrl!.stopAccessingSecurityScopedResource()
+    }
+
 
     func pollInput() -> FFIGamepadInputs {
         let keyboard = pollKeyboardInput()

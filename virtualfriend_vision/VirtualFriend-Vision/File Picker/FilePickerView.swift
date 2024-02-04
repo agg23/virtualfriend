@@ -14,18 +14,33 @@ let IMAGE_HEIGHT = 224.0
 let GRID_SPACING = 40.0
 
 struct FilePickerView: View {
-    @AppStorage("romDirectory") var romDirectory: String?
+//    @AppStorage("romDirectory") var romDirectory: String?
+    @State var romDirectory: URL?
 
     @State var selectFolder = false
 
     private var directoryContents: Binding<[(URL, String?)]> {
         Binding {
-            guard let romDirectory = self.romDirectory, let url = URL(string: romDirectory) else {
+//            guard let romDirectory = self.romDirectory, let url = URL(string: romDirectory) else {
+//                return []
+//            }
+            guard let url = self.romDirectory else {
                 return []
             }
 
             do {
+                print(url.startAccessingSecurityScopedResource())
+
+                var error: NSError? = nil
+                NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { (url) in
+                    for case let file as URL in FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.nameKey])! {
+                        print("Opening", file.startAccessingSecurityScopedResource())
+                    }
+                }
+
                 let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey])
+
+//                url.stopAccessingSecurityScopedResource()
 
                 let filteredUrls = urls.filter { url in
                     url.pathExtension == "vb"
@@ -34,12 +49,15 @@ struct FilePickerView: View {
                 }
 
                 return filteredUrls.map { url in
+                    let _ = url.startAccessingSecurityScopedResource()
                     let hash = hashOfFile(atUrl: url)
+                    url.stopAccessingSecurityScopedResource()
 
                     return (url, hash)
                 }
             } catch {
                 // Directory not found
+                print(error)
                 return []
             }
         } set: { _, _ in
@@ -89,7 +107,8 @@ struct FilePickerView: View {
         .fileImporter(isPresented: $selectFolder, allowedContentTypes: [.folder]) { result in
             switch result {
             case .success(let url):
-                self.romDirectory = url.absoluteString
+//                self.romDirectory = url.absoluteString
+                self.romDirectory = url
             case .failure(let failure):
                 print("\(failure)")
             }

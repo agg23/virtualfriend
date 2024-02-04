@@ -65,7 +65,7 @@ struct FilePickerEntry: View {
 //                ZStack {
 //                    Color(.green)
 //                        .frame(width: self.imageWidth, height: self.imageHeight)
-                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, zPosition: -0.18, scale: 0.9)
+                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, scale: 0.9)
                     .frame(width: self.imageWidth, height: self.imageHeight)
 //                }
                 Spacer()

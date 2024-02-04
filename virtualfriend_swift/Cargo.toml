@@ -5,7 +5,8 @@ edition = "2021"
 
 [lib]
 name = "virtualfriend_swift"
-crate-type = ["staticlib", "cdylib"]
+#crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib"]
 
 [build-dependencies]
 swift-bridge-build = "0.1"

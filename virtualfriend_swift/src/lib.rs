@@ -58,7 +58,7 @@ mod ffi {
         type VirtualFriend;
 
         #[swift_bridge(init)]
-        fn new(rom_path: String) -> VirtualFriend;
+        fn new(rom_data: &[u8]) -> VirtualFriend;
 
         fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
     }
@@ -73,9 +73,9 @@ pub struct VirtualFriend {
 }
 
 impl VirtualFriend {
-    fn new(rom_path: String) -> Self {
+    fn new(rom_data: &[u8]) -> Self {
         VirtualFriend {
-            core: virtualfriend::VirtualFriend::new(rom_path),
+            core: virtualfriend::VirtualFriend::new(rom_data.to_vec()),
         }
     }
 

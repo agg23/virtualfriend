@@ -463,7 +463,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros-sim/debug";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -493,7 +493,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros-sim/debug";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";

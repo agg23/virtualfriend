@@ -268,7 +268,7 @@ impl VIP {
 
         match address {
             0x0..=0x3_FFFF => self.vram.set_u16(address, value),
-            0x4_0000..=0x5_DFFF => panic!("Invalid VIP address"),
+            // 0x4_0000..=0x5_DFFF => panic!("Invalid VIP address"),
             0x5_F800..=0x5_F801 => {
                 // INTPND Interrupt pending
                 // Writes have no effect

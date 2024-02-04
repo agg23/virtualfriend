@@ -21,10 +21,8 @@ pub struct ROM {
 }
 
 impl ROM {
-    pub fn load_from_file(path: &Path) -> Self {
-        let rom_buffer = fs::read(path)
-            .expect("Could not find file")
-            .into_boxed_slice();
+    pub fn load_from_vec(vec: Vec<u8>) -> Self {
+        let rom_buffer = vec.into_boxed_slice();
 
         if rom_buffer.len() > MAX_ROM_SIZE {
             panic!("ROM is too large");
@@ -46,6 +44,12 @@ impl ROM {
             ram,
             ram_size: None,
         }
+    }
+
+    pub fn load_from_file(path: &Path) -> Self {
+        let rom_buffer = fs::read(path).expect("Could not find file");
+
+        ROM::load_from_vec(rom_buffer)
     }
 
     /// TODO: This is debug init to match with Mednafen
