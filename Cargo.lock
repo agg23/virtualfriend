@@ -960,8 +960,7 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.151"
-source = "git+https://github.com/agg23/libc.git?rev=db0fbbf6b554915eaffd42fb8703ab0b11625573#db0fbbf6b554915eaffd42fb8703ab0b11625573"
+version = "0.2.153"
 
 [[package]]
 name = "libloading"

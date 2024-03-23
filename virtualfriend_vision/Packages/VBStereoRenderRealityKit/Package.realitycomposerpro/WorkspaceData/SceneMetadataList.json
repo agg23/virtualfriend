@@ -23,9 +23,7 @@
     "objectMetadataList" : [
       [
         "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
-        "Root",
-        "HoldingCube",
-        "StereoRenderMaterial"
+        "Root"
       ],
       {
         "isExpanded" : true,
@@ -42,7 +40,9 @@
       },
       [
         "5001C8E0-26AC-4CA2-B51E-C4FA21A25681",
-        "Root"
+        "Root",
+        "HoldingCube",
+        "StereoRenderMaterial"
       ],
       {
         "isExpanded" : true,
@@ -100,7 +100,7 @@
       },
       [
         "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
-        "Edge_001"
+        "root"
       ],
       {
         "isExpanded" : true,
@@ -108,7 +108,7 @@
       },
       [
         "B87E11A6-CE01-41BF-B1BF-8D95453BC509",
-        "root"
+        "Edge_001"
       ],
       {
         "isExpanded" : true,
@@ -118,15 +118,6 @@
   },
   "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85" : {
     "objectMetadataList" : [
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root",
-        "VBStereoRenderRealityKit"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
@@ -141,17 +132,6 @@
         "Root",
         "VBStereoRenderRealityKit",
         "HoldingCube"
-      ],
-      {
-        "isExpanded" : true,
-        "isLocked" : false
-      },
-      [
-        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
-        "Root",
-        "VBStereoRenderRealityKit",
-        "HoldingCube",
-        "StereoRenderMaterial"
       ],
       {
         "isExpanded" : true,
@@ -177,6 +157,24 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
+        "VBStereoRenderRealityKit"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
+        "Eyepiece"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
+        "Root",
         "Eyepiece",
         "Screen"
       ],
@@ -187,7 +185,9 @@
       [
         "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85",
         "Root",
-        "Eyepiece"
+        "VBStereoRenderRealityKit",
+        "HoldingCube",
+        "StereoRenderMaterial"
       ],
       {
         "isExpanded" : true,

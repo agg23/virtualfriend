@@ -1,8 +1,8 @@
 [patch.crates-io]
-libc = { git = "https://github.com/agg23/libc.git", rev = "db0fbbf6b554915eaffd42fb8703ab0b11625573" }
+#libc = { git = "https://github.com/agg23/libc.git", rev = "db0fbbf6b554915eaffd42fb8703ab0b11625573" }
 
-[target.aarch64-apple-xros-sim.dependencies.std]
+[target.aarch64-apple-visionos-sim.dependencies.std]
 features = ["panic-unwind"]
 
-[target.aarch64-apple-xros.dependencies.std]
+[target.aarch64-apple-visionos.dependencies.std]
 features = ["panic-unwind"]

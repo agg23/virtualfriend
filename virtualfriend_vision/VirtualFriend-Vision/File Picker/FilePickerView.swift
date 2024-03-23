@@ -109,8 +109,9 @@ struct FilePickerView: View {
             case .success(let url):
 //                self.romDirectory = url.absoluteString
                 self.romDirectory = url
+                print("Selected \(url)")
             case .failure(let failure):
-                print("\(failure)")
+                print("Failed to open folder: \(failure)")
             }
         }
     }

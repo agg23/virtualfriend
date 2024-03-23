@@ -18,9 +18,9 @@
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
 		66635BA12B66D002004FD096 /* manifests in Resources */ = {isa = PBXBuildFile; fileRef = 66635BA02B66D002004FD096 /* manifests */; };
 		66635BA32B66D1F6004FD096 /* Files.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66635BA22B66D1F6004FD096 /* Files.swift */; };
+		6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */; };
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
-		6688DED42B5DBA98004B2123 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */; };
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
 		66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */; };
 		66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */; };
@@ -48,6 +48,7 @@
 		66635BA22B66D1F6004FD096 /* Files.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Files.swift; sourceTree = "<group>"; };
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66654C072B5B3F97008E283D /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
+		6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-visionos-sim/release/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
 		6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
 		6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
 		6688DECE2B5DAC33004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
@@ -67,7 +68,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */,
-				6688DED42B5DBA98004B2123 /* libvirtualfriend_swift.a in Frameworks */,
+				6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */,
 				661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -89,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */,
+				6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */,
 				66136E262B5D948300D580BF /* libvirtualfriend.a */,
 				66654C052B5AF3E0008E283D /* libxrostest.a */,
 				66136E242B5B419600D580BF /* libxrostest.a */,
@@ -463,7 +465,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros/release";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -493,7 +495,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-xros/release";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";

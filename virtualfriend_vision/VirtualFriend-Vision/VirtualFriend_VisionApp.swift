@@ -9,6 +9,11 @@ import SwiftUI
 
 @main
 struct VirtualFriend_VisionApp: App {
+    init() {
+        // Print simulator run location
+        print(NSHomeDirectory())
+    }
+
     var body: some Scene {
         WindowGroup(id: "filepicker") {
             FilePickerView()
