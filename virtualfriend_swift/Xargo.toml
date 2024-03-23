@@ -1,5 +1,6 @@
 [patch.crates-io]
-#libc = { git = "https://github.com/agg23/libc.git", rev = "db0fbbf6b554915eaffd42fb8703ab0b11625573" }
+# Patch libc in the Vision specific build
+libc = { path = "../../libc" }
 
 [target.aarch64-apple-visionos-sim.dependencies.std]
 features = ["panic-unwind"]
