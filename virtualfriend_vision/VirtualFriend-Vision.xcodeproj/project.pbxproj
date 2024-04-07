@@ -19,7 +19,6 @@
 		66635BA12B66D002004FD096 /* manifests in Resources */ = {isa = PBXBuildFile; fileRef = 66635BA02B66D002004FD096 /* manifests */; };
 		66635BA32B66D1F6004FD096 /* Files.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66635BA22B66D1F6004FD096 /* Files.swift */; };
 		6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */; };
-		6666F3632BAF606C009D5A29 /* BLOX 2.vb in Resources */ = {isa = PBXBuildFile; fileRef = 6666F3622BAF606C009D5A29 /* BLOX 2.vb */; };
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
@@ -50,7 +49,6 @@
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66654C072B5B3F97008E283D /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-visionos-sim/release/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
-		6666F3622BAF606C009D5A29 /* BLOX 2.vb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BLOX 2.vb"; sourceTree = "<group>"; };
 		6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
 		6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
 		6688DECE2B5DAC33004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
@@ -124,7 +122,6 @@
 		6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */ = {
 			isa = PBXGroup;
 			children = (
-				6666F3622BAF606C009D5A29 /* BLOX 2.vb */,
 				66635BA02B66D002004FD096 /* manifests */,
 				66C60F042B63545C00C1FDF4 /* ffi */,
 				6609555E2B621FE200A47B1B /* StreamingStereoImage */,
@@ -280,7 +277,6 @@
 				6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */,
 				6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */,
 				6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */,
-				6666F3632BAF606C009D5A29 /* BLOX 2.vb in Resources */,
 				66635BA12B66D002004FD096 /* manifests in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -470,6 +466,8 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=xros*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=xrsimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -500,6 +498,8 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=xros*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=xrsimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
