@@ -1,0 +1,148 @@
+#usda 1.0
+(
+    defaultPrim = "Root"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "Root"
+{
+    reorder nameChildren = ["StereoRenderMaterial", "HoldingCube"]
+    def Material "StereoRenderMaterial"
+    {
+        asset inputs:Left_Image (
+            colorSpace = "srgb_texture"
+            customData = {
+                dictionary realitykit = {
+                    float2 positionInSubgraph = (-940.77747, 46.325825)
+                    float2 sizeInSubgraph = (138.5, 53)
+                    int stackingOrderInSubgraph = 743
+                }
+            }
+        )
+        asset inputs:Right_Image (
+            colorSpace = "srgb_texture"
+            customData = {
+                dictionary realitykit = {
+                    float2 positionInSubgraph = (-942.0648, 212.37627)
+                    float2 sizeInSubgraph = (146.5, 53)
+                    int stackingOrderInSubgraph = 744
+                }
+            }
+        )
+        token outputs:mtlx:surface.connect = </Root/StereoRenderMaterial/PBRSurface.outputs:out>
+        token outputs:realitykit:vertex
+        token outputs:surface.connect = </Root/StereoRenderMaterial/DefaultSurfaceShader.outputs:surface>
+        float2 ui:nodegraph:realitykit:subgraphOutputs:pos = (57.6875, 123.3125)
+        float2 ui:nodegraph:realitykit:subgraphOutputs:size = (181.5, 99)
+        int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 734
+
+        def Shader "DefaultSurfaceShader" (
+            active = false
+        )
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1, 1, 1)
+            float inputs:roughness = 0.75
+            token outputs:surface
+        }
+
+        def Shader "PreviewSurface"
+        {
+            uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
+            float inputs:clearcoat
+            float inputs:clearcoatRoughness = 0
+            color3f inputs:diffuseColor.connect = </Root/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            color3f inputs:emissiveColor.connect = </Root/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            float inputs:ior = 0
+            float inputs:metallic
+            float3 inputs:normal
+            float inputs:occlusion
+            float inputs:opacity
+            float inputs:opacityThreshold
+            float inputs:roughness = 1
+            token outputs:out
+            float2 ui:nodegraph:node:pos = (-173.94922, 127.71875)
+            float2 ui:nodegraph:node:size = (159.5, 307)
+            int ui:nodegraph:node:stackingOrder = 747
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor"]
+        }
+
+        def Shader "Image"
+        {
+            uniform token info:id = "ND_image_color3"
+            color3f inputs:default = (1, 0, 0.009548978) (
+                colorSpace = "srgb_displayp3"
+            )
+            asset inputs:file (
+                colorSpace = "srgb_texture"
+            )
+            asset inputs:file.connect = </Root/StereoRenderMaterial.inputs:Left_Image>
+            string inputs:filtertype
+            float2 inputs:texcoord
+            string inputs:uaddressmode = "periodic"
+            string inputs:vaddressmode = "periodic"
+            color3f outputs:out
+            float2 ui:nodegraph:node:pos = (-690.5575, 95.75305)
+            float2 ui:nodegraph:node:size = (148.5, 199)
+            int ui:nodegraph:node:stackingOrder = 745
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:default"]
+        }
+
+        def Shader "Image_1"
+        {
+            uniform token info:id = "ND_image_color3"
+            color3f inputs:default = (1, 1, 1) (
+                colorSpace = "srgb_displayp3"
+            )
+            asset inputs:file.connect = </Root/StereoRenderMaterial.inputs:Right_Image>
+            string inputs:filtertype
+            float2 inputs:texcoord
+            string inputs:uaddressmode
+            string inputs:vaddressmode
+            color3f outputs:out
+            float2 ui:nodegraph:node:pos = (-691.20514, 268.43466)
+            float2 ui:nodegraph:node:size = (148.5, 199)
+            int ui:nodegraph:node:stackingOrder = 741
+        }
+
+        def Shader "PBRSurface"
+        {
+            uniform token info:id = "ND_realitykit_pbr_surfaceshader"
+            color3f inputs:baseColor = (0, 0, 0) (
+                colorSpace = "srgb_displayp3"
+            )
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0
+            color3f inputs:emissiveColor = (0, 0, 0) (
+                colorSpace = "srgb_displayp3"
+            )
+            color3f inputs:emissiveColor.connect = </Root/StereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            float inputs:metallic
+            float3 inputs:normal
+            float inputs:roughness = 1
+            float inputs:specular = 0
+            token outputs:out
+            float2 ui:nodegraph:node:pos = (-174.36328, 446.27344)
+            float2 ui:nodegraph:node:size = (167, 307)
+            int ui:nodegraph:node:stackingOrder = 991
+        }
+
+        def Shader "GeometrySwitchCameraIndex"
+        {
+            uniform token info:id = "ND_realitykit_geometry_switch_cameraindex_color3"
+            color3f inputs:left.connect = </Root/StereoRenderMaterial/Image.outputs:out>
+            color3f inputs:mono = (0, 0.08667583, 0.9863684) (
+                colorSpace = "srgb_displayp3"
+            )
+            color3f inputs:mono.connect = </Root/StereoRenderMaterial/Image.outputs:out>
+            color3f inputs:right.connect = </Root/StereoRenderMaterial/Image_1.outputs:out>
+            color3f outputs:out
+            float2 ui:nodegraph:node:pos = (-434.48322, 169.02385)
+            float2 ui:nodegraph:node:size = (237, 145)
+            int ui:nodegraph:node:stackingOrder = 761
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
+        }
+    }
+}
+

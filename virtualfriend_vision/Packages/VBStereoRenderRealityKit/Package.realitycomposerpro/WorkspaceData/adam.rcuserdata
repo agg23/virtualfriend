@@ -1,8 +1,8 @@
 {
-  "advancedEditorSelectedIdentifier" : "ShaderGraphEditorPluginID",
+  "advancedEditorSelectedIdentifier" : "ProjectBrowser",
   "openSceneRelativePaths" : [
-    "Scene.usda",
-    "VBStereoRenderRealityKit.usda"
+    "VBStereoRenderRealityKit 1.usda",
+    "StereoImageMaterial.usda"
   ],
   "recentIdentifiers" : {
     "5001C8E0-26AC-4CA2-B51E-C4FA21A25681" : [
@@ -12,6 +12,9 @@
 
     ],
     "B87E11A6-CE01-41BF-B1BF-8D95453BC509" : [
+
+    ],
+    "B0826B4E-C7DB-494F-A1E4-00B054A217FA" : [
 
     ],
     "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85" : [
@@ -245,6 +248,50 @@
       }
     ],
     "5001C8E0-26AC-4CA2-B51E-C4FA21A25681" : [
+      {
+        "date" : 734395007.528629,
+        "title" : "Untitled",
+        "transform" : [
+          0.99756527,
+          -1.732877e-09,
+          -0.069739506,
+          0,
+          -0.041214224,
+          0.8066907,
+          -0.589535,
+          0,
+          0.056258213,
+          0.59097385,
+          0.8047266,
+          0,
+          0.022178765,
+          0.21241337,
+          0.306727,
+          1
+        ]
+      },
+      {
+        "date" : 734322570.812722,
+        "title" : "Untitled",
+        "transform" : [
+          0.99756527,
+          -1.2805967e-09,
+          -0.0697395,
+          0,
+          -0.04121422,
+          0.8066907,
+          -0.589535,
+          0,
+          0.056258205,
+          0.59097385,
+          0.8047266,
+          0,
+          0.022178777,
+          0.21241337,
+          0.30672705,
+          1
+        ]
+      },
       {
         "date" : 727905208.084284,
         "title" : "Untitled",
@@ -624,6 +671,30 @@
         ]
       }
     ],
+    "B0826B4E-C7DB-494F-A1E4-00B054A217FA" : [
+      {
+        "date" : 734484658.516296,
+        "title" : "Untitled",
+        "transform" : [
+          0.99999994,
+          0,
+          -0,
+          0,
+          -0,
+          0.8660253,
+          -0.50000024,
+          0,
+          0,
+          0.50000024,
+          0.8660253,
+          0,
+          0,
+          0.5169574,
+          0.89539653,
+          1
+        ]
+      }
+    ],
     "C557F816-7AAE-4A77-BB25-4D7D3DDEDE85" : [
       {
         "date" : 727900348.140689,
@@ -893,5 +964,5 @@
       }
     ]
   },
-  "selectedSceneRelativePath" : "VBStereoRenderRealityKit.usda"
+  "selectedSceneRelativePath" : "StereoImageMaterial.usda"
 }

@@ -25,7 +25,7 @@ struct StreamingStereoImageView: View {
     let leftDrawableQueue: TextureResource.DrawableQueue
     let rightDrawableQueue: TextureResource.DrawableQueue
 
-    let renderBuffer: RenderBuffer
+    fileprivate let renderBuffer: RenderBuffer
 
 
     let context = CIContext()
@@ -134,7 +134,7 @@ struct StreamingStereoImageView: View {
 //    }
 }
 
-class RenderBuffer {
+private class RenderBuffer {
     var bufferedImage = false
 
     var leftQueue: TextureResource.DrawableQueue
