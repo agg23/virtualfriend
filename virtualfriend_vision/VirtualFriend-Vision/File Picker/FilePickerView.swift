@@ -15,7 +15,7 @@ let GRID_SPACING = 40.0
 
 struct FilePickerView: View {
 //    @AppStorage("romDirectory") var romDirectory: String?
-    @State var romDirectory: URL?
+    @AppStorage("romDirectory") var romDirectory: URL?
 
     @State var selectFolder = false
 

@@ -14,6 +14,7 @@ struct StereoImageView: View {
     let height: Int
     let scale: Float
 
+    @State private var didRender: BoolWrapper = BoolWrapper()
     @State var cancellables: Set<AnyCancellable> = Set()
 
     let drawableQueue: TextureResource.DrawableQueue
@@ -46,9 +47,8 @@ struct StereoImageView: View {
                 print("Loaded material")
 
                 // This appears to never be used
-                let baseColor = CIImage(color: .yellow).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2, height: self.height)))
+                let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2, height: self.height)))
                 let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
-                print(baseColor.extent)
 
                 do {
                     let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
@@ -61,17 +61,41 @@ struct StereoImageView: View {
 
                 entity.model?.materials = [material]
             }
+            self.onAppear()
         }
+        // This constrains the plane to sit directly on top of the window
+        // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
+        .frame(minDepth: 1, maxDepth: 1.1)
         // TODO: Change to onReceive
         .onAppear {
-            self.renderBuffer.subscribe().store(in: &self.cancellables)
+            self.onAppear()
         }
         .onDisappear {
+            self.didRender.value = false
             self.cancellables.forEach { cancellable in
                 cancellable.cancel()
             }
         }
     }
+
+    /// Require that both RealityView render and onAppear have triggered before we start receiving frames
+    func onAppear() {
+        if !self.didRender.value {
+            self.didRender.value = true
+
+            return
+        }
+
+        // Both onAppear and RealityView render has occured. Wait 10ms and subscribe
+        Task {
+            try await Task.sleep(for: .milliseconds(10))
+            self.renderBuffer.subscribe().store(in: &self.cancellables)
+        }
+    }
+}
+
+private class BoolWrapper {
+    var value: Bool = false
 }
 
 private class RenderBuffer {
