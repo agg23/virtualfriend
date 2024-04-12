@@ -10,7 +10,7 @@ import SwiftUI
 struct FilePickerEntry: View {
     @Environment(\.openWindow) var openWindow
 
-    let stereoImage: StreamingStereoImage
+    let stereoImage: StereoImage
 
     let imageWidth: CGFloat
     let imageHeight: CGFloat
@@ -67,7 +67,9 @@ struct FilePickerEntry: View {
 //                        .frame(width: self.imageWidth, height: self.imageHeight)
 //                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, scale: 0.7)
 //                    .frame(width: self.imageWidth, height: self.imageHeight)
-                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImage: stereoImage)
+                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageStream: AsyncStream { continuation in
+                    continuation.yield(self.stereoImage)
+                })
 //                }
                 Spacer()
             }
@@ -109,14 +111,14 @@ struct FilePickerEntry: View {
         return manifest
     }
 
-    static func manifestToImage(_ manifest: FFIManifest) -> StreamingStereoImage {
+    static func manifestToImage(_ manifest: FFIManifest) -> StereoImage {
         let left = rustVecToCIImage(manifest.left_frame)
         let right = rustVecToCIImage(manifest.right_frame)
 
         let leftTransformedImage = left.transformed(by: .init(scaleX: 1, y: -1))
         let rightTransformedImage = right.transformed(by: .init(scaleX: 1, y: -1))
 
-        return StreamingStereoImage(image: StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+        return StereoImage(left: leftTransformedImage, right: rightTransformedImage)
     }
 }
 

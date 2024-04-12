@@ -12,77 +12,22 @@ import Combine
 
 import GameController
 
-struct EmuView: View {
-    let queue = DispatchQueue(label: "emu", qos: .userInteractive)
+class EmuObject {
+    var virtualFriend: VirtualFriend
 
-    let context = CIContext()
+    var stereoImageStream: AsyncStream<StereoImage>!
+    var continuation: AsyncStream<StereoImage>.Continuation!
 
-    @Binding var fileUrl: URL?
-
-    @StateObject var streamingStereoImage = StreamingStereoImage(image: StereoImage(left: nil, right: nil))
-    @State var virtualFriend: VirtualFriend?
-
-    @State var image: UIImage?
-
-    init(fileUrl: Binding<URL?>) {
-        self._fileUrl = fileUrl
-
-        loadEmulator()
-    }
-
-    var body: some View {
-        VStack {
-            StreamingStereoImageView(width: 384, height: 224, stereoImage: self.streamingStereoImage, scale: 5.0)
-                .onAppear(perform: {
-                    self.queue.async {
-                        while (true) {
-                            autoreleasepool {
-                                let inputs = pollInput()
-
-                                guard let frame = self.virtualFriend?.run_frame(inputs) else {
-                                    return
-                                }
-                                let leftImage = rustVecToCIImage(frame.left)
-                                let rightImage = rustVecToCIImage(frame.right)
-
-                                DispatchQueue.main.async {
-                                    self.image = UIImage(cgImage: context.createCGImage(leftImage, from: leftImage.extent)!)
-                                }
-
-                                // TODO: This should be flipped by Metal, not the CPU
-                                let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
-                                let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
-
-                                DispatchQueue.main.async {
-                                    self.streamingStereoImage.update(left: leftTransformedImage, right: rightTransformedImage)
-                                }
-                            }
-                        }
-                    }
-                })
-//            if let image = image {
-//                Image(uiImage: image)
-//            }
-        }
-        .onChange(of: self.fileUrl) {
-            loadEmulator()
-        }
-        .onAppear {
-            // I'm not sure why init doesn't cover this
-            loadEmulator()
-        }
-    }
-
-    func loadEmulator() {
-        let _ = self.fileUrl!.startAccessingSecurityScopedResource()
+    init?(fileUrl: URL) {
+        let _ = fileUrl.startAccessingSecurityScopedResource()
 
         let data: Data
 
         do {
-            data = try Data(contentsOf: self.fileUrl!)
+            data = try Data(contentsOf: fileUrl)
         } catch {
             print(error)
-            return
+            return nil
         }
 
         let array = data.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [UInt8] in
@@ -94,9 +39,63 @@ struct EmuView: View {
             return VirtualFriend(pointer)
         }
 
-        self.fileUrl!.stopAccessingSecurityScopedResource()
-    }
+        fileUrl.stopAccessingSecurityScopedResource()
 
+        self.stereoImageStream = AsyncStream<StereoImage>(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            self.continuation = continuation
+        }
+    }
+}
+
+struct EmuView: View {
+    let fileUrl: URL
+
+    @State var emu: EmuObject?
+
+    var body: some View {
+        Group {
+            if let emu = self.emu {
+                EmuContentView(emu: emu)
+            } else {
+                Text("Could not start emulator")
+            }
+        }
+        .onChange(of: self.fileUrl, initial: true) { _, newValue in
+            self.emu = EmuObject(fileUrl: newValue)
+        }
+    }
+}
+
+private struct EmuContentView: View {
+    let queue = DispatchQueue(label: "emu", qos: .userInteractive)
+
+    let context = CIContext()
+
+    let emu: EmuObject
+
+    var body: some View {
+        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageStream: self.emu.stereoImageStream)
+            .task {
+                self.queue.async {
+                    while (true) {
+                        autoreleasepool {
+                            let inputs = pollInput()
+
+                            let frame = self.emu.virtualFriend.run_frame(inputs)
+
+                            let leftImage = rustVecToCIImage(frame.left)
+                            let rightImage = rustVecToCIImage(frame.right)
+
+                            // TODO: This should be flipped by Metal, not the CPU
+                            let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
+                            let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
+
+                            self.emu.continuation.yield(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+                        }
+                    }
+                }
+            }
+    }
 
     func pollInput() -> FFIGamepadInputs {
         let keyboard = pollKeyboardInput()
@@ -157,8 +156,4 @@ struct EmuView: View {
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
     }
-}
-
-#Preview {
-    EmuView(fileUrl: .constant(nil))
 }

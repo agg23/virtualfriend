@@ -25,7 +25,11 @@ struct VirtualFriend_VisionApp: App {
         .defaultSize(width: 1400, height: 1100)
 
         WindowGroup(id: "emu", for: URL.self) { url in
-            EmuView(fileUrl: url)
+            if let url = url.wrappedValue {
+                EmuView(fileUrl: url)
+            } else {
+                Text("Could not start emulator")
+            }
         }
 //        WindowGroup(id: "emu") {
 //            let url = Bundle.main.url(forResource: "BLOX 2", withExtension: "vb")!

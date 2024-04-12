@@ -15,17 +15,14 @@ struct StereoImageView: View {
     let scale: Float
 
     @State private var didRender: BoolWrapper = BoolWrapper()
-    @State var cancellables: Set<AnyCancellable> = Set()
+    @State var displayTask: Task<(), Error>?
 
     let drawableQueue: TextureResource.DrawableQueue
-
     let context: CIContext
-    fileprivate let renderBuffer: RenderBuffer
 
-    // TODO: Change to straight Combine
-    @ObservedObject var stereoImage: StreamingStereoImage
+    let stereoImageStream: AsyncStream<StereoImage>
 
-    init(width: Int, height: Int, scale: Float, stereoImage: StreamingStereoImage) {
+    init(width: Int, height: Int, scale: Float, stereoImageStream: AsyncStream<StereoImage>) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -34,9 +31,8 @@ struct StereoImageView: View {
         self.drawableQueue.allowsNextDrawableTimeout = false
 
         self.context = CIContext()
-        self.renderBuffer = RenderBuffer(queue: self.drawableQueue, context: self.context, streamingImage: stereoImage)
 
-        self.stereoImage = stereoImage
+        self.stereoImageStream = stereoImageStream
     }
 
     var body: some View {
@@ -44,9 +40,8 @@ struct StereoImageView: View {
             if var material = await StereoImageMaterial.shared.material {
                 let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
                 content.add(entity)
-                print("Loaded material")
 
-                // This appears to never be used
+                // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
                 let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2, height: self.height)))
                 let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
 
@@ -72,9 +67,8 @@ struct StereoImageView: View {
         }
         .onDisappear {
             self.didRender.value = false
-            self.cancellables.forEach { cancellable in
-                cancellable.cancel()
-            }
+            self.displayTask?.cancel()
+            self.displayTask = nil
         }
     }
 
@@ -87,75 +81,38 @@ struct StereoImageView: View {
         }
 
         // Both onAppear and RealityView render has occured. Wait 10ms and subscribe
-        Task {
+        self.displayTask = Task {
             try await Task.sleep(for: .milliseconds(10))
-            self.renderBuffer.subscribe().store(in: &self.cancellables)
-        }
-    }
-}
 
-private class BoolWrapper {
-    var value: Bool = false
-}
+            for await image in self.stereoImageStream {
+                if Task.isCancelled {
+                    return
+                }
 
-private class RenderBuffer {
-    var bufferedImage = false
-
-    var queue: TextureResource.DrawableQueue
-
-    let streamingImage: StreamingStereoImage
-
-    let dispatchQueue = DispatchQueue(label: "stereoImage", qos: .userInteractive)
-
-    let context: CIContext
-
-    init(queue: TextureResource.DrawableQueue, context: CIContext, streamingImage: StreamingStereoImage) {
-        self.queue = queue
-        self.context = context
-
-        self.streamingImage = streamingImage
-    }
-
-    func subscribe() -> AnyCancellable {
-        return self.streamingImage.$image.sink { _ in
-            if (!self.bufferedImage) {
-                // Request new buffered image
-                self.start()
-            } else {
-                // We've already buffered an image, so this new one will be the one that is displayed
+                self.step(image)
             }
         }
     }
 
-    private func start() {
-        self.bufferedImage = true
-
-        self.dispatchQueue.async {
-            self.step()
-        }
-    }
-
-    private func step() {
-        guard let drawable = try? self.queue.nextDrawable() else {
+    func step(_ image: StereoImage) {
+        guard let drawable = try? self.drawableQueue.nextDrawable() else {
             // Repeat
             // TODO: This can stack overflow
-            self.step()
+            self.step(image)
             return
         }
 
-        guard let left = self.streamingImage.image.left, let right = self.streamingImage.image.right else {
-            // No image, do nothing
-            self.bufferedImage = false
-
-            return
-        }
+        let left = image.left
+        let right = image.right
 
         // Time to draw
         self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: left.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
         self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: .init(x: -left.extent.width, y: left.extent.minY, width: left.extent.width + right.extent.width, height: right.extent.height), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 
         drawable.present()
-
-        self.bufferedImage = false
     }
+}
+
+private class BoolWrapper {
+    var value: Bool = false
 }
