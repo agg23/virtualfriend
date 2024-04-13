@@ -6,11 +6,10 @@
 //
 
 import SwiftUI
+import AsyncAlgorithms
 
 struct FilePickerEntry: View {
     @Environment(\.openWindow) var openWindow
-
-    let stereoImage: StereoImage
 
     let imageWidth: CGFloat
     let imageHeight: CGFloat
@@ -19,6 +18,7 @@ struct FilePickerEntry: View {
     @Binding var hash: String?
 
     let metadata: FFIMetadata?
+    let stereoStreamChannel: AsyncChannel<StereoImage>
 
     init(fileUrl: Binding<URL>, hash: Binding<String?>, imageWidth: CGFloat, imageHeight: CGFloat) {
         self._fileUrl = fileUrl
@@ -29,14 +29,27 @@ struct FilePickerEntry: View {
 
         guard let manifest = FilePickerEntry.getManifest(hash: hash.wrappedValue) else {
             let manifest = FilePickerEntry.getUnknownManifest()
-            self.stereoImage = FilePickerEntry.manifestToImage(manifest)
+            let stereoImage = FilePickerEntry.manifestToImage(manifest)
 //            self.stereoImage = StreamingStereoImage(image: StereoImage(left: nil, right: nil))
             self.metadata = nil
+
+            let channel = AsyncChannel<StereoImage>()
+            Task {
+                await channel.send(stereoImage)
+            }
+            self.stereoStreamChannel = channel
+
             return
         }
 
-        self.stereoImage = FilePickerEntry.manifestToImage(manifest)
+        let stereoImage = FilePickerEntry.manifestToImage(manifest)
         self.metadata = manifest.metadata
+
+        let channel = AsyncChannel<StereoImage>()
+        Task {
+            await channel.send(stereoImage)
+        }
+        self.stereoStreamChannel = channel
     }
 
     var body: some View {
@@ -67,9 +80,7 @@ struct FilePickerEntry: View {
 //                        .frame(width: self.imageWidth, height: self.imageHeight)
 //                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, scale: 0.7)
 //                    .frame(width: self.imageWidth, height: self.imageHeight)
-                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageStream: AsyncStream { continuation in
-                    continuation.yield(self.stereoImage)
-                })
+                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel)
 //                }
                 Spacer()
             }

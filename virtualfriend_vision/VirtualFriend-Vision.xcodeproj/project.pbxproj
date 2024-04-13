@@ -28,6 +28,7 @@
 		66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B12BC755F500BE5C0F /* StereoImageView.swift */; };
 		66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */; };
 		66CB32B62BC758F600BE5C0F /* StereoImageMaterial.usda in Resources */ = {isa = PBXBuildFile; fileRef = 66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */; };
+		66E8CC8F2BCA2FF70068223A /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +73,7 @@
 				661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */,
 				6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */,
 				661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */,
+				66E8CC8F2BCA2FF70068223A /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,6 +233,7 @@
 			name = "VirtualFriend-Vision";
 			packageProductDependencies = (
 				661265C52B54460900D1B343 /* VBStereoRenderRealityKit */,
+				66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */,
 			);
 			productName = "VirtualFriend-Vision";
 			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-Vision.app */;
@@ -262,6 +265,7 @@
 			mainGroup = 6629A1C42B4E538200FE2AB3;
 			packageReferences = (
 				661265C42B54460900D1B343 /* XCLocalSwiftPackageReference "Packages/VBStereoRenderRealityKit" */,
+				66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			productRefGroup = 6629A1CE2B4E538200FE2AB3 /* Products */;
 			projectDirPath = "";
@@ -547,10 +551,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		661265C52B54460900D1B343 /* VBStereoRenderRealityKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VBStereoRenderRealityKit;
+		};
+		66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

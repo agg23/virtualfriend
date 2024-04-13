@@ -7,7 +7,7 @@
 
 import SwiftUI
 import RealityKit
-import Combine
+import AsyncAlgorithms
 
 struct StereoImageView: View {
     let width: Int
@@ -20,9 +20,9 @@ struct StereoImageView: View {
     let drawableQueue: TextureResource.DrawableQueue
     let context: CIContext
 
-    let stereoImageStream: AsyncStream<StereoImage>
+    let stereoImageChannel: AsyncChannel<StereoImage>
 
-    init(width: Int, height: Int, scale: Float, stereoImageStream: AsyncStream<StereoImage>) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncChannel<StereoImage>) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -32,7 +32,7 @@ struct StereoImageView: View {
 
         self.context = CIContext()
 
-        self.stereoImageStream = stereoImageStream
+        self.stereoImageChannel = stereoImageChannel
     }
 
     var body: some View {
@@ -84,7 +84,7 @@ struct StereoImageView: View {
         self.displayTask = Task {
             try await Task.sleep(for: .milliseconds(10))
 
-            for await image in self.stereoImageStream {
+            for await image in self.stereoImageChannel {
                 if Task.isCancelled {
                     return
                 }
