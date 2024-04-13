@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, path::Path};
+use std::{collections::VecDeque, env, io};
 
 use bus::Bus;
 use cpu_v810::CpuV810;
@@ -33,6 +33,7 @@ pub struct VirtualFriend {
     bus: Bus,
 
     frame_serviced: bool,
+    cycle_count: usize,
 }
 
 pub struct Frame {
@@ -72,10 +73,28 @@ impl VirtualFriend {
         let hardware = Hardware::new();
         let bus = Bus::new(rom, vip, vsu, hardware);
 
+        let mut temp_dir = env::temp_dir();
+
+        println!("{temp_dir:?}");
+
+        // fs::create_dir_all(&temp_dir).unwrap();
+        // temp_dir.push("instructions.log");
+
+        // println!("Logging to {:?}", temp_dir);
+
+        // let log_file = OpenOptions::new()
+        //     .write(true)
+        //     .create(true)
+        //     .open(temp_dir)
+        //     .unwrap();
+
+        // let writer = BufWriter::with_capacity(4000, log_file);
+
         VirtualFriend {
             cpu,
             bus,
             frame_serviced: false,
+            cycle_count: 0,
         }
     }
 
@@ -88,16 +107,24 @@ impl VirtualFriend {
         //     .open("instructions.log")
         //     .unwrap();
 
-        let mut cycle_count = 0;
+        // let mut cycle_count = 0;
+        // let mut prev_cycle_count = false;
 
         // let mut writer = BufWriter::new(log_file);
 
+        let mut lock = io::stdout().lock();
+
         loop {
-            // cpu.log_instruction(Some(&mut writer), cycle_count, None);
+            // self.cpu.log_instruction(
+            //     Some(&mut self.buf_writer),
+            //     &mut lock,
+            //     self.cycle_count,
+            //     None,
+            // );
 
             let step_cycle_count = self.cpu.step(&mut self.bus);
 
-            cycle_count += step_cycle_count;
+            self.cycle_count += step_cycle_count;
 
             if let Some(request) = self
                 .bus
@@ -111,8 +138,6 @@ impl VirtualFriend {
                 if !self.frame_serviced {
                     // Render framebuffer
                     self.frame_serviced = true;
-
-                    println!("Sending frame");
 
                     return Frame {
                         left: self.bus.vip.left_rendered_framebuffer.clone(),

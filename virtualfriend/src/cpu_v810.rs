@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{StdoutLock, Write};
 use std::{fs::File, io::BufWriter};
 
 use bitvec::array::BitArray;
@@ -160,6 +160,7 @@ impl CpuV810 {
     pub fn log_instruction(
         &self,
         log_file: Option<&mut BufWriter<File>>,
+        std_lock: &mut StdoutLock<'static>,
         cycle_count: usize,
         extra_log_info: Option<String>,
     ) {
@@ -220,11 +221,13 @@ impl CpuV810 {
 
         let chcw = if self.cache_enabled { 2 } else { 0 };
 
-        if let Some(log_file) = log_file {
-            // writeln!(log_file, "PC={:08X}", self.pc).unwrap();
-            writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
-            self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre).unwrap();
-        }
+        // if let Some(log_file) = log_file {
+        //     // writeln!(log_file, "PC={:08X}", self.pc).unwrap();
+        //     writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
+        //     self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre).unwrap();
+        // }
+        std_lock.write_fmt(format_args!("PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}\n",
+        self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre));
     }
 
     /// Step one CPU instruction
@@ -360,7 +363,7 @@ impl CpuV810 {
             0b01_1100 => self.ldsr(instruction), // LDSR Load to system register
             0b01_1001 => self.reti(),            // RETI Return from trap or interrupt
             0b01_1101 => self.stsr(instruction), // STSR Store contents of system register
-            0b01_1000 => self.trap(),
+            0b01_1000 => self.trap(instruction), // TRAP Raise exception
 
             0b11_1110 => self.float_inst(instruction, bus), // Floating point operations and Nintendo
 
@@ -968,8 +971,13 @@ impl CpuV810 {
         (8, BusActivity::Standard)
     }
 
-    fn trap(&mut self) -> (u32, BusActivity) {
-        todo!("Raise exception and set restore PC");
+    fn trap(&mut self, instruction: u16) -> (u32, BusActivity) {
+        // TRAP Raise exception and set restore PC
+        let (reg1_index, _) = extract_reg1_2_index(instruction);
+
+        self.perform_exception(0xFFA0 + reg1_index);
+
+        (15, BusActivity::Standard)
     }
 
     fn float_inst(&mut self, instruction: u16, bus: &mut Bus) -> (u32, BusActivity) {
@@ -1180,7 +1188,9 @@ impl CpuV810 {
 
     fn caxi(&mut self) -> (u32, BusActivity) {
         // CAXI Compare and exchange interlocked
-        unimplemented!("CAXI doesn't really do anything on VB")
+        println!("CAXI doesn't really do anything on VB");
+
+        (26, BusActivity::Standard)
     }
 
     fn setf(&mut self, instruction: u16) -> (u32, BusActivity) {

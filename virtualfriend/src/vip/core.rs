@@ -386,7 +386,7 @@ impl VIP {
                     // Render left frame buffer
                     // Column table stuff is ignored as it's not relevant to software emulation.
                     // TODO: Do we need to update CTA?
-                    println!("Displaying framebuffer");
+                    // println!("Displaying framebuffer");
                     self.display_framebuffer();
 
                     if self.display_enabled && self.sync_enabled {
@@ -422,7 +422,7 @@ impl VIP {
                 }
                 FRAME_COMPLETE_CYCLE_OFFSET => {
                     // End frame
-                    println!("End of frame");
+                    // println!("End of frame");
                 }
                 _ => {}
             }
@@ -456,7 +456,7 @@ impl VIP {
                         // Finished drawing
                         self.in_drawing = false;
 
-                        println!("Ended drawing");
+                        // println!("Ended drawing");
 
                         self.render_state.sbcount = 0;
                         self.interrupt_pending.set_xpend(true);
@@ -506,10 +506,10 @@ impl VIP {
         if self.drawing_enabled {
             // Flip framebuffers to start writing to the currently displayed ones
             self.render_state.drawing_framebuffer_1 = !self.render_state.drawing_framebuffer_1;
-            println!(
-                "Starting draw. Flipped framebuffer to {}",
-                self.render_state.drawing_framebuffer_1
-            );
+            // println!(
+            //     "Starting draw. Flipped framebuffer to {}",
+            //     self.render_state.drawing_framebuffer_1
+            // );
 
             self.render_state.sbcount = 0;
             self.drawing_cycle_count = 0;
