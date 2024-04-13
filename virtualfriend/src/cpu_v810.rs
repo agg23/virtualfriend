@@ -373,7 +373,12 @@ impl CpuV810 {
             // Nintendo
             0b01_0110 => self.cli(), // CLI Clear interrupt disable flag
             0b01_1110 => self.sei(), // SEI Set interrupt disable flag
-            _ => panic!("Invalid opcode {opcode:x}"),
+            _ => {
+                #[cfg(feature = "panic")]
+                panic!("Invalid opcode {opcode:x}");
+
+                (1, BusActivity::Standard)
+            }
         }
     }
 
@@ -1107,7 +1112,12 @@ impl CpuV810 {
                 (1, BusActivity::Standard)
             }
 
-            _ => panic!("Invalid float or Nintendo instruction {sub_opcode:x}"),
+            _ => {
+                #[cfg(feature = "panic")]
+                panic!("Invalid float or Nintendo instruction {sub_opcode:x}");
+
+                (1, BusActivity::Standard)
+            }
         }
     }
 
@@ -1485,7 +1495,10 @@ impl CpuV810 {
                     // XORNBSU XOR NOT bit string
                     *dest_bit = *dest_bit ^ !*source_bit;
                 }
-                _ => panic!("Invalid bit string instruction {sub_opcode:x}"),
+                _ => {
+                    #[cfg(feature = "panic")]
+                    panic!("Invalid bit string instruction {sub_opcode:x}")
+                }
             }
 
             // Make sure we can access borrowed data

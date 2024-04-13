@@ -60,7 +60,7 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
 
 impl VirtualFriend {
     pub fn new(vec: Vec<u8>) -> Self {
-        println!("Loading ROM at {rom_path}");
+        println!("Loading ROM");
 
         let rom = ROM::load_from_vec(vec);
 

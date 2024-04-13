@@ -347,7 +347,10 @@ impl VIP {
             0x5_F86C..=0x5_F86D => self.render_state.object_palette_control2.set(value),
             0x5_F86E..=0x5_F86F => self.render_state.object_palette_control3.set(value),
             0x5_F870..=0x5_F871 => self.render_state.bkcol = (value & 0x3) as u8,
-            0x6_0000..=0x7_7FFF => panic!("Invalid VIP address"),
+            0x6_0000..=0x7_7FFF => {
+                #[cfg(feature = "panic")]
+                panic!("Invalid VIP address")
+            }
             0x7_8000..=0x7_9FFF => {
                 // Character table 1 remap
                 self.vram.set_u16((address & 0x1FFF) + 0x6000, value);

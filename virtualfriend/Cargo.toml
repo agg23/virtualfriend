@@ -7,7 +7,9 @@ edition = "2021"
 name = "virtualfriend"
 
 [features]
+default = ["stdout", "panic"]
 stdout = []
+panic = []
 
 [dependencies]
 rand = "0.8.5"
