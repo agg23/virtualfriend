@@ -566,8 +566,13 @@ impl CpuV810 {
         let reg1 = self.general_purpose_reg[reg1_index];
         let reg2 = self.general_purpose_reg[reg2_index];
 
+        let cycles = if signed { 38 } else { 36 };
+
         if reg1 == 0 {
-            todo!("Handle divide by zero exception");
+            println!("Divide by zero");
+            self.perform_exception(0xFF80);
+
+            return (cycles, BusActivity::Long);
         }
 
         let (result, remainder, overflow) = if signed {
@@ -594,8 +599,6 @@ impl CpuV810 {
         self.general_purpose_reg[30] = remainder;
         self.set_gen_purpose_reg(reg2_index, result);
         self.psw.update_alu_flags_u32(result, overflow, None);
-
-        let cycles = if signed { 38 } else { 36 };
 
         (cycles, BusActivity::Long)
     }
@@ -1029,6 +1032,22 @@ impl CpuV810 {
             }
             0b00_0111 => {
                 // DIVF.S Divide
+                if reg1_float == 0.0 {
+                    if reg2_float == 0.0 {
+                        println!("Divide float zero by zero");
+
+                        self.psw.float_zero_divide = true;
+                        self.perform_exception(0xFF70);
+                    } else {
+                        println!("Divide float by zero");
+
+                        self.psw.float_zero_divide = true;
+                        self.perform_exception(0xFF68);
+                    }
+
+                    return (44, BusActivity::Standard);
+                }
+
                 let result = reg2_float / reg1_float;
 
                 self.set_gen_purpose_reg(reg2_index, result.to_bits());
