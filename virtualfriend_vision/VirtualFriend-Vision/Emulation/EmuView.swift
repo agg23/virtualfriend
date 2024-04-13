@@ -152,6 +152,7 @@ struct EmuView: View {
                 Text("Could not start emulator")
             }
         }
+        .glassBackgroundEffect()
         .onChange(of: self.fileUrl, initial: true) { _, newValue in
             self.emu = EmuObject(fileUrl: newValue)
         }

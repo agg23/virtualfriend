@@ -31,11 +31,6 @@ struct VirtualFriend_VisionApp: App {
                 Text("Could not start emulator")
             }
         }
-//        WindowGroup(id: "emu") {
-//            let url = Bundle.main.url(forResource: "BLOX 2", withExtension: "vb")!
-//            EmuView(fileUrl: .constant(url))
-//        }
-        .windowStyle(.volumetric)
         .defaultSize(width: 2, height: 2, depth: 0.1, in: .meters)
     }
 }

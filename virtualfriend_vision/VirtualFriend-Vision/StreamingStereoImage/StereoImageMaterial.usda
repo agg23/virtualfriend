@@ -158,13 +158,13 @@ def Xform "Root"
 
     def Material "SideBySideStereoRenderMaterial"
     {
-        asset inputs:Image = @../../../../../../Downloads/Sidebyside.png@ (
+        asset inputs:Image (
             colorSpace = "srgb_texture"
             customData = {
                 dictionary realitykit = {
                     float2 positionInSubgraph = (-702.27747, -62.68199)
                     float2 sizeInSubgraph = (115.5, 53)
-                    int stackingOrderInSubgraph = 1516
+                    int stackingOrderInSubgraph = 1519
                 }
             }
         )

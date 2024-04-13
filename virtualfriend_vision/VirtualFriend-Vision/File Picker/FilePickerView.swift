@@ -86,18 +86,20 @@ struct FilePickerView: View {
                     Text("Choose folder")
                 }
             } else {
-                LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
-                    // Make sure we always have 9 items and insert placeholders
-                    ForEach(0..<max(9, self.directoryContents.count), id: \.self) { index in
-                        if index < self.directoryContents.count {
-                            let file = self.directoryContents[index]
-
-                            FilePickerEntry(fileUrl: file.0, hash: file.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
-                                .frame(height: IMAGE_HEIGHT + 70.0)
-                        } else {
-                            Color(.clear)
-                                .frame(height: IMAGE_HEIGHT + 70.0)
-                                .hidden()
+                ScrollView {
+                    LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
+                        // Make sure we always have 9 items and insert placeholders
+                        ForEach(0..<max(9, self.directoryContents.count), id: \.self) { index in
+                            if index < self.directoryContents.count {
+                                let file = self.directoryContents[index]
+                                
+                                FilePickerEntry(fileUrl: file.0, hash: file.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
+                                    .frame(height: IMAGE_HEIGHT + 70.0)
+                            } else {
+                                Color(.clear)
+                                    .frame(height: IMAGE_HEIGHT + 70.0)
+                                    .hidden()
+                            }
                         }
                     }
                 }

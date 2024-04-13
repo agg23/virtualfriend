@@ -22,12 +22,16 @@ struct StereoImageView: View {
 
     let stereoImageChannel: AsyncChannel<StereoImage>
 
+    // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
+    let MARGIN: Int = 1
+
     init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncChannel<StereoImage>) {
         self.width = width
         self.height = height
         self.scale = scale
 
-        self.drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: width * 2, height: height, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
+        // Two screens, margin on either side = 4 * MARGIN
+        self.drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: width * 2 + MARGIN * 4, height: height + MARGIN * 2, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
         self.drawableQueue.allowsNextDrawableTimeout = false
 
         self.context = CIContext()
@@ -42,7 +46,7 @@ struct StereoImageView: View {
                 content.add(entity)
 
                 // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
-                let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2, height: self.height)))
+                let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
                 let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
 
                 do {
@@ -106,8 +110,13 @@ struct StereoImageView: View {
         let right = image.right
 
         // Time to draw
-        self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: left.extent, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-        self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: .init(x: -left.extent.width, y: left.extent.minY, width: left.extent.width + right.extent.width, height: right.extent.height), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        let width = left.extent.width + CGFloat(MARGIN) * 2
+        let height = left.extent.height + CGFloat(MARGIN) * 2
+
+        let leftBounds = CGRect(x: -CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width, height: height)
+        let rightBounds = CGRect(x: -width - CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width + right.extent.width + CGFloat(MARGIN) * 2, height: height)
+        self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 
         drawable.present()
     }
