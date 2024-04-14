@@ -191,7 +191,7 @@ def Xform "Root"
             token outputs:out
             float2 ui:nodegraph:node:pos = (64.55078, 18.710938)
             float2 ui:nodegraph:node:size = (159.5, 307)
-            int ui:nodegraph:node:stackingOrder = 1490
+            int ui:nodegraph:node:stackingOrder = 1523
             string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor"]
         }
 
@@ -214,7 +214,7 @@ def Xform "Root"
             token outputs:out
             float2 ui:nodegraph:node:pos = (64.13672, 337.26562)
             float2 ui:nodegraph:node:size = (167, 307)
-            int ui:nodegraph:node:stackingOrder = 1280
+            int ui:nodegraph:node:stackingOrder = 1524
         }
 
         def Shader "GeometrySwitchCameraIndex"
@@ -229,7 +229,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-195.98322, 60.016037)
             float2 ui:nodegraph:node:size = (237, 145)
-            int ui:nodegraph:node:stackingOrder = 1490
+            int ui:nodegraph:node:stackingOrder = 1522
             string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
         }
 
@@ -243,13 +243,13 @@ def Xform "Root"
                 colorSpace = "srgb_texture"
             )
             asset inputs:file.connect = </Root/SideBySideStereoRenderMaterial.inputs:Image>
-            string inputs:filtertype
+            string inputs:filtertype = "closest"
             float2 inputs:realworldtilesize
             float2 inputs:uvtiling = (0.5, 1)
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-473.48532, -10.630167)
             float2 ui:nodegraph:node:size = (158.5, 235)
-            int ui:nodegraph:node:stackingOrder = 1518
+            int ui:nodegraph:node:stackingOrder = 1521
         }
 
         def Shader "TiledImage_Right"
@@ -262,7 +262,7 @@ def Xform "Root"
                 colorSpace = "srgb_texture"
             )
             asset inputs:file.connect = </Root/SideBySideStereoRenderMaterial.inputs:Image>
-            string inputs:filtertype
+            string inputs:filtertype = "closest"
             float2 inputs:realworldimagesize
             float2 inputs:realworldtilesize
             float2 inputs:texcoord
@@ -271,7 +271,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-473.57523, 246.361)
             float2 ui:nodegraph:node:size = (161, 235)
-            int ui:nodegraph:node:stackingOrder = 1516
+            int ui:nodegraph:node:stackingOrder = 1520
         }
     }
 }
