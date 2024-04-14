@@ -145,14 +145,17 @@ struct EmuView: View {
     @State var emu: EmuObject?
 
     var body: some View {
-        Group {
+        ZStack {
             if let emu = self.emu {
                 EmuContentView(emu: emu)
             } else {
                 Text("Could not start emulator")
             }
+
+            // Black to surround the view and pad out the window AR
+            Color.black
+                .ignoresSafeArea()
         }
-        .glassBackgroundEffect()
         .onChange(of: self.fileUrl, initial: true) { _, newValue in
             self.emu = EmuObject(fileUrl: newValue)
         }

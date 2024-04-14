@@ -27,10 +27,13 @@ struct VirtualFriend_VisionApp: App {
         WindowGroup(id: "emu", for: URL.self) { url in
             if let url = url.wrappedValue {
                 EmuView(fileUrl: url)
+                    .windowGeometryPreferences(minimumSize: CGSize(width: 384 + 2, height: 224 + 2), resizingRestrictions: .uniform)
             } else {
                 Text("Could not start emulator")
             }
         }
+        .windowResizability(.contentSize)
+        .windowStyle(.plain)
         .defaultSize(width: 2, height: 2, depth: 0.1, in: .meters)
     }
 }

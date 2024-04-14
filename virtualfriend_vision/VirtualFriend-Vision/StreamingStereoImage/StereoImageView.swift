@@ -40,31 +40,51 @@ struct StereoImageView: View {
     }
 
     var body: some View {
-        RealityView { content in
-            if var material = await StereoImageMaterial.shared.material {
-                let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
-                content.add(entity)
+        GeometryReader { geometry in
+            RealityView { content in
+                if var material = await StereoImageMaterial.shared.material {
+                    let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
+                    content.add(entity)
 
-                // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
-                let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
-                let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
+                    // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
+                    let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
+                    let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
 
-                do {
-                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
-                    texture.replace(withDrawables: self.drawableQueue)
+                    do {
+                        let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
+                        texture.replace(withDrawables: self.drawableQueue)
 
-                    try material.setParameter(name: "Image", value: .textureResource(texture))
-                } catch {
-                    fatalError(error.localizedDescription)
+                        try material.setParameter(name: "Image", value: .textureResource(texture))
+                    } catch {
+                        fatalError(error.localizedDescription)
+                    }
+
+                    entity.model?.materials = [material]
                 }
+                self.onAppear()
+            } update: { content in
+                let leftPoint = content.convert(Point3D(simd_float3(0, 0, 0)), from: .local, to: .scene)
+                let rightPoint = content.convert(Point3D(simd_float3(Float(geometry.size.width), Float(geometry.size.height), 1)), from: .local, to: .scene)
 
-                entity.model?.materials = [material]
+                let diff = rightPoint - leftPoint
+
+                if let entity = content.entities.first as? ModelEntity, let model = entity.model {
+                    let leftBound = model.mesh.bounds.min
+                    let rightBound = model.mesh.bounds.max
+
+                    let boundDiff = rightBound - leftBound
+
+                    let xScale = abs(diff.x) / abs(boundDiff.x)
+                    let yScale = abs(diff.y) / abs(boundDiff.y)
+
+                    entity.transform.scale = [xScale, yScale, 1.0]
+                }
             }
-            self.onAppear()
         }
         // This constrains the plane to sit directly on top of the window
         // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
         .frame(minDepth: 1, maxDepth: 1.1)
+        .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         // TODO: Change to onReceive
         .onAppear {
             self.onAppear()

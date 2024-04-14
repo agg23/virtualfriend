@@ -20,6 +20,7 @@
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
+		66C4BC2C2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */; };
 		66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */; };
 		66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */; };
 		66C60F0E2B6595CE00C1FDF4 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */; };
@@ -55,6 +56,7 @@
 		6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftBridgeCore.swift; sourceTree = "<group>"; };
 		6688DED32B5DBA88004B2123 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-xros-sim/debug/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
 		6688DED62B5DF876004B2123 /* EmuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuView.swift; sourceTree = "<group>"; };
+		66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+WindowGeometryPreferences.swift"; sourceTree = "<group>"; };
 		66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIGamepadInputs.swift; sourceTree = "<group>"; };
 		66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerView.swift; sourceTree = "<group>"; };
 		66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
@@ -129,6 +131,7 @@
 			children = (
 				66635BA02B66D002004FD096 /* manifests */,
 				66C60F042B63545C00C1FDF4 /* ffi */,
+				66C4BC2A2BCC22FB00AA8732 /* Extensions */,
 				6609555E2B621FE200A47B1B /* StreamingStereoImage */,
 				66C60F092B643A3500C1FDF4 /* File Picker */,
 				66C60F0C2B6595B600C1FDF4 /* Emulation */,
@@ -177,6 +180,14 @@
 				6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */,
 			);
 			path = virtualfriend_swift;
+			sourceTree = "<group>";
+		};
+		66C4BC2A2BCC22FB00AA8732 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 		66C60F042B63545C00C1FDF4 /* ffi */ = {
@@ -331,6 +342,7 @@
 				66635BA32B66D1F6004FD096 /* Files.swift in Sources */,
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerEntry.swift in Sources */,
+				66C4BC2C2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -112,7 +112,7 @@ impl VirtualFriend {
 
         // let mut writer = BufWriter::new(log_file);
 
-        let mut lock = io::stdout().lock();
+        // let mut lock = io::stdout().lock();
 
         loop {
             // self.cpu.log_instruction(
