@@ -68,15 +68,33 @@ pub fn draw_block_row(vram: &mut VRAM, state: &RenderState) {
             continue;
         }
 
+        let (render_left, render_right) = match world.display_state {
+            WorldDisplayState::Left => (true, false),
+            WorldDisplayState::Right => (false, true),
+            WorldDisplayState::Both => (true, true),
+            WorldDisplayState::Dummy => (false, false),
+        };
+
         match world.background_type {
             BackgroundType::Standard | BackgroundType::HBias => {
                 let hbias = world.background_type == BackgroundType::HBias;
-                render_normal_or_hbias_background(vram, state, &world, true, hbias, y);
-                render_normal_or_hbias_background(vram, state, &world, false, hbias, y);
+
+                if render_left {
+                    render_normal_or_hbias_background(vram, state, &world, true, hbias, y);
+                }
+
+                if render_right {
+                    render_normal_or_hbias_background(vram, state, &world, false, hbias, y);
+                }
             }
             BackgroundType::Affine => {
-                render_affine_background(vram, state, &world, true, y);
-                render_affine_background(vram, state, &world, false, y);
+                if render_left {
+                    render_affine_background(vram, state, &world, true, y);
+                }
+
+                if render_right {
+                    render_affine_background(vram, state, &world, false, y);
+                }
             }
             BackgroundType::Obj => {
                 let (mut start_obj_index, end_obj_index) = match object_group_counter {
@@ -113,8 +131,13 @@ pub fn draw_block_row(vram: &mut VRAM, state: &RenderState) {
 
                     let object = Object::parse(halfwords);
 
-                    render_obj_world(vram, state, true, y, &object);
-                    render_obj_world(vram, state, false, y, &object);
+                    if render_left {
+                        render_obj_world(vram, state, true, y, &object);
+                    }
+
+                    if render_right {
+                        render_obj_world(vram, state, false, y, &object);
+                    }
                 }
 
                 if object_group_counter == 0 {

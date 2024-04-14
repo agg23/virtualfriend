@@ -2,7 +2,7 @@ mod audio_driver;
 
 use std::{
     collections::VecDeque,
-    fs::File,
+    fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
     thread,
@@ -371,7 +371,8 @@ fn create_emulator(
     rom_path: String,
 ) {
     thread::spawn(move || {
-        let mut virtualfriend = VirtualFriend::new(rom_path);
+        let rom = fs::read(rom_path).unwrap();
+        let mut virtualfriend = VirtualFriend::new(rom);
 
         let mut frame_id = 0;
 
