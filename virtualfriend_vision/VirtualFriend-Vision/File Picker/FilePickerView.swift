@@ -14,56 +14,11 @@ let IMAGE_HEIGHT = 224.0
 let GRID_SPACING = 40.0
 
 struct FilePickerView: View {
-//    @AppStorage("romDirectory") var romDirectory: String?
-    @AppStorage("romDirectory") var romDirectory: URL?
+    @AppStorage("romDirectoryBookmark") var romDirectoryBookmark: Data?
 
+    /// Binding to open fileImporter
     @State var selectFolder = false
-
-    private var directoryContents: Binding<[(URL, String?)]> {
-        Binding {
-//            guard let romDirectory = self.romDirectory, let url = URL(string: romDirectory) else {
-//                return []
-//            }
-            guard let url = self.romDirectory else {
-                return []
-            }
-
-            do {
-                print(url.startAccessingSecurityScopedResource())
-
-                var error: NSError? = nil
-                NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { (url) in
-                    for case let file as URL in FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.nameKey])! {
-                        print("Opening", file.startAccessingSecurityScopedResource())
-                    }
-                }
-
-                let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey])
-
-//                url.stopAccessingSecurityScopedResource()
-
-                let filteredUrls = urls.filter { url in
-                    url.pathExtension == "vb"
-                }.sorted { a, b in
-                    a.lastPathComponent < b.lastPathComponent
-                }
-
-                return filteredUrls.map { url in
-                    let _ = url.startAccessingSecurityScopedResource()
-                    let hash = hashOfFile(atUrl: url)
-                    url.stopAccessingSecurityScopedResource()
-
-                    return (url, hash)
-                }
-            } catch {
-                // Directory not found
-                print(error)
-                return []
-            }
-        } set: { _, _ in
-
-        }
-    }
+    @State var directoryContents: [(URL, String?)] = []
 
     private let columns = [
         GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
@@ -89,32 +44,83 @@ struct FilePickerView: View {
                 ScrollView {
                     LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
                         // Make sure we always have 9 items and insert placeholders
-                        ForEach(0..<max(9, self.directoryContents.count), id: \.self) { index in
-                            if index < self.directoryContents.count {
-                                let file = self.directoryContents[index]
-                                
-                                FilePickerEntry(fileUrl: file.0, hash: file.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
-                                    .frame(height: IMAGE_HEIGHT + 70.0)
-                            } else {
-                                Color(.clear)
-                                    .frame(height: IMAGE_HEIGHT + 70.0)
-                                    .hidden()
-                            }
+                        ForEach(self.$directoryContents, id: \.1) { urlAndHash in
+                            FilePickerEntry(fileUrl: urlAndHash.0, hash: urlAndHash.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
                         }
                     }
                 }
             }
         }
         .padding(40.0)
+        .onAppear {
+            self.populateFromBookmark()
+        }
         .fileImporter(isPresented: $selectFolder, allowedContentTypes: [.folder]) { result in
             switch result {
             case .success(let url):
-//                self.romDirectory = url.absoluteString
-                self.romDirectory = url
+                self.buildDirectoryContents(from: url)
                 print("Selected \(url)")
             case .failure(let failure):
                 print("Failed to open folder: \(failure)")
             }
+        }
+    }
+
+    func populateFromBookmark() {
+        guard let bookmarkData = self.romDirectoryBookmark else {
+            return
+        }
+
+        var isStale = false
+
+        let url = try? URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+
+        guard let url = url, !isStale else {
+            print("Could not resolve bookmark")
+            return
+        }
+
+        self.buildDirectoryContents(from: url)
+    }
+
+    func buildDirectoryContents(from url: URL) {
+        do {
+            guard url.startAccessingSecurityScopedResource() else {
+                print("Could not obtain security scope")
+                return
+            }
+
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            // Update bookmark
+            let bookmarkData = try? url.bookmarkData(options: .minimalBookmark)
+            self.romDirectoryBookmark = bookmarkData
+
+            var error: NSError? = nil
+            NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { (url) in
+                for case let file as URL in FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.nameKey])! {
+                    print("Opening", file.startAccessingSecurityScopedResource())
+                }
+            }
+
+            let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey])
+
+            let filteredUrls = urls.filter { url in
+                url.pathExtension == "vb"
+            }.sorted { a, b in
+                a.lastPathComponent < b.lastPathComponent
+            }
+
+            self.directoryContents = filteredUrls.map { url in
+                let _ = url.startAccessingSecurityScopedResource()
+                let hash = hashOfFile(atUrl: url)
+                url.stopAccessingSecurityScopedResource()
+
+                return (url, hash)
+            }
+        } catch {
+            // Directory not found
+            print(error)
         }
     }
 }
