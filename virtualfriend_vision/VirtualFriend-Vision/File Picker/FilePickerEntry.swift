@@ -30,7 +30,6 @@ struct FilePickerEntry: View {
         guard let manifest = FilePickerEntry.getManifest(hash: hash.wrappedValue) else {
             let manifest = FilePickerEntry.getUnknownManifest()
             let stereoImage = FilePickerEntry.manifestToImage(manifest)
-//            self.stereoImage = StreamingStereoImage(image: StereoImage(left: nil, right: nil))
             self.metadata = nil
 
             let channel = AsyncChannel<StereoImage>()

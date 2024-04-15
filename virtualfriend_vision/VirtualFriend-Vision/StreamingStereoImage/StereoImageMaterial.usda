@@ -164,23 +164,27 @@ def Xform "Root"
                 dictionary realitykit = {
                     float2 positionInSubgraph = (-702.27747, -62.68199)
                     float2 sizeInSubgraph = (115.5, 53)
-                    int stackingOrderInSubgraph = 1519
+                    int stackingOrderInSubgraph = 1527
                 }
             }
         )
-        prepend token outputs:mtlx:surface.connect = </Root/SideBySideStereoRenderMaterial/PreviewSurface.outputs:out>
+        token outputs:mtlx:surface.connect = </Root/SideBySideStereoRenderMaterial/UnlitSurface.outputs:out>
         token outputs:realitykit:vertex
+        token outputs:surface.connect = </Root/SideBySideStereoRenderMaterial/UsdPreviewSurface.outputs:surface>
+        string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["outputs:realitykit:vertex", "outputs:mtlx:surface"]
         float2 ui:nodegraph:realitykit:subgraphOutputs:pos = (299.25, 99.5)
         float2 ui:nodegraph:realitykit:subgraphOutputs:size = (208.5, 99)
-        int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 1398
+        int ui:nodegraph:realitykit:subgraphOutputs:stackingOrder = 1541
 
-        def Shader "PreviewSurface"
+        def Shader "PreviewSurface" (
+            active = true
+        )
         {
             uniform token info:id = "ND_UsdPreviewSurface_surfaceshader"
             float inputs:clearcoat
             float inputs:clearcoatRoughness = 0
             color3f inputs:diffuseColor.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
-            color3f inputs:emissiveColor.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            color3f inputs:emissiveColor
             float inputs:ior = 0
             float inputs:metallic
             float3 inputs:normal
@@ -191,30 +195,8 @@ def Xform "Root"
             token outputs:out
             float2 ui:nodegraph:node:pos = (64.55078, 18.710938)
             float2 ui:nodegraph:node:size = (159.5, 307)
-            int ui:nodegraph:node:stackingOrder = 1523
-            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor"]
-        }
-
-        def Shader "PBRSurface"
-        {
-            uniform token info:id = "ND_realitykit_pbr_surfaceshader"
-            color3f inputs:baseColor = (0, 0, 0) (
-                colorSpace = "srgb_displayp3"
-            )
-            float inputs:clearcoat = 0
-            float inputs:clearcoatRoughness = 0
-            color3f inputs:emissiveColor = (0, 0, 0) (
-                colorSpace = "srgb_displayp3"
-            )
-            color3f inputs:emissiveColor.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
-            float inputs:metallic
-            float3 inputs:normal
-            float inputs:roughness = 1
-            float inputs:specular = 0
-            token outputs:out
-            float2 ui:nodegraph:node:pos = (64.13672, 337.26562)
-            float2 ui:nodegraph:node:size = (167, 307)
-            int ui:nodegraph:node:stackingOrder = 1524
+            int ui:nodegraph:node:stackingOrder = 1539
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor", "inputs:emissiveColor"]
         }
 
         def Shader "GeometrySwitchCameraIndex"
@@ -249,7 +231,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-473.48532, -10.630167)
             float2 ui:nodegraph:node:size = (158.5, 235)
-            int ui:nodegraph:node:stackingOrder = 1521
+            int ui:nodegraph:node:stackingOrder = 1526
         }
 
         def Shader "TiledImage_Right"
@@ -272,6 +254,28 @@ def Xform "Root"
             float2 ui:nodegraph:node:pos = (-473.57523, 246.361)
             float2 ui:nodegraph:node:size = (161, 235)
             int ui:nodegraph:node:stackingOrder = 1520
+        }
+
+        def Shader "UsdPreviewSurface" (
+            active = false
+        )
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            token outputs:surface
+        }
+
+        def Shader "UnlitSurface"
+        {
+            uniform token info:id = "ND_realitykit_unlit_surfaceshader"
+            bool inputs:applyPostProcessToneMap = 1
+            color3f inputs:color.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            bool inputs:hasPremultipliedAlpha
+            float inputs:opacity
+            float inputs:opacityThreshold
+            token outputs:out
+            float2 ui:nodegraph:node:pos = (71.21951, 284.36124)
+            float2 ui:nodegraph:node:size = (194.5, 181)
+            int ui:nodegraph:node:stackingOrder = 1546
         }
     }
 }
