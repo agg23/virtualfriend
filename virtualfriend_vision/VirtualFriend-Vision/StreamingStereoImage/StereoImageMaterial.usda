@@ -268,7 +268,7 @@ def Xform "Root"
         {
             uniform token info:id = "ND_realitykit_unlit_surfaceshader"
             bool inputs:applyPostProcessToneMap = 1
-            color3f inputs:color.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            color3f inputs:color.connect = </Root/SideBySideStereoRenderMaterial/Power.outputs:out>
             bool inputs:hasPremultipliedAlpha
             float inputs:opacity
             float inputs:opacityThreshold
@@ -276,6 +276,27 @@ def Xform "Root"
             float2 ui:nodegraph:node:pos = (71.21951, 284.36124)
             float2 ui:nodegraph:node:size = (194.5, 181)
             int ui:nodegraph:node:stackingOrder = 1546
+        }
+
+        def Shader "Constant"
+        {
+            uniform token info:id = "ND_constant_float"
+            float inputs:value = 1.2
+            float outputs:out
+            float2 ui:nodegraph:node:pos = (-259.35107, 306.39667)
+            float2 ui:nodegraph:node:size = (141.5, 53)
+            int ui:nodegraph:node:stackingOrder = 1556
+        }
+
+        def Shader "Power"
+        {
+            uniform token info:id = "ND_power_color3FA"
+            prepend color3f inputs:in1.connect = </Root/SideBySideStereoRenderMaterial/GeometrySwitchCameraIndex.outputs:out>
+            float inputs:in2.connect = </Root/SideBySideStereoRenderMaterial/Constant.outputs:out>
+            color3f outputs:out
+            float2 ui:nodegraph:node:pos = (-122.54342, 242.87909)
+            float2 ui:nodegraph:node:size = (123.5, 40)
+            int ui:nodegraph:node:stackingOrder = 1552
         }
     }
 }

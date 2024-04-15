@@ -44,7 +44,7 @@ struct FilePickerView: View {
                 ScrollView {
                     LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
                         // Make sure we always have 9 items and insert placeholders
-                        ForEach(self.$directoryContents, id: \.1) { urlAndHash in
+                        ForEach(self.$directoryContents, id: \.0) { urlAndHash in
                             FilePickerEntry(fileUrl: urlAndHash.0, hash: urlAndHash.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
                         }
                     }
