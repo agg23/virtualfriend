@@ -1,5 +1,11 @@
-use std::{collections::VecDeque, env, io};
+use std::{
+    collections::VecDeque,
+    env,
+    fs::{self, OpenOptions},
+    io,
+};
 
+use buffer_writer::BufferWriter;
 use bus::Bus;
 use cpu_v810::CpuV810;
 use hardware::Hardware;
@@ -11,6 +17,7 @@ use vsu::{
 
 use crate::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, gamepad::GamepadInputs, rom::ROM};
 
+pub mod buffer_writer;
 pub mod bus;
 pub mod constants;
 pub mod cpu_internals;
@@ -31,6 +38,8 @@ pub mod vsu;
 pub struct VirtualFriend {
     cpu: CpuV810,
     bus: Bus,
+
+    instruction_writer: BufferWriter,
 
     frame_serviced: bool,
     cycle_count: usize,
@@ -77,22 +86,23 @@ impl VirtualFriend {
 
         println!("{temp_dir:?}");
 
-        // fs::create_dir_all(&temp_dir).unwrap();
-        // temp_dir.push("instructions.log");
+        fs::create_dir_all(&temp_dir).unwrap();
+        temp_dir.push("instructions.log");
 
-        // println!("Logging to {:?}", temp_dir);
+        println!("Logging to {:?}", temp_dir);
 
-        // let log_file = OpenOptions::new()
-        //     .write(true)
-        //     .create(true)
-        //     .open(temp_dir)
-        //     .unwrap();
+        let log_file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(temp_dir)
+            .unwrap();
 
         // let writer = BufWriter::with_capacity(4000, log_file);
 
         VirtualFriend {
             cpu,
             bus,
+            instruction_writer: BufferWriter::new(log_file),
             frame_serviced: false,
             cycle_count: 0,
         }
@@ -115,12 +125,8 @@ impl VirtualFriend {
         // let mut lock = io::stdout().lock();
 
         loop {
-            // self.cpu.log_instruction(
-            //     Some(&mut self.buf_writer),
-            //     &mut lock,
-            //     self.cycle_count,
-            //     None,
-            // );
+            self.cpu
+                .log_instruction(&mut self.instruction_writer, self.cycle_count, None);
 
             let step_cycle_count = self.cpu.step(&mut self.bus);
 

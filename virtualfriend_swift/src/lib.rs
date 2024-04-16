@@ -1,3 +1,5 @@
+use std::{fs, path::Path};
+
 use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata};
 use virtualfriend::{
     gamepad::GamepadInputs,
@@ -58,9 +60,9 @@ mod ffi {
         type VirtualFriend;
 
         #[swift_bridge(init)]
-        fn new(rom_data: &[u8]) -> VirtualFriend;
+        fn new() -> VirtualFriend;
 
-        fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
+        fn run_frame(&mut self) -> FFIFrame;
     }
 
     extern "Rust" {
@@ -72,14 +74,74 @@ pub struct VirtualFriend {
     core: virtualfriend::VirtualFriend,
 }
 
+#[no_mangle]
+pub extern "C" fn vb_make() -> *mut std::ffi::c_void {
+    let b = Box::new(VirtualFriend::new());
+    Box::into_raw(b).cast()
+}
+
 impl VirtualFriend {
-    fn new(rom_data: &[u8]) -> Self {
-        VirtualFriend {
-            core: virtualfriend::VirtualFriend::new(rom_data.to_vec()),
+    fn new() -> Self {
+        let rom_path = Path::new(
+            "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
+        );
+
+        let rom = fs::read(rom_path).unwrap();
+
+        let mut virtual_friend = VirtualFriend {
+            core: virtualfriend::VirtualFriend::new(rom),
+        };
+
+        let inputs = GamepadInputs {
+            a_button: false,
+            b_button: false,
+
+            right_trigger: false,
+            left_trigger: false,
+
+            right_dpad_up: false,
+            right_dpad_right: false,
+            right_dpad_left: false,
+            right_dpad_down: false,
+
+            left_dpad_up: false,
+            left_dpad_right: false,
+            left_dpad_left: false,
+            left_dpad_down: false,
+
+            start: false,
+            select: false,
+        };
+
+        loop {
+            virtual_friend.core.run_frame(inputs.into());
         }
+
+        virtual_friend
     }
 
-    fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
+    fn run_frame(&mut self) -> FFIFrame {
+        let inputs = GamepadInputs {
+            a_button: false,
+            b_button: false,
+
+            right_trigger: false,
+            left_trigger: false,
+
+            right_dpad_up: false,
+            right_dpad_right: false,
+            right_dpad_left: false,
+            right_dpad_down: false,
+
+            left_dpad_up: false,
+            left_dpad_right: false,
+            left_dpad_left: false,
+            left_dpad_down: false,
+
+            start: false,
+            select: false,
+        };
+
         self.core.run_frame(inputs.into()).into()
     }
 }
