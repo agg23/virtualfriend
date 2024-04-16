@@ -1,4 +1,5 @@
 use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata};
+use std::sync::Mutex;
 use virtualfriend::{
     gamepad::GamepadInputs,
     manifest::{Manifest, Metadata},
@@ -60,7 +61,7 @@ mod ffi {
         #[swift_bridge(init)]
         fn new(rom_data: &[u8]) -> VirtualFriend;
 
-        fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
+        fn run_frame(&self, inputs: FFIGamepadInputs) -> FFIFrame;
     }
 
     extern "Rust" {
@@ -69,18 +70,23 @@ mod ffi {
 }
 
 pub struct VirtualFriend {
-    core: virtualfriend::VirtualFriend,
+    core: Mutex<virtualfriend::VirtualFriend>,
 }
 
 impl VirtualFriend {
     fn new(rom_data: &[u8]) -> Self {
         VirtualFriend {
-            core: virtualfriend::VirtualFriend::new(rom_data.to_vec()),
+            core: Mutex::new(virtualfriend::VirtualFriend::new(rom_data.to_vec())),
         }
     }
 
-    fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
-        self.core.run_frame(inputs.into()).into()
+    fn run_frame(&self, inputs: FFIGamepadInputs) -> FFIFrame {
+        let core = self
+            .core
+            .try_lock()
+            .expect("tried to lock mutex twice, which means that something was trying to compute two frames at once");
+
+        core.run_frame(inputs.into()).into()
     }
 }
 
