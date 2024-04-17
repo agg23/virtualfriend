@@ -10,7 +10,7 @@ import AsyncAlgorithms
 import GameController
 
 class Emulator {
-    let virtualFriend: VirtualFriend
+    private let actor: EmulatorActor
 
     var stereoImageChannel: AsyncChannel<StereoImage>!
 
@@ -35,9 +35,11 @@ class Emulator {
             return buffer.map { UInt8($0) }
         }
 
-        self.virtualFriend = array.withUnsafeBufferPointer { pointer in
+        let virtualFriend = array.withUnsafeBufferPointer { pointer in
             return VirtualFriend(pointer)
         }
+
+        self.actor = EmulatorActor(virtualFriend: virtualFriend)
 
         fileUrl.stopAccessingSecurityScopedResource()
 
@@ -55,7 +57,7 @@ class Emulator {
 
                 let inputs = self.pollInput()
 
-                let frame = self.virtualFriend.run_frame(inputs)
+                let frame = await self.actor.runFrame(with: inputs)
 
                 let leftImage = rustVecToCIImage(frame.left)
                 let rightImage = rustVecToCIImage(frame.right)
@@ -132,5 +134,18 @@ class Emulator {
         let select = sticks?.buttonOptions?.isPressed ?? false
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
+    }
+}
+
+/// Used to prevent concurrent access to Rust code
+private actor EmulatorActor {
+    let virtualFriend: VirtualFriend
+
+    init(virtualFriend: VirtualFriend) {
+        self.virtualFriend = virtualFriend
+    }
+
+    func runFrame(with inputs: FFIGamepadInputs) -> FFIFrame {
+        return self.virtualFriend.run_frame(inputs)
     }
 }

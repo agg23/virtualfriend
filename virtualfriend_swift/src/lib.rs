@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata};
 use virtualfriend::{
     gamepad::GamepadInputs,
@@ -69,18 +71,18 @@ mod ffi {
 }
 
 pub struct VirtualFriend {
-    core: virtualfriend::VirtualFriend,
+    core: Mutex<virtualfriend::VirtualFriend>,
 }
 
 impl VirtualFriend {
     fn new(rom_data: &[u8]) -> Self {
         VirtualFriend {
-            core: virtualfriend::VirtualFriend::new(rom_data.to_vec()),
+            core: Mutex::new(virtualfriend::VirtualFriend::new(rom_data.to_vec())),
         }
     }
 
     fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
-        self.core.run_frame(inputs.into()).into()
+        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_frame(inputs.into()).into()
     }
 }
 
