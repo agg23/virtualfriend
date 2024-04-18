@@ -32,30 +32,33 @@ pub struct VirtualFriend {
     cpu: CpuV810,
     bus: Bus,
 
-    frame_serviced: bool,
+    video_frame_serviced: bool,
     cycle_count: usize,
 }
 
-pub struct Frame {
+pub struct VideoFrame {
     pub left: Vec<u8>,
     pub right: Vec<u8>,
 }
 
+pub struct Frame {
+    pub video: Option<VideoFrame>,
+    pub audio_buffer: Vec<AudioFrame>,
+}
+
 struct SimpleAudioFrameSink {
-    inner: VecDeque<AudioFrame>,
+    inner: Vec<AudioFrame>,
 }
 
 impl SimpleAudioFrameSink {
     fn new() -> Self {
-        SimpleAudioFrameSink {
-            inner: VecDeque::new(),
-        }
+        SimpleAudioFrameSink { inner: Vec::new() }
     }
 }
 
 impl Sink<AudioFrame> for SimpleAudioFrameSink {
     fn append(&mut self, frame: AudioFrame) {
-        self.inner.push_back(frame);
+        self.inner.push(frame);
     }
 }
 
@@ -93,12 +96,12 @@ impl VirtualFriend {
         VirtualFriend {
             cpu,
             bus,
-            frame_serviced: false,
+            video_frame_serviced: false,
             cycle_count: 0,
         }
     }
 
-    pub fn run_frame(&mut self, inputs: GamepadInputs) -> Frame {
+    pub fn run_video_frame(&mut self, inputs: GamepadInputs) -> Frame {
         let mut emu_audio_sink = SimpleAudioFrameSink::new();
 
         // let mut log_file = OpenOptions::new()
@@ -122,34 +125,62 @@ impl VirtualFriend {
             //     None,
             // );
 
-            let step_cycle_count = self.cpu.step(&mut self.bus);
-
-            self.cycle_count += step_cycle_count;
-
-            if let Some(request) = self
-                .bus
-                .step(step_cycle_count, &mut emu_audio_sink, &inputs)
-            {
-                self.cpu.request_interrupt(request);
-                continue;
-            }
+            self.system_tick(&mut emu_audio_sink, &inputs);
 
             if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-                if !self.frame_serviced {
-                    // Render framebuffer
-                    self.frame_serviced = true;
-
-                    return Frame {
+                // Render framebuffer
+                return Frame {
+                    video: Some(VideoFrame {
                         left: self.bus.vip.left_rendered_framebuffer.clone(),
                         right: self.bus.vip.right_rendered_framebuffer.clone(),
-                    };
+                    }),
+                    audio_buffer: emu_audio_sink.inner,
+                };
+            }
+        }
+    }
+
+    pub fn run_audio_frame(&mut self, inputs: GamepadInputs, buffer_size: usize) -> Frame {
+        let mut emu_audio_sink = SimpleAudioFrameSink::new();
+
+        let mut buffered_video_frame: Option<VideoFrame> = None;
+
+        loop {
+            self.system_tick(&mut emu_audio_sink, &inputs);
+
+            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {}
+
+            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
+                if !self.video_frame_serviced {
+                    // Render framebuffer
+                    self.video_frame_serviced = true;
+
+                    buffered_video_frame = Some(VideoFrame {
+                        left: self.bus.vip.left_rendered_framebuffer.clone(),
+                        right: self.bus.vip.right_rendered_framebuffer.clone(),
+                    });
                 }
             } else {
-                self.frame_serviced = false;
+                self.video_frame_serviced = false;
             }
 
-            // base_audio_sink.append(emu_audio_sink.inner.as_slices().0);
-            emu_audio_sink.inner.clear();
+            if emu_audio_sink.inner.len() >= buffer_size {
+                // Audio buffer is filled. Return what we have
+                return Frame {
+                    video: buffered_video_frame,
+                    audio_buffer: emu_audio_sink.inner,
+                };
+            }
+        }
+    }
+
+    fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {
+        let step_cycle_count = self.cpu.step(&mut self.bus);
+
+        self.cycle_count += step_cycle_count;
+
+        if let Some(request) = self.bus.step(step_cycle_count, emu_audio_sink, inputs) {
+            self.cpu.request_interrupt(request);
         }
     }
 }

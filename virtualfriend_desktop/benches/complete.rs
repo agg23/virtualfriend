@@ -1,20 +1,50 @@
-use std::path::Path;
+use std::{collections::VecDeque, path::Path};
 
 use virtualfriend::{
-    bus::Bus, cpu_v810::CpuV810, gamepad::GamepadInputs, hardware::Hardware, rom::ROM, vip::VIP,
+    bus::Bus,
+    cpu_v810::CpuV810,
+    gamepad::GamepadInputs,
+    hardware::Hardware,
+    rom::ROM,
+    vip::VIP,
+    vsu::{
+        traits::{AudioFrame, Sink},
+        VSU,
+    },
 };
+
+struct SimpleAudioFrameSink {
+    inner: VecDeque<AudioFrame>,
+}
+
+impl SimpleAudioFrameSink {
+    fn new() -> Self {
+        SimpleAudioFrameSink {
+            inner: VecDeque::new(),
+        }
+    }
+}
+
+impl Sink<AudioFrame> for SimpleAudioFrameSink {
+    fn append(&mut self, frame: AudioFrame) {
+        self.inner.push_back(frame);
+    }
+}
 
 fn main() {
     let rom = ROM::load_from_file(Path::new(
         "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
     ));
 
+    let mut audio_sink = SimpleAudioFrameSink::new();
+
     let mut cpu = CpuV810::new();
 
     let mut vip = VIP::new();
+    let mut vsu = VSU::new();
 
     let mut hardware = Hardware::new();
-    let mut bus = Bus::new(rom, &mut vip, &mut hardware);
+    let mut bus = Bus::new(rom, &mut vip, &mut vsu, &mut hardware);
 
     let mut inputs = GamepadInputs {
         a_button: false,
@@ -34,9 +64,11 @@ fn main() {
 
         let step_cycle_count = cpu.step(&mut bus);
 
-        if let Some(request) = bus.step(step_cycle_count, &inputs) {
+        if let Some(request) = bus.step(step_cycle_count, &mut audio_sink, &inputs) {
             cpu.request_interrupt(request);
             continue;
         }
+
+        audio_sink.inner.clear();
     }
 }

@@ -8,8 +8,9 @@ use std::{
     thread,
 };
 
+use audio_driver::AudioDriver;
 use pixels::{Pixels, SurfaceTexture};
-use single_value_channel::{channel_starting_with, Receiver, Updater};
+use single_value_channel::channel_starting_with;
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, WindowEvent},
@@ -19,9 +20,9 @@ use winit::{
     window::WindowBuilder,
 };
 
-use virtualfriend::vsu::traits::{AudioFrame, Sink};
+use virtualfriend::gamepad::GamepadInputs;
+use virtualfriend::VideoFrame;
 use virtualfriend::VirtualFriend;
-use virtualfriend::{gamepad::GamepadInputs, Frame};
 
 const DISPLAY_WIDTH: usize = 384;
 const DISPLAY_MARGIN: usize = 40;
@@ -39,7 +40,7 @@ struct ThreadFrame {
 }
 
 impl ThreadFrame {
-    fn from(value: Frame, id: usize) -> Self {
+    fn from(value: VideoFrame, id: usize) -> Self {
         ThreadFrame {
             left: value.left,
             right: value.right,
@@ -119,7 +120,7 @@ fn main() {
             right: initial_framebuffer.clone(),
             id: last_frame_id,
         });
-    let (inputs_receiver, mut inputs_transmitter) =
+    let (mut inputs_receiver, mut inputs_transmitter) =
         channel_starting_with::<GamepadInputs>(GamepadInputs {
             a_button: false,
             b_button: false,
@@ -141,14 +142,30 @@ fn main() {
             select: false,
         });
 
-    let rom_path =
-        Path::new("/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb");
-
-    create_emulator(
-        buffer_transmitter,
-        inputs_receiver,
-        rom_path.to_str().unwrap().into(),
+    let rom_path = Path::new(
+        "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
     );
+
+    let rom = fs::read(rom_path).unwrap();
+    let mut virtualfriend = VirtualFriend::new(rom);
+
+    let mut frame_id = 0;
+
+    // 41.667kHz
+    let audio_driver = AudioDriver::new(41667, 20, move |sample_count| {
+        let frame = virtualfriend.run_audio_frame(inputs_receiver.latest().clone(), sample_count);
+
+        if let Some(video) = frame.video {
+            // Send updated video frame
+            frame_id += 1;
+
+            buffer_transmitter
+                .update(ThreadFrame::from(video, frame_id))
+                .expect("Could not update frame");
+        }
+
+        VecDeque::from(frame.audio_buffer)
+    });
 
     let red_base = RGB {
         red: 0xFF,
@@ -193,12 +210,13 @@ fn main() {
             if latest_frame.id != last_frame_id {
                 last_frame_id = latest_frame.id;
                 // println!("Drawing frame");
+
                 window.request_redraw();
             }
 
             match event {
                 Event::WindowEvent {
-                    window_id,
+                    window_id: _,
                     event: WindowEvent::RedrawRequested,
                 } => {
                     let buffer = pixels.frame_mut();
@@ -347,43 +365,25 @@ fn main() {
         .unwrap();
 }
 
-struct SimpleAudioFrameSink {
-    inner: VecDeque<AudioFrame>,
-}
+// fn create_emulator(
+//     buffer_transmitter: Updater<ThreadFrame>,
+//     mut inputs_receiver: Receiver<GamepadInputs>,
+//     rom_path: String,
+// ) {
+//     thread::spawn(move || {
+//         let rom = fs::read(rom_path).unwrap();
+//         let mut virtualfriend = VirtualFriend::new(rom);
 
-impl SimpleAudioFrameSink {
-    fn new() -> Self {
-        SimpleAudioFrameSink {
-            inner: VecDeque::new(),
-        }
-    }
-}
+//         let mut frame_id = 0;
 
-impl Sink<AudioFrame> for SimpleAudioFrameSink {
-    fn append(&mut self, frame: AudioFrame) {
-        self.inner.push_back(frame);
-    }
-}
+//         loop {
+//             let frame = virtualfriend.run_frame(inputs_receiver.latest().clone());
 
-fn create_emulator(
-    buffer_transmitter: Updater<ThreadFrame>,
-    mut inputs_receiver: Receiver<GamepadInputs>,
-    rom_path: String,
-) {
-    thread::spawn(move || {
-        let rom = fs::read(rom_path).unwrap();
-        let mut virtualfriend = VirtualFriend::new(rom);
+//             frame_id += 1;
 
-        let mut frame_id = 0;
-
-        loop {
-            let frame = virtualfriend.run_frame(inputs_receiver.latest().clone());
-
-            frame_id += 1;
-
-            buffer_transmitter
-                .update(ThreadFrame::from(frame, frame_id))
-                .expect("Could not update frame");
-        }
-    });
-}
+//             buffer_transmitter
+//                 .update(ThreadFrame::from(frame, frame_id))
+//                 .expect("Could not update frame");
+//         }
+//     });
+// }
