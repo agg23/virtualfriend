@@ -1,11 +1,11 @@
 mod audio_driver;
+mod linear_resampler;
 
 use std::{
     collections::VecDeque,
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
-    thread,
 };
 
 use audio_driver::AudioDriver;

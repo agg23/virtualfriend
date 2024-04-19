@@ -25,19 +25,19 @@
 // IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-struct LinearResampler {
+use virtualfriend::vsu::traits::AudioFrame;
+
+pub struct LinearResampler {
     from_sample_rate: u32,
     to_sample_rate: u32,
 
     current_from_frame: AudioFrame,
     next_from_frame: AudioFrame,
     from_fract_pos: u32,
-
-    current_frame_channel_offset: u32,
 }
 
 impl LinearResampler {
-    fn new(from_sample_rate: u32, to_sample_rate: u32) -> LinearResampler {
+    pub fn new(from_sample_rate: u32, to_sample_rate: u32) -> LinearResampler {
         let sample_rate_gcd = {
             fn gcd(a: u32, b: u32) -> u32 {
                 if b == 0 {
@@ -57,48 +57,37 @@ impl LinearResampler {
             current_from_frame: (0, 0),
             next_from_frame: (0, 0),
             from_fract_pos: 0,
-
-            current_frame_channel_offset: 0,
         }
     }
 
-    fn next(&mut self, input: &mut dyn Iterator<Item = i16>) -> i16 {
+    pub fn next(&mut self, input: &mut dyn Iterator<Item = (i16, i16)>) -> (i16, i16) {
         fn interpolate(a: i16, b: i16, num: u32, denom: u32) -> i16 {
             (((a as i32) * ((denom - num) as i32) + (b as i32) * (num as i32)) / (denom as i32))
                 as _
         }
 
-        let ret = match self.current_frame_channel_offset {
-            0 => interpolate(
-                self.current_from_frame.0,
-                self.next_from_frame.0,
-                self.from_fract_pos,
-                self.to_sample_rate,
-            ),
-            _ => interpolate(
-                self.current_from_frame.1,
-                self.next_from_frame.1,
-                self.from_fract_pos,
-                self.to_sample_rate,
-            ),
-        };
+        let output_left = interpolate(
+            self.current_from_frame.0,
+            self.next_from_frame.0,
+            self.from_fract_pos,
+            self.to_sample_rate,
+        );
+        let output_right = interpolate(
+            self.current_from_frame.1,
+            self.next_from_frame.1,
+            self.from_fract_pos,
+            self.to_sample_rate,
+        );
 
-        self.current_frame_channel_offset += 1;
-        if self.current_frame_channel_offset >= 2 {
-            self.current_frame_channel_offset = 0;
+        self.from_fract_pos += self.from_sample_rate;
+        while self.from_fract_pos > self.to_sample_rate {
+            self.from_fract_pos -= self.to_sample_rate;
 
-            self.from_fract_pos += self.from_sample_rate;
-            while self.from_fract_pos > self.to_sample_rate {
-                self.from_fract_pos -= self.to_sample_rate;
+            self.current_from_frame = self.next_from_frame;
 
-                self.current_from_frame = self.next_from_frame;
-
-                let left = input.next().unwrap_or(0);
-                let right = input.next().unwrap_or(0);
-                self.next_from_frame = (left, right);
-            }
+            self.next_from_frame = input.next().unwrap_or((0, 0));
         }
 
-        ret
+        (output_left, output_right)
     }
 }

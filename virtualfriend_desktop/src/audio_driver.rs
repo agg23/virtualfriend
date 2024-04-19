@@ -10,6 +10,8 @@ use rubato::{
 };
 use virtualfriend::vsu::traits::AudioFrame;
 
+use crate::linear_resampler::LinearResampler;
+
 pub struct AudioDriver {
     stream: Stream,
 }
@@ -57,6 +59,12 @@ impl AudioDriver {
         let mut resampler: Option<FftFixedInOut<f32>> = None;
         let mut resample_buffers: Option<(Vec<Vec<f32>>, Vec<Vec<f32>>)> = None;
 
+        let mut resampler = LinearResampler::new(sample_rate, config.max_sample_rate().0);
+
+        let rate_ratio = (config.max_sample_rate().0 as f32) / (sample_rate as f32);
+
+        println!("Converting with ratio: {rate_ratio}");
+
         let mut initial_buffer = true;
 
         let stream = output_device
@@ -89,75 +97,90 @@ impl AudioDriver {
                     //     )
                     //     .unwrap()
                     // });
-                    let local_resampler = resampler.get_or_insert_with(|| {
-                        FftFixedInOut::new(
-                            sample_rate as usize,
-                            config.max_sample_rate().0 as usize,
-                            484,
-                            2,
-                        )
-                        .unwrap()
-                    });
+                    // let local_resampler = resampler.get_or_insert_with(|| {
+                    //     FftFixedInOut::new(
+                    //         sample_rate as usize,
+                    //         config.max_sample_rate().0 as usize,
+                    //         484,
+                    //         2,
+                    //     )
+                    //     .unwrap()
+                    // });
 
-                    let (input_resample_buffer, output_resample_buffer) = resample_buffers
-                        .get_or_insert_with(|| {
-                            (
-                                local_resampler.input_buffer_allocate(false),
-                                vec![vec![0.0f32; local_resampler.output_frames_max()]; 2],
-                            )
-                        });
+                    // let (input_resample_buffer, output_resample_buffer) = resample_buffers
+                    //     .get_or_insert_with(|| {
+                    //         (
+                    //             local_resampler.input_buffer_allocate(false),
+                    //             vec![vec![0.0f32; local_resampler.output_frames_max()]; 2],
+                    //         )
+                    //     });
 
-                    println!("Frames requested: {}", local_resampler.input_frames_next());
-                    let frame_buffer = on_frame_request(local_resampler.input_frames_next());
+                    // println!("Frames requested: {}", local_resampler.input_frames_next());
+                    let frame_buffer =
+                        on_frame_request(((data.len() / 2) as f32 / rate_ratio).ceil() as usize);
 
-                    // Save buffer
-                    input_resample_buffer[0].clear();
-                    input_resample_buffer[1].clear();
+                    // // Save buffer
+                    // input_resample_buffer[0].clear();
+                    // input_resample_buffer[1].clear();
 
-                    for frame in frame_buffer.into_iter() {
-                        input_resample_buffer[0].push((frame.0 as f32) / 32768.0);
-                        input_resample_buffer[1].push((frame.1 as f32) / 32768.0);
-                    }
+                    // for frame in frame_buffer.into_iter() {
+                    //     // input_resample_buffer[0].push((frame.0 as f32) / 32768.0);
+                    //     // input_resample_buffer[1].push((frame.1 as f32) / 32768.0);
 
-                    // Resample to system format
-                    local_resampler
-                        .process_into_buffer(
-                            input_resample_buffer.as_slice(),
-                            output_resample_buffer.as_mut_slice(),
-                            None,
-                        )
-                        .expect("Could not resample");
-
-                    // if initial_buffer {
-                    //     initial_buffer = false;
-
-                    //     println!("Writing initial buffer");
-
-                    //     for value in data.iter_mut() {
-                    //         *value = 0.0;
-                    //     }
-
-                    //     return;
                     // }
 
-                    // Copy frames from emulator buffer to soundcard buffer
-                    for (output_frame, input_frame) in
-                        data.chunks_mut(2).zip(output_resample_buffer.iter())
-                    {
+                    let mut input_frame_iter = frame_buffer.into_iter();
+
+                    for output_frame in data.chunks_mut(2) {
                         let mut frame_iter = output_frame.iter_mut();
                         let channel0 = frame_iter.next().unwrap();
                         let channel1 = frame_iter.next().unwrap();
 
-                        // Remove entries from buffer as we use them
-                        *channel0 = input_frame[0];
-                        *channel1 = input_frame[1];
+                        let (left, right) = resampler.next(&mut input_frame_iter);
 
-                        // println!("{channel0}");
-
-                        // if *channel0 > 0.0 {
-                        //     println!("{channel0}");
-                        // }
+                        *channel0 = (left as f32) / 32768.0;
+                        *channel1 = (right as f32) / 32768.0;
                     }
+
+                    // // Resample to system format
+                    // local_resampler
+                    //     .process_into_buffer(
+                    //         input_resample_buffer.as_slice(),
+                    //         output_resample_buffer.as_mut_slice(),
+                    //         None,
+                    //     )
+                    //     .expect("Could not resample");
+
+                    // // if initial_buffer {
+                    // //     initial_buffer = false;
+
+                    // //     println!("Writing initial buffer");
+
+                    // //     for value in data.iter_mut() {
+                    // //         *value = 0.0;
+                    // //     }
+
+                    // //     return;
+                    // // }
+
+                    // // Copy frames from emulator buffer to soundcard buffer
+                    // for (output_frame, input_frame) in
+                    //     data.chunks_mut(2).zip(output_resample_buffer.iter())
+                    // {
+                    //     let mut frame_iter = output_frame.iter_mut();
+                    //     let channel0 = frame_iter.next().unwrap();
+                    //     let channel1 = frame_iter.next().unwrap();
+
+                    //     // Remove entries from buffer as we use them
+                    //     *channel0 = input_frame[0];
+                    //     *channel1 = input_frame[1];
+
+                    //     // println!("{channel0}");
+
+                    //     // if *channel0 > 0.0 {
+                    //     //     println!("{channel0}");
+                    //     // }
+                    // }
                 },
                 move |err| println!("Audio error: {err}"),
                 None,
