@@ -159,9 +159,12 @@ fn main() {
             // Send updated video frame
             frame_id += 1;
 
-            buffer_transmitter
+            if buffer_transmitter
                 .update(ThreadFrame::from(video, frame_id))
-                .expect("Could not update frame");
+                .is_err()
+            {
+                println!("Could not update frame");
+            };
         }
 
         VecDeque::from(frame.audio_buffer)
