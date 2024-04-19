@@ -1,6 +1,6 @@
 use crate::constants::{
-    NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT, SOUND_LIVE_INTERVAL_CYCLE_COUNT,
-    WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT,
+    ENVELOPE_CYCLE_COUNT, NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT,
+    SOUND_LIVE_INTERVAL_CYCLE_COUNT, WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT,
 };
 
 use super::{channel::Channel, waveform::Waveform};
@@ -53,6 +53,8 @@ impl ChannelType {
                         ..
                     } => {
                         *current_sample_index = 0;
+
+                        // TODO: Reset frequency modification timer for Ch5
                     }
                     Self::Noise {} => {
                         // TODO: Reset shift register
@@ -92,6 +94,7 @@ impl ChannelType {
                 continue;
             }
 
+            // When firing, turn off channel
             if channel.auto_deactivate {
                 if channel.live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
                     // One tick of live interval
@@ -109,6 +112,7 @@ impl ChannelType {
                 }
             }
 
+            // Sampling frequency
             if channel.sampling_frequency_tick_counter >= cycles_per_frequency_tick {
                 // One tick of frequency step increment
                 if channel.sampling_frequency_counter >= 2048 - channel.sampling_frequency {
@@ -123,6 +127,31 @@ impl ChannelType {
                 channel.sampling_frequency_tick_counter = 0;
             } else {
                 channel.sampling_frequency_tick_counter += 1;
+            }
+
+            // Envelope
+            if channel.envelope_tick_counter >= ENVELOPE_CYCLE_COUNT {
+                // One tick of envelope
+                if channel.enable_envelope_modification {
+                    if channel.envelope_step_counter >= channel.envelope_interval + 1 {
+                        if channel.envelope_direction && channel.envelope_level < 15 {
+                            // Increment volume
+                            channel.envelope_level += 1;
+                        } else if !channel.envelope_direction && channel.envelope_level > 0 {
+                            // Decrement volume
+                            channel.envelope_level -= 1;
+                        } else if channel.loop_envelope {
+                            // We must be at 0 or 15. We're set to repeat
+                            channel.envelope_level = channel.envelope_reload_value;
+                        }
+
+                        channel.envelope_step_counter = 0;
+                    }
+                }
+
+                channel.envelope_tick_counter = 0;
+            } else {
+                channel.envelope_tick_counter += 1;
             }
         }
 

@@ -73,6 +73,8 @@ pub const SOUND_LIVE_INTERVAL_CYCLE_COUNT: usize = 76_805;
 pub const WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT: usize = CLOCK_SPEED / 5_000_000;
 /// Number of cycles per frequency tick for the noise channel
 pub const NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT: usize = CLOCK_SPEED / 500_000;
+/// Number of cycles per envelope tick
+pub const ENVELOPE_CYCLE_COUNT: usize = ((CLOCK_SPEED as f32) / 65.1) as usize;
 
-/// Sampled every 41.7kHz
-pub const SOUND_SAMPLE_RATE_CYCLE_COUNT: usize = CLOCK_SPEED / 41_700;
+/// Sampled every 41.7kHz (41.666kHz so it rounds the result to 480 cycles)
+pub const SOUND_SAMPLE_RATE_CYCLE_COUNT: usize = CLOCK_SPEED / 41_666;

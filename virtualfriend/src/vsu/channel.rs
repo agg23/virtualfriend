@@ -10,18 +10,24 @@ pub struct Channel {
 
     pub left_volume: u8,
     pub right_volume: u8,
+    pub envelope_level: u8,
 
     /// Frequency specification
     pub sampling_frequency: u16,
     pub sampling_frequency_counter: u16,
     pub sampling_frequency_tick_counter: usize,
 
+    /// Envelope specification
     pub envelope_interval: u8,
     /// When set, envelope will grow (add 1). Otherwise, shrink
     pub envelope_direction: bool,
     pub envelope_reload_value: u8,
     pub enable_envelope_modification: bool,
     pub loop_envelope: bool,
+    // The global envelope timing position
+    pub envelope_tick_counter: usize,
+    /// The envelope's position in the envelope interval
+    pub envelope_step_counter: u8,
 
     /// The latest sample from this channel
     pub sampled_value: u8,
@@ -54,6 +60,7 @@ impl Channel {
 
             left_volume: 0,
             right_volume: 0,
+            envelope_level: 0,
 
             sampling_frequency: 0,
             sampling_frequency_counter: 0,
@@ -64,6 +71,8 @@ impl Channel {
             envelope_reload_value: 0,
             enable_envelope_modification: false,
             loop_envelope: false,
+            envelope_tick_counter: 0,
+            envelope_step_counter: 0,
 
             sampled_value: 0,
         }
@@ -79,10 +88,13 @@ impl Channel {
                 self.auto_deactivate = register.auto_deactivate();
                 self.enable_playback = register.enable_playback();
 
-                // Reset counter
+                // Reset frequency delay counter to beginning of current sample
                 self.sampling_frequency_counter = 0;
 
-                // TODO: Reset envelope delay
+                // PCM memory reset performed in `channel_enum.rs`
+
+                // Reset envelope step counter
+                self.envelope_step_counter = 0;
             }
             0x4 => {
                 // Stereo level setting register
@@ -114,6 +126,8 @@ impl Channel {
                 self.envelope_interval = register.envelope_interval();
                 self.envelope_direction = register.envelope_direction();
                 self.envelope_reload_value = register.envelope_reload_value();
+
+                self.envelope_level = self.envelope_reload_value;
             }
             0x14 => {
                 // Envelope Specification register 1
@@ -131,20 +145,17 @@ impl Channel {
     }
 
     fn sample_side(&self, is_left: bool) -> u16 {
-        // TODO: Set envelope
-        let envelope = 8;
-
         let stereo_level = if is_left {
             self.left_volume
         } else {
             self.right_volume
         };
 
-        let amplitude = envelope * stereo_level;
+        let amplitude = self.envelope_level * stereo_level;
         // Take only the top 5 bits
         let mut amplitude = amplitude >> 3;
 
-        if envelope > 0 || stereo_level > 0 {
+        if self.envelope_level > 0 || stereo_level > 0 {
             amplitude += 1;
         }
 
