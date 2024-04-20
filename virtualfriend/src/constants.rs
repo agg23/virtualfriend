@@ -76,5 +76,10 @@ pub const NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT: usize = CLOCK_SPEED / 500_00
 /// Number of cycles per envelope tick
 pub const ENVELOPE_CYCLE_COUNT: usize = ((CLOCK_SPEED as f32) / 65.1) as usize;
 
+/// Number of cycles in 130.2Hz sweep tick
+pub const SWEEP_FAST_CYCLE_COUNT: usize = ((CLOCK_SPEED as f32) / 130.2) as usize;
+/// Number of cycles in 1041.6Hz sweep tick
+pub const SWEEP_SLOW_CYCLE_COUNT: usize = ((CLOCK_SPEED as f32) / 1041.6) as usize;
+
 /// Sampled every 41.7kHz (41.666kHz so it rounds the result to 480 cycles)
 pub const SOUND_SAMPLE_RATE_CYCLE_COUNT: usize = CLOCK_SPEED / 41_666;

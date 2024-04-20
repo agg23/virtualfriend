@@ -3,7 +3,7 @@ use crate::constants::{
     SOUND_LIVE_INTERVAL_CYCLE_COUNT, WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT,
 };
 
-use super::{channel::Channel, waveform::Waveform};
+use super::{channel::Channel, sweep_modulate::SweepModulate, waveform::Waveform};
 
 pub enum ChannelType {
     PCM {
@@ -14,6 +14,7 @@ pub enum ChannelType {
     /// Same as PCM, plus supports frequency sweep and modulation
     PCMCh5 {
         channel: Channel,
+        sweep_mod: SweepModulate,
         waveform_bank_index: u8,
         current_sample_index: usize,
     },
@@ -34,6 +35,7 @@ impl ChannelType {
     pub fn new_pcm_ch5() -> Self {
         Self::PCMCh5 {
             channel: Channel::new(),
+            sweep_mod: SweepModulate::new(),
             waveform_bank_index: 0,
             current_sample_index: 0,
         }
@@ -103,18 +105,25 @@ impl ChannelType {
         }
 
         self.channel_mut().set_u8(address, value);
+
+        match self {
+            Self::PCMCh5 { sweep_mod, .. } => {
+                sweep_mod.set_u8(address, value);
+            }
+            _ => {}
+        }
     }
 
-    /**
-     * Sample stereo output from channel
-     */
+    ///
+    /// Sample stereo output from channel
+    ///
     pub fn sample(&self, waveforms: &[Waveform; 5]) -> (u16, u16) {
         self.channel().sample(self.output(waveforms))
     }
 
-    /**
-     * Turn off channel after period
-     */
+    ///
+    /// Turn off channel after period
+    ///
     pub fn step_auto_deactivate(&mut self) {
         let channel = self.channel_mut();
 
@@ -137,9 +146,9 @@ impl ChannelType {
         }
     }
 
-    /**
-     * Increment current sample for channel after period
-     */
+    ///
+    /// Increment current sample for channel after period
+    ///
     pub fn step_sampling_frequency(&mut self) {
         let cycles_per_frequency_tick = if let ChannelType::Noise { .. } = self {
             NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT
@@ -147,29 +156,29 @@ impl ChannelType {
             WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT
         };
 
-        let channel = self.channel_mut();
+        let channel = self.channel();
 
         // Sampling frequency
         if channel.sampling_frequency_tick_counter >= cycles_per_frequency_tick {
             // One tick of frequency step increment
-            if channel.sampling_frequency_counter >= 2048 - channel.sampling_frequency {
+            if channel.sampling_frequency_counter > 2047 - self.frequency() {
                 // Move to next sample
                 self.increment_sample();
 
                 self.channel_mut().sampling_frequency_counter = 0;
             } else {
-                channel.sampling_frequency_counter += 1;
+                self.channel_mut().sampling_frequency_counter += 1;
             }
 
             self.channel_mut().sampling_frequency_tick_counter = 0;
         } else {
-            channel.sampling_frequency_tick_counter += 1;
+            self.channel_mut().sampling_frequency_tick_counter += 1;
         }
     }
 
-    /**
-     * Modify envelope after period
-     */
+    ///
+    /// Modify envelope after period
+    ///
     pub fn step_envelope(&mut self) {
         let channel = self.channel_mut();
 
@@ -198,20 +207,32 @@ impl ChannelType {
         }
     }
 
-    /**
-     * Moves to the next sample in the waveform. Does nothing on Noise channel
-     */
+    ///
+    /// Update sweep/modulation after period
+    ///
+    pub fn step_sweep_modulate(&mut self, modulation_data: &[i8]) {
+        match self {
+            ChannelType::PCMCh5 {
+                channel, sweep_mod, ..
+            } => {
+                sweep_mod.step(channel, modulation_data);
+            }
+            _ => (),
+        }
+    }
+
+    ///
+    /// Moves to the next sample in the waveform. Does nothing on Noise channel
+    ///
     fn increment_sample(&mut self) {
         match self {
             ChannelType::PCM {
-                channel: _,
-                waveform_bank_index: _,
                 current_sample_index,
+                ..
             }
             | ChannelType::PCMCh5 {
-                channel: _,
-                waveform_bank_index: _,
                 current_sample_index,
+                ..
             } => {
                 // Update sample index
                 *current_sample_index = (*current_sample_index + 1) & 0x1F;
@@ -220,9 +241,9 @@ impl ChannelType {
         }
     }
 
-    /**
-     * Gets the latest output for this channel
-     */
+    ///
+    /// Gets the latest output for this channel
+    ///
     fn output(&self, waveforms: &[Waveform; 5]) -> u8 {
         match self {
             ChannelType::PCM {
@@ -231,9 +252,9 @@ impl ChannelType {
                 current_sample_index,
             }
             | ChannelType::PCMCh5 {
-                channel: _,
                 waveform_bank_index,
                 current_sample_index,
+                ..
             } => {
                 // Update sample index
                 if *waveform_bank_index > 4 {
@@ -246,6 +267,17 @@ impl ChannelType {
             Self::Noise { .. } => {
                 // TODO: Add noise sample
                 0
+            }
+        }
+    }
+
+    fn frequency(&self) -> u16 {
+        match self {
+            ChannelType::PCM { channel, .. } => channel.sampling_frequency,
+            ChannelType::PCMCh5 { sweep_mod, .. } => sweep_mod.frequency(),
+            ChannelType::Noise { .. } => {
+                // TODO: Handle noise
+                return 0;
             }
         }
     }

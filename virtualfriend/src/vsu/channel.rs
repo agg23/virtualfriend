@@ -28,9 +28,6 @@ pub struct Channel {
     pub envelope_tick_counter: usize,
     /// The envelope's position in the envelope interval
     pub envelope_step_counter: u8,
-
-    /// The latest sample from this channel
-    pub sampled_value: u8,
 }
 
 bitfield! {
@@ -73,8 +70,6 @@ impl Channel {
             loop_envelope: false,
             envelope_tick_counter: 0,
             envelope_step_counter: 0,
-
-            sampled_value: 0,
         }
     }
 

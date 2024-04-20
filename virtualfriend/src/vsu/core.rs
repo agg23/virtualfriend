@@ -8,6 +8,7 @@ use super::{
 
 pub struct VSU {
     waveforms: [Waveform; 5],
+    modulation: [i8; 32],
     channels: [ChannelType; 6],
 
     sample_output_counter: usize,
@@ -17,6 +18,7 @@ impl VSU {
     pub fn new() -> Self {
         VSU {
             waveforms: [Waveform::new(); 5],
+            modulation: [0; 32],
             channels: [
                 ChannelType::new_pcm(),
                 ChannelType::new_pcm(),
@@ -55,6 +57,11 @@ impl VSU {
             0x200..=0x27F => {
                 if !self.playback_occuring() {
                     self.waveforms[4].set_u8(address, value)
+                }
+            }
+            0x280..=0x2FF => {
+                if !self.channels[4].channel().enable_playback {
+                    self.modulation[(address - 0x280) >> 2] = value as i8;
                 }
             }
             0x580 => {
@@ -121,6 +128,8 @@ impl VSU {
             self.channels
                 .iter_mut()
                 .for_each(|channel| channel.step_envelope());
+
+            self.channels[4].step_sweep_modulate(&self.modulation);
 
             // Actually take samples
             if self.sample_output_counter >= SOUND_SAMPLE_RATE_CYCLE_COUNT {
