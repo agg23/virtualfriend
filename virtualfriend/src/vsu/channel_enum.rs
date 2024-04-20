@@ -79,8 +79,6 @@ impl ChannelType {
                         ..
                     } => {
                         *current_sample_index = 0;
-
-                        // TODO: Reset frequency modification timer for Ch5
                     }
                     Self::Noise { .. } => {
                         // TODO: Reset shift register
@@ -164,6 +162,7 @@ impl ChannelType {
             if channel.sampling_frequency_counter > 2047 - self.frequency() {
                 // Move to next sample
                 self.increment_sample();
+                // println!("Increment sample {}", self.channel().enable_playback);
 
                 self.channel_mut().sampling_frequency_counter = 0;
             } else {
@@ -261,7 +260,14 @@ impl ChannelType {
                     // Out of range. Nothing plays
                     0
                 } else {
-                    waveforms[*waveform_bank_index as usize].get_indexed(*current_sample_index)
+                    let output =
+                        waveforms[*waveform_bank_index as usize].get_indexed(*current_sample_index);
+
+                    // println!(
+                    //     "Output {output:02X}, bank: {waveform_bank_index:01X} {current_sample_index:02X}"
+                    // );
+
+                    output
                 }
             }
             Self::Noise { .. } => {

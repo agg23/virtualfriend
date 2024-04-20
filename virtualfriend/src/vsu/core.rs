@@ -36,26 +36,31 @@ impl VSU {
         match address {
             0x0..=0x7F => {
                 if !self.playback_occuring() {
+                    println!("Set bank0 waveform {address:04X} {value:02X}");
                     self.waveforms[0].set_u8(address, value)
                 }
             }
             0x80..=0xFF => {
                 if !self.playback_occuring() {
+                    println!("Set bank1 waveform {address:04X} {value:02X}");
                     self.waveforms[1].set_u8(address, value);
                 }
             }
             0x100..=0x17F => {
                 if !self.playback_occuring() {
+                    println!("Set bank2 waveform");
                     self.waveforms[2].set_u8(address, value)
                 }
             }
             0x180..=0x1FF => {
                 if !self.playback_occuring() {
+                    println!("Set bank3 waveform");
                     self.waveforms[3].set_u8(address, value)
                 }
             }
             0x200..=0x27F => {
                 if !self.playback_occuring() {
+                    println!("Set bank4 waveform");
                     self.waveforms[4].set_u8(address, value)
                 }
             }
@@ -88,6 +93,7 @@ impl VSU {
         match address {
             0x400..=0x43F => {
                 let channel = &mut self.channels[0];
+                println!("Set ch0 {value:02X}");
                 channel.set_u8(register_address, value);
             }
             0x440..=0x47F => {
@@ -120,16 +126,19 @@ impl VSU {
             self.channels
                 .iter_mut()
                 .for_each(|channel| channel.step_auto_deactivate());
+            // self.channels[0].step_auto_deactivate();
 
             self.channels
                 .iter_mut()
                 .for_each(|channel| channel.step_sampling_frequency());
+            // self.channels[0].step_sampling_frequency();
 
             self.channels
                 .iter_mut()
                 .for_each(|channel| channel.step_envelope());
+            // self.channels[0].step_envelope();
 
-            self.channels[4].step_sweep_modulate(&self.modulation);
+            // self.channels[4].step_sweep_modulate(&self.modulation);
 
             // Actually take samples
             if self.sample_output_counter >= SOUND_SAMPLE_RATE_CYCLE_COUNT {
@@ -157,6 +166,13 @@ impl VSU {
             left_acc += left;
             right_acc += right;
         }
+
+        // if self.channels[0].channel().enable_playback {
+        //     let (left, right) = self.channels[0].sample(&self.waveforms);
+
+        //     left_acc += left;
+        //     right_acc += right;
+        // }
 
         // Convert to signed audio
         let left_output = ((left_acc & 0xfff8) << 2) as i16;

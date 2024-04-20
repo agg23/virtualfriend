@@ -108,7 +108,7 @@ impl Channel {
             0xC => {
                 // Frequency high register
                 self.sampling_frequency &= 0xFF;
-                self.sampling_frequency |= (value as u16 & 0x5) << 8;
+                self.sampling_frequency |= (value as u16 & 0x7) << 8;
 
                 // TODO: Modify frequency delay counter
                 // I'm not sure how this should be modified. It's intuitive for this to count up, but

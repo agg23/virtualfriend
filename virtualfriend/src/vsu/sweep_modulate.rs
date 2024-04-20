@@ -95,6 +95,14 @@ impl SweepModulate {
 
     pub fn set_u8(&mut self, address: usize, value: u8) {
         match address {
+            0x0 => {
+                // Sound interval specification register
+                // Reset sweep/mod counter
+                self.step_counter = 0;
+
+                // Reset modulation index
+                self.modulation_index = 0;
+            }
             0x8 => {
                 // Frequency low register
                 self.last_written_frequency &= 0xFF00;
@@ -106,10 +114,10 @@ impl SweepModulate {
             0xC => {
                 // Frequency high register
                 self.last_written_frequency &= 0xFF;
-                self.last_written_frequency |= (value as u16 & 0x5) << 8;
+                self.last_written_frequency |= (value as u16 & 0x7) << 8;
 
                 self.next_frequency &= 0xFF;
-                self.next_frequency |= (value as u16 & 0x5) << 8;
+                self.next_frequency |= (value as u16 & 0x7) << 8;
             }
             0x14 => {
                 // Envelope specification register
