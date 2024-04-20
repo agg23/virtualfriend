@@ -93,26 +93,18 @@ impl Channel {
             }
             0x4 => {
                 // Stereo level setting register
-                self.left_volume = value & 0xF;
-                self.right_volume = value >> 4;
+                self.left_volume = value >> 4;
+                self.right_volume = value & 0xF;
             }
             0x8 => {
                 // Frequency low register
                 self.sampling_frequency &= 0xFF00;
                 self.sampling_frequency |= value as u16;
-
-                // TODO: Modify frequency delay counter
-                // I'm not sure how this should be modified. It's intuitive for this to count up, but
-                // resetting the value to `sampling_frequency` suggests it doesn't count up.
             }
             0xC => {
                 // Frequency high register
                 self.sampling_frequency &= 0xFF;
                 self.sampling_frequency |= (value as u16 & 0x7) << 8;
-
-                // TODO: Modify frequency delay counter
-                // I'm not sure how this should be modified. It's intuitive for this to count up, but
-                // resetting the value to `sampling_frequency` suggests it doesn't count up.
             }
             0x10 => {
                 // Envelope Specification register 0
@@ -129,7 +121,7 @@ impl Channel {
                 self.enable_envelope_modification = value & 0x1 != 0;
                 self.loop_envelope = value & 0x2 != 0;
 
-                // TODO: Send ext to frequency mod and noise
+                // TODO: Send ext to noise
             }
             _ => {}
         }
@@ -137,26 +129,23 @@ impl Channel {
 
     pub fn sample(&self, output_value: u8) -> (u16, u16) {
         (
-            self.sample_side(true, output_value),
-            self.sample_side(false, output_value),
+            self.sample_side(self.left_volume, output_value),
+            self.sample_side(self.right_volume, output_value),
         )
     }
 
-    fn sample_side(&self, is_left: bool, output_value: u8) -> u16 {
-        let stereo_level = if is_left {
-            self.left_volume
-        } else {
-            self.right_volume
-        };
-
-        let amplitude = self.envelope_level * stereo_level;
+    fn sample_side(&self, volume: u8, output_value: u8) -> u16 {
+        let amplitude = self.envelope_level * volume;
         // Take only the top 5 bits
         let mut amplitude = amplitude >> 3;
 
-        if self.envelope_level > 0 || stereo_level > 0 {
+        if self.envelope_level > 0 && volume > 0 {
             amplitude += 1;
         }
 
-        (amplitude as u16) * (output_value as u16)
+        // 6 * 5 = 11 bits
+        let output = (amplitude as u16) * (output_value as u16);
+        // Only top 10 bits are used
+        output >> 1
     }
 }
