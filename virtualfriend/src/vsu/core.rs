@@ -1,7 +1,6 @@
 use crate::constants::SOUND_SAMPLE_RATE_CYCLE_COUNT;
 
 use super::{
-    channel::Channel,
     channel_enum::ChannelType,
     traits::{AudioFrame, Sink},
     waveform::Waveform,
@@ -9,7 +8,7 @@ use super::{
 
 pub struct VSU {
     waveforms: [Waveform; 5],
-    channels: [(Channel, ChannelType); 6],
+    channels: [ChannelType; 6],
 
     sample_output_counter: usize,
 }
@@ -19,12 +18,12 @@ impl VSU {
         VSU {
             waveforms: [Waveform::new(); 5],
             channels: [
-                (Channel::new(), ChannelType::new_pcm()),
-                (Channel::new(), ChannelType::new_pcm()),
-                (Channel::new(), ChannelType::new_pcm()),
-                (Channel::new(), ChannelType::new_pcm()),
-                (Channel::new(), ChannelType::new_pcm_ch5()),
-                (Channel::new(), ChannelType::new_noise()),
+                ChannelType::new_pcm(),
+                ChannelType::new_pcm(),
+                ChannelType::new_pcm(),
+                ChannelType::new_pcm(),
+                ChannelType::new_pcm_ch5(),
+                ChannelType::new_noise(),
             ],
 
             sample_output_counter: 0,
@@ -61,8 +60,8 @@ impl VSU {
             0x580 => {
                 // SSTOP Stop all sound register
                 if value & 0x1 != 0 {
-                    for (channel, _) in &mut self.channels {
-                        channel.enable_playback = false;
+                    for channel in &mut self.channels {
+                        channel.channel_mut().enable_playback = false;
                     }
                 }
             }
@@ -73,7 +72,7 @@ impl VSU {
     fn playback_occuring(&self) -> bool {
         self.channels
             .iter()
-            .any(|(channel, _)| channel.enable_playback)
+            .any(|channel| channel.channel().enable_playback)
     }
 
     fn send_channel_write(&mut self, address: usize, value: u8) {
@@ -81,45 +80,49 @@ impl VSU {
 
         match address {
             0x400..=0x43F => {
-                let (channel, channel_type) = &mut self.channels[0];
+                let channel = &mut self.channels[0];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             0x440..=0x47F => {
-                let (channel, channel_type) = &mut self.channels[1];
+                let channel = &mut self.channels[1];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             0x480..=0x4BF => {
-                let (channel, channel_type) = &mut self.channels[2];
+                let channel = &mut self.channels[2];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             0x4C0..=0x4FF => {
-                let (channel, channel_type) = &mut self.channels[3];
+                let channel = &mut self.channels[3];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             0x500..=0x53F => {
-                let (channel, channel_type) = &mut self.channels[4];
+                let channel = &mut self.channels[4];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             0x540..=0x57F => {
-                let (channel, channel_type) = &mut self.channels[5];
+                let channel = &mut self.channels[5];
                 channel.set_u8(register_address, value);
-                channel_type.set_u8(register_address, value)
             }
             _ => {}
         }
     }
 
     pub fn step(&mut self, cycles_to_run: usize, audio_sink: &mut dyn Sink<AudioFrame>) {
-        for (channel, channel_type) in &mut self.channels {
-            channel_type.step(cycles_to_run, channel, &self.waveforms);
-        }
-
         for _ in 0..cycles_to_run {
+            // Written as seperate iter loops to allow for unrolling
+            self.channels
+                .iter_mut()
+                .for_each(|channel| channel.step_auto_deactivate());
+
+            self.channels
+                .iter_mut()
+                .for_each(|channel| channel.step_sampling_frequency());
+
+            self.channels
+                .iter_mut()
+                .for_each(|channel| channel.step_envelope());
+
+            // Actually take samples
             if self.sample_output_counter >= SOUND_SAMPLE_RATE_CYCLE_COUNT {
                 // Take sample
                 self.sample(audio_sink);
@@ -135,12 +138,12 @@ impl VSU {
         let mut left_acc = 0;
         let mut right_acc = 0;
 
-        for (channel, _) in &self.channels {
-            if !channel.enable_playback {
+        for channel in &self.channels {
+            if !channel.channel().enable_playback {
                 continue;
             }
 
-            let (left, right) = channel.sample();
+            let (left, right) = channel.sample(&self.waveforms);
 
             left_acc += left;
             right_acc += right;

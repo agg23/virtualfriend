@@ -140,11 +140,14 @@ impl Channel {
         }
     }
 
-    pub fn sample(&self) -> (u16, u16) {
-        (self.sample_side(true), self.sample_side(false))
+    pub fn sample(&self, output_value: u8) -> (u16, u16) {
+        (
+            self.sample_side(true, output_value),
+            self.sample_side(false, output_value),
+        )
     }
 
-    fn sample_side(&self, is_left: bool) -> u16 {
+    fn sample_side(&self, is_left: bool, output_value: u8) -> u16 {
         let stereo_level = if is_left {
             self.left_volume
         } else {
@@ -159,6 +162,6 @@ impl Channel {
             amplitude += 1;
         }
 
-        (amplitude as u16) * (self.sampled_value as u16)
+        (amplitude as u16) * (output_value as u16)
     }
 }

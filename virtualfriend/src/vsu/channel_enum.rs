@@ -7,20 +7,25 @@ use super::{channel::Channel, waveform::Waveform};
 
 pub enum ChannelType {
     PCM {
+        channel: Channel,
         waveform_bank_index: u8,
         current_sample_index: usize,
     },
     /// Same as PCM, plus supports frequency sweep and modulation
     PCMCh5 {
+        channel: Channel,
         waveform_bank_index: u8,
         current_sample_index: usize,
     },
-    Noise {},
+    Noise {
+        channel: Channel,
+    },
 }
 
 impl ChannelType {
     pub fn new_pcm() -> Self {
         Self::PCM {
+            channel: Channel::new(),
             waveform_bank_index: 0,
             current_sample_index: 0,
         }
@@ -28,13 +33,32 @@ impl ChannelType {
 
     pub fn new_pcm_ch5() -> Self {
         Self::PCMCh5 {
+            channel: Channel::new(),
             waveform_bank_index: 0,
             current_sample_index: 0,
         }
     }
 
     pub fn new_noise() -> Self {
-        Self::Noise {}
+        Self::Noise {
+            channel: Channel::new(),
+        }
+    }
+
+    pub fn channel(&self) -> &Channel {
+        match self {
+            ChannelType::PCM { channel, .. } => channel,
+            ChannelType::PCMCh5 { channel, .. } => channel,
+            ChannelType::Noise { channel } => channel,
+        }
+    }
+
+    pub fn channel_mut(&mut self) -> &mut Channel {
+        match self {
+            ChannelType::PCM { channel, .. } => channel,
+            ChannelType::PCMCh5 { channel, .. } => channel,
+            ChannelType::Noise { channel } => channel,
+        }
     }
 
     pub fn set_u8(&mut self, address: usize, value: u8) {
@@ -56,7 +80,7 @@ impl ChannelType {
 
                         // TODO: Reset frequency modification timer for Ch5
                     }
-                    Self::Noise {} => {
+                    Self::Noise { .. } => {
                         // TODO: Reset shift register
                     }
                 }
@@ -77,115 +101,151 @@ impl ChannelType {
             }
             _ => {}
         }
+
+        self.channel_mut().set_u8(address, value);
     }
 
-    pub fn step(&mut self, cycles_to_run: usize, channel: &mut Channel, waveforms: &[Waveform; 5]) {
-        let cycles_per_frequency_tick = if let Self::Noise {} = self {
+    /**
+     * Sample stereo output from channel
+     */
+    pub fn sample(&self, waveforms: &[Waveform; 5]) -> (u16, u16) {
+        self.channel().sample(self.output(waveforms))
+    }
+
+    /**
+     * Turn off channel after period
+     */
+    pub fn step_auto_deactivate(&mut self) {
+        let channel = self.channel_mut();
+
+        // When firing, turn off channel
+        if channel.auto_deactivate {
+            if channel.live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
+                // One tick of live interval
+                if channel.live_interval_counter >= (channel.live_interval + 1) {
+                    // Stop the channel
+                    channel.enable_playback = false;
+                    channel.live_interval_counter = 0;
+                } else {
+                    channel.live_interval_counter += 1;
+                }
+
+                channel.live_interval_tick_counter = 0;
+            } else {
+                channel.live_interval_tick_counter += 1;
+            }
+        }
+    }
+
+    /**
+     * Increment current sample for channel after period
+     */
+    pub fn step_sampling_frequency(&mut self) {
+        let cycles_per_frequency_tick = if let ChannelType::Noise { .. } = self {
             NOISE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT
         } else {
             WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT
         };
 
-        let mut needs_next_sample = false;
+        let channel = self.channel_mut();
 
-        // Common channel properties
-        for _ in 0..cycles_to_run {
-            if !channel.enable_playback {
-                continue;
-            }
+        // Sampling frequency
+        if channel.sampling_frequency_tick_counter >= cycles_per_frequency_tick {
+            // One tick of frequency step increment
+            if channel.sampling_frequency_counter >= 2048 - channel.sampling_frequency {
+                // Move to next sample
+                self.increment_sample();
 
-            // When firing, turn off channel
-            if channel.auto_deactivate {
-                if channel.live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
-                    // One tick of live interval
-                    if channel.live_interval_counter >= (channel.live_interval + 1) {
-                        // Stop the channel
-                        channel.enable_playback = false;
-                        channel.live_interval_counter = 0;
-                    } else {
-                        channel.live_interval_counter += 1;
-                    }
-
-                    channel.live_interval_tick_counter = 0;
-                } else {
-                    channel.live_interval_tick_counter += 1;
-                }
-            }
-
-            // Sampling frequency
-            if channel.sampling_frequency_tick_counter >= cycles_per_frequency_tick {
-                // One tick of frequency step increment
-                if channel.sampling_frequency_counter >= 2048 - channel.sampling_frequency {
-                    // Move to next sample
-                    needs_next_sample = true;
-
-                    channel.sampling_frequency_counter = 0;
-                } else {
-                    channel.sampling_frequency_counter += 1;
-                }
-
-                channel.sampling_frequency_tick_counter = 0;
+                self.channel_mut().sampling_frequency_counter = 0;
             } else {
-                channel.sampling_frequency_tick_counter += 1;
+                channel.sampling_frequency_counter += 1;
             }
 
-            // Envelope
-            if channel.envelope_tick_counter >= ENVELOPE_CYCLE_COUNT {
-                // One tick of envelope
-                if channel.enable_envelope_modification {
-                    if channel.envelope_step_counter >= channel.envelope_interval + 1 {
-                        if channel.envelope_direction && channel.envelope_level < 15 {
-                            // Increment volume
-                            channel.envelope_level += 1;
-                        } else if !channel.envelope_direction && channel.envelope_level > 0 {
-                            // Decrement volume
-                            channel.envelope_level -= 1;
-                        } else if channel.loop_envelope {
-                            // We must be at 0 or 15. We're set to repeat
-                            channel.envelope_level = channel.envelope_reload_value;
-                        }
-
-                        channel.envelope_step_counter = 0;
-                    }
-                }
-
-                channel.envelope_tick_counter = 0;
-            } else {
-                channel.envelope_tick_counter += 1;
-            }
+            self.channel_mut().sampling_frequency_tick_counter = 0;
+        } else {
+            channel.sampling_frequency_tick_counter += 1;
         }
+    }
 
-        // The two separate for loops running serially relies on the fact that operations from one will not
-        // modify the other
+    /**
+     * Modify envelope after period
+     */
+    pub fn step_envelope(&mut self) {
+        let channel = self.channel_mut();
+
+        if channel.envelope_tick_counter >= ENVELOPE_CYCLE_COUNT {
+            // One tick of envelope
+            if channel.enable_envelope_modification {
+                if channel.envelope_step_counter >= channel.envelope_interval + 1 {
+                    if channel.envelope_direction && channel.envelope_level < 15 {
+                        // Increment volume
+                        channel.envelope_level += 1;
+                    } else if !channel.envelope_direction && channel.envelope_level > 0 {
+                        // Decrement volume
+                        channel.envelope_level -= 1;
+                    } else if channel.loop_envelope {
+                        // We must be at 0 or 15. We're set to repeat
+                        channel.envelope_level = channel.envelope_reload_value;
+                    }
+
+                    channel.envelope_step_counter = 0;
+                }
+            }
+
+            channel.envelope_tick_counter = 0;
+        } else {
+            channel.envelope_tick_counter += 1;
+        }
+    }
+
+    /**
+     * Moves to the next sample in the waveform. Does nothing on Noise channel
+     */
+    fn increment_sample(&mut self) {
         match self {
             ChannelType::PCM {
+                channel: _,
+                waveform_bank_index: _,
+                current_sample_index,
+            }
+            | ChannelType::PCMCh5 {
+                channel: _,
+                waveform_bank_index: _,
+                current_sample_index,
+            } => {
+                // Update sample index
+                *current_sample_index = (*current_sample_index + 1) & 0x1F;
+            }
+            Self::Noise { .. } => (),
+        }
+    }
+
+    /**
+     * Gets the latest output for this channel
+     */
+    fn output(&self, waveforms: &[Waveform; 5]) -> u8 {
+        match self {
+            ChannelType::PCM {
+                channel: _,
                 waveform_bank_index,
                 current_sample_index,
             }
             | ChannelType::PCMCh5 {
+                channel: _,
                 waveform_bank_index,
                 current_sample_index,
             } => {
-                // for _ in 0..cycles_to_run {
-                //     if !channel.enable_playback {
-                //         continue;
-                //     }
-                // }
-                if needs_next_sample {
-                    // Update sample index
-                    *current_sample_index = (*current_sample_index + 1) & 0x1F;
-
-                    if *waveform_bank_index > 4 {
-                        // Out of range. Nothing plays
-                        channel.sampled_value = 0;
-                    } else {
-                        channel.sampled_value = waveforms[*waveform_bank_index as usize]
-                            .get_indexed(*current_sample_index)
-                    }
+                // Update sample index
+                if *waveform_bank_index > 4 {
+                    // Out of range. Nothing plays
+                    0
+                } else {
+                    waveforms[*waveform_bank_index as usize].get_indexed(*current_sample_index)
                 }
             }
-            ChannelType::Noise {} => {
-                // TODO
+            Self::Noise { .. } => {
+                // TODO: Add noise sample
+                0
             }
         }
     }
