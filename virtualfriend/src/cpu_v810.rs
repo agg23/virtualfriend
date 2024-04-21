@@ -160,7 +160,6 @@ impl CpuV810 {
     pub fn log_instruction(
         &self,
         log_file: Option<&mut BufWriter<File>>,
-        std_lock: &mut StdoutLock<'static>,
         cycle_count: usize,
         extra_log_info: Option<String>,
     ) {
@@ -221,13 +220,13 @@ impl CpuV810 {
 
         let chcw = if self.cache_enabled { 2 } else { 0 };
 
-        // if let Some(log_file) = log_file {
-        //     // writeln!(log_file, "PC={:08X}", self.pc).unwrap();
-        //     writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
-        //     self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre).unwrap();
-        // }
-        std_lock.write_fmt(format_args!("PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}\n",
-        self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre));
+        if let Some(log_file) = log_file {
+            // writeln!(log_file, "PC={:08X}", self.pc).unwrap();
+            writeln!(log_file, "PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}",
+            self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre).unwrap();
+        }
+        // std_lock.write_fmt(format_args!("PC={:08X} R1={:08X} FP={:08X} SP={:08X} GP={:08X} TP={:08X} R6={:08X} R7={:08X} R8={:08X} R9={:08X} R10={:08X} R11={:08X} R12={:08X} R13={:08X} R14={:08X} R15={:08X} R16={:08X} R17={:08X} R18={:08X} R19={:08X} R20={:08X} R21={:08X} R22={:08X} R23={:08X} R24={:08X} R25={:08X} R26={:08X} R27={:08X} R28={:08X} R29={:08X} R30={:08X} LP={:08X} EIPC={:08X} EIPSW={:08X} FEPC={:08X} FEPSW={:08X} ECR={:08X} PSW={:08X} PIR=00005347 TKCW={:08X} CHCW={:08X} ADTRE={:08X}\n",
+        // self.pc, self.general_purpose_reg[1], self.general_purpose_reg[2], self.general_purpose_reg[3], self.general_purpose_reg[4], self.general_purpose_reg[5], self.general_purpose_reg[6], self.general_purpose_reg[7], self.general_purpose_reg[8], self.general_purpose_reg[9], self.general_purpose_reg[10], self.general_purpose_reg[11], self.general_purpose_reg[12], self.general_purpose_reg[13], self.general_purpose_reg[14], self.general_purpose_reg[15], self.general_purpose_reg[16], self.general_purpose_reg[17], self.general_purpose_reg[18], self.general_purpose_reg[19], self.general_purpose_reg[20], self.general_purpose_reg[21], self.general_purpose_reg[22], self.general_purpose_reg[23], self.general_purpose_reg[24], self.general_purpose_reg[25], self.general_purpose_reg[26], self.general_purpose_reg[27], self.general_purpose_reg[28], self.general_purpose_reg[29], self.general_purpose_reg[30], self.general_purpose_reg[31], self.eipc, self.eipsw, self.fepc, self.fepsw, self.ecr, self.psw.get(), self.tkcw, chcw, self.adtre));
     }
 
     /// Step one CPU instruction
@@ -601,7 +600,7 @@ impl CpuV810 {
         // Remainder
         self.general_purpose_reg[30] = remainder;
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, overflow, None);
+        self.psw.update_alu_flags(result, overflow, None);
 
         (cycles, BusActivity::Long)
     }
@@ -615,9 +614,12 @@ impl CpuV810 {
         let (result, overflow) = (reg1 as i64).overflowing_mul(reg2 as i64);
         let result = result as u64;
 
+        let result_low = (result & 0xFFFF_FFFF) as u32;
+
         self.set_gen_purpose_reg(30, (result >> 32) as u32);
-        self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
-        self.psw.update_alu_flags_u64(result, overflow, None);
+        self.set_gen_purpose_reg(reg2_index, result_low);
+        // Multiplication only uses lower 32 bits
+        self.psw.update_alu_flags(result_low, overflow, None);
 
         (13, BusActivity::Long)
     }
@@ -629,10 +631,12 @@ impl CpuV810 {
         let reg2 = self.general_purpose_reg[reg2_index];
 
         let (result, overflow) = (reg1 as u64).overflowing_mul(reg2 as u64);
+        let result_low = (result & 0xFFFF_FFFF) as u32;
 
         self.set_gen_purpose_reg(30, (result >> 32) as u32);
-        self.set_gen_purpose_reg(reg2_index, (result & 0xFFFF_FFFF) as u32);
-        self.psw.update_alu_flags_u64(result, overflow, None);
+        self.set_gen_purpose_reg(reg2_index, result_low);
+        // Multiplication only uses lower 32 bits
+        self.psw.update_alu_flags(result_low, overflow, None);
 
         (13, BusActivity::Long)
     }
@@ -655,7 +659,7 @@ impl CpuV810 {
         let result = reg2 & reg1;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
 
         (1, BusActivity::Standard)
     }
@@ -670,7 +674,7 @@ impl CpuV810 {
         let result = reg1 & immediate;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
         // Special case, sign is always false
         self.psw.sign = false;
 
@@ -686,7 +690,7 @@ impl CpuV810 {
         let result = !reg1;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
 
         (1, BusActivity::Standard)
     }
@@ -700,7 +704,7 @@ impl CpuV810 {
         let result = reg2 | reg1;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
 
         (1, BusActivity::Standard)
     }
@@ -715,7 +719,7 @@ impl CpuV810 {
         let result = reg1 | immediate;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
 
         (1, BusActivity::Standard)
     }
@@ -752,7 +756,7 @@ impl CpuV810 {
         };
 
         self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
+        self.psw.update_alu_flags(result, false, Some(carry));
 
         (1, BusActivity::Standard)
     }
@@ -789,7 +793,7 @@ impl CpuV810 {
         };
 
         self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
+        self.psw.update_alu_flags(result, false, Some(carry));
 
         (1, BusActivity::Standard)
     }
@@ -823,7 +827,7 @@ impl CpuV810 {
         };
 
         self.set_gen_purpose_reg(store_reg_index, result);
-        self.psw.update_alu_flags_u32(result, false, Some(carry));
+        self.psw.update_alu_flags(result, false, Some(carry));
 
         (1, BusActivity::Standard)
     }
@@ -841,20 +845,21 @@ impl CpuV810 {
         let result = reg2 ^ value;
 
         self.set_gen_purpose_reg(reg2_index, result);
-        self.psw.update_alu_flags_u32(result, false, None);
+        self.psw.update_alu_flags(result, false, None);
 
         (1, BusActivity::Standard)
     }
 
     fn bcond(&mut self, instruction: u16) -> (u32, BusActivity) {
         let condition = (instruction >> 9) & 0xF;
-        let disp = instruction & 0x1FF;
-        let disp = sign_extend(disp as u32, 9);
 
         let condition = self.indexed_flag(condition);
 
         if condition {
             // Jumping
+            let disp = instruction & 0x1FF;
+            let disp = sign_extend(disp as u32, 9);
+
             // PC was already incremented by 2, so we have to remove that
             self.pc = (self.pc - 2).wrapping_add(disp & 0xFFFF_FFFE);
 
@@ -876,7 +881,7 @@ impl CpuV810 {
 
         let reg1 = self.general_purpose_reg[reg1_index];
 
-        self.pc = reg1;
+        self.pc = reg1 & 0xFFFF_FFFE;
 
         (3, BusActivity::Standard)
     }
@@ -1022,7 +1027,7 @@ impl CpuV810 {
                 self.set_gen_purpose_reg(reg2_index, result as u32);
                 self.psw
                     .update_float_flags(result as f32, true, true, false, false, false, true);
-                self.psw.update_alu_flags_u32(result as u32, false, None);
+                self.psw.update_alu_flags(result as u32, false, None);
 
                 // TODO: This is a range of 9-14 cycles
                 (14, BusActivity::Standard)
@@ -1264,7 +1269,7 @@ impl CpuV810 {
         // Taken from rustual-boy
         let overflow = ((!(a ^ b) & (b ^ result)) & 0x80000000) != 0;
 
-        self.psw.update_alu_flags_u32(result, overflow, Some(carry));
+        self.psw.update_alu_flags(result, overflow, Some(carry));
 
         self.set_gen_purpose_reg(store_reg_index, result);
 
@@ -1282,7 +1287,7 @@ impl CpuV810 {
         // Taken from rustual-boy
         let overflow = (((lhs ^ rhs) & !(rhs ^ result)) & 0x80000000) != 0;
 
-        self.psw.update_alu_flags_u32(result, overflow, Some(carry));
+        self.psw.update_alu_flags(result, overflow, Some(carry));
 
         if let Some(store_reg_index) = store_reg_index {
             self.set_gen_purpose_reg(store_reg_index, result);

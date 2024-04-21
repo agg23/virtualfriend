@@ -70,7 +70,6 @@ impl Bus {
             request = Some(InterruptRequest::VIP);
         }
 
-        // TODO: Tick timer
         request
     }
 
