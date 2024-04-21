@@ -1,18 +1,26 @@
 use std::sync::Mutex;
 
-use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata};
+use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata, FFIVideoFrame};
 use virtualfriend::{
     gamepad::GamepadInputs,
     manifest::{Manifest, Metadata},
-    Frame,
+    vsu::traits::AudioFrame,
+    Frame, VideoFrame,
 };
 
 #[swift_bridge::bridge]
 mod ffi {
     #[swift_bridge(swift_repr = "struct")]
-    struct FFIFrame {
+    struct FFIVideoFrame {
         left: Vec<u8>,
         right: Vec<u8>,
+    }
+
+    #[swift_bridge(swift_repr = "struct")]
+    struct FFIFrame {
+        video: Option<FFIVideoFrame>,
+        audio_left: Vec<i16>,
+        audio_right: Vec<i16>,
     }
 
     #[swift_bridge(swift_repr = "struct")]
@@ -82,7 +90,7 @@ impl VirtualFriend {
     }
 
     fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
-        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_frame(inputs.into()).into()
+        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_video_frame(inputs.into()).into()
     }
 }
 
@@ -94,9 +102,21 @@ impl FFIFrame {}
 
 impl From<Frame> for FFIFrame {
     fn from(value: Frame) -> Self {
+        let mut audio_left = Vec::with_capacity(value.audio_buffer.len());
+        let mut audio_right = Vec::with_capacity(value.audio_buffer.len());
+
+        for (left, right) in value.audio_buffer {
+            audio_left.push(left);
+            audio_right.push(right);
+        }
+
         FFIFrame {
-            left: value.left,
-            right: value.right,
+            video: value.video.map(|frame| FFIVideoFrame {
+                left: frame.left,
+                right: frame.right,
+            }),
+            audio_left,
+            audio_right,
         }
     }
 }

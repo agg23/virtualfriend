@@ -59,14 +59,16 @@ class Emulator {
 
                 let frame = await self.actor.runFrame(with: inputs)
 
-                let leftImage = rustVecToCIImage(frame.left)
-                let rightImage = rustVecToCIImage(frame.right)
+                if let frame = frame.video {
+                    let leftImage = rustVecToCIImage(frame.left)
+                    let rightImage = rustVecToCIImage(frame.right)
 
-                // TODO: This should be flipped by Metal, not the CPU
-                let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
-                let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
+                    // TODO: This should be flipped by Metal, not the CPU
+                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
+                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
 
-                await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+                    await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+                }
             }
         }
     }

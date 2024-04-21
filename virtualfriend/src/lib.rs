@@ -1,4 +1,9 @@
-use std::{collections::VecDeque, env, io};
+use std::{
+    collections::VecDeque,
+    env,
+    fs::{File, OpenOptions},
+    io::{self, BufWriter},
+};
 
 use bus::Bus;
 use cpu_v810::CpuV810;
@@ -32,6 +37,7 @@ pub struct VirtualFriend {
     cpu: CpuV810,
     bus: Bus,
 
+    // writer: BufWriter<File>,
     video_frame_serviced: bool,
     cycle_count: usize,
 }
@@ -68,7 +74,7 @@ impl VirtualFriend {
 
         let rom = ROM::load_from_vec(vec);
 
-        let cpu = CpuV810::new();
+        let mut cpu = CpuV810::new();
 
         let vip = VIP::new();
         let vsu = VSU::new();
@@ -88,14 +94,20 @@ impl VirtualFriend {
         // let log_file = OpenOptions::new()
         //     .write(true)
         //     .create(true)
-        //     .open(temp_dir)
+        //     .open(
+        //         // temp_dir
+        //         "instructions.log",
+        //     )
         //     .unwrap();
 
         // let writer = BufWriter::with_capacity(4000, log_file);
 
+        cpu.debug_init();
+
         VirtualFriend {
             cpu,
             bus,
+            // writer,
             video_frame_serviced: false,
             cycle_count: 0,
         }
@@ -104,27 +116,7 @@ impl VirtualFriend {
     pub fn run_video_frame(&mut self, inputs: GamepadInputs) -> Frame {
         let mut emu_audio_sink = SimpleAudioFrameSink::new();
 
-        // let mut log_file = OpenOptions::new()
-        //     .write(true)
-        //     .create(true)
-        //     .open("instructions.log")
-        //     .unwrap();
-
-        // let mut cycle_count = 0;
-        // let mut prev_cycle_count = false;
-
-        // let mut writer = BufWriter::new(log_file);
-
-        // let mut lock = io::stdout().lock();
-
         loop {
-            // self.cpu.log_instruction(
-            //     Some(&mut self.buf_writer),
-            //     &mut lock,
-            //     self.cycle_count,
-            //     None,
-            // );
-
             self.system_tick(&mut emu_audio_sink, &inputs);
 
             if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
@@ -146,6 +138,9 @@ impl VirtualFriend {
         let mut buffered_video_frame: Option<VideoFrame> = None;
 
         loop {
+            // self.cpu
+            //     .log_instruction(Some(&mut self.writer), self.cycle_count, None);
+
             self.system_tick(&mut emu_audio_sink, &inputs);
 
             if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {}
