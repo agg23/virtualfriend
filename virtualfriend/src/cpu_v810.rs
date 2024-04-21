@@ -896,10 +896,10 @@ impl CpuV810 {
             0 => self.eipc = reg2 & 0xFFFF_FFFE,
             1 => {
                 // Don't write unused or reserved bits
-                self.eipsw = reg2 & 0x000FF3FF
+                self.eipsw = reg2 & 0x000F_F3FF
             }
             2 => self.fepc = reg2 & 0xFFFF_FFFE,
-            3 => self.fepsw = reg2 & 0x000FF3FF,
+            3 => self.fepsw = reg2 & 0x000F_F3FF,
             // 4 => ECR not setable
             5 => self.psw.set(reg2),
             // 6 => pir
@@ -912,7 +912,8 @@ impl CpuV810 {
             }
             25 => self.adtre = reg2,
             29 => self.unknown_29 = reg2,
-            30 => self.unknown_30 = reg2,
+            // 30 not setable
+            // 30 => self.unknown_30 = reg2,
             31 => self.unknown_31 = reg2,
             _ => {}
         }
@@ -1375,7 +1376,7 @@ impl CpuV810 {
         let upper_disp = (instruction & 0x3FF) as u32;
         let disp = self.fetch_instruction_word(bus) as u32;
 
-        let disp = sign_extend((upper_disp << 16) | disp, 26);
+        let disp = sign_extend((upper_disp << 16) | disp, 26) & 0xFFFF_FFFE;
 
         if save_pc {
             // PC has already been incremented by 4 by 2x `fetch_instruction_word`

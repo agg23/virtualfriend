@@ -97,19 +97,9 @@ impl ProgramStatusWord {
         self.interrupt_level = ((value >> 16) & 0xF) as u8;
     }
 
-    pub fn update_alu_flags_u32(&mut self, alu_value: u32, overflow: bool, carry: Option<bool>) {
+    pub fn update_alu_flags(&mut self, alu_value: u32, overflow: bool, carry: Option<bool>) {
         self.zero = alu_value == 0;
         self.sign = (alu_value & 0x8000_0000) != 0;
-        self.overflow = overflow;
-
-        if let Some(carry) = carry {
-            self.carry = carry;
-        }
-    }
-
-    pub fn update_alu_flags_u64(&mut self, alu_value: u64, overflow: bool, carry: Option<bool>) {
-        self.zero = alu_value == 0;
-        self.sign = (alu_value & 0x8000_0000_0000_0000) != 0;
         self.overflow = overflow;
 
         if let Some(carry) = carry {
