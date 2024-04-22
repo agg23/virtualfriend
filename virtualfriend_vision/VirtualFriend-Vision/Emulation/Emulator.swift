@@ -5,7 +5,7 @@
 //  Created by Adam Gastineau on 4/14/24.
 //
 
-import Foundation
+import SwiftUI
 import AsyncAlgorithms
 import GameController
 
@@ -17,6 +17,8 @@ class Emulator {
     var timer: Timer?
 
     var prevFrameTime: TimeInterval?
+
+    var separation: Binding<Double>?
 
     init?(fileUrl: URL) {
         let _ = fileUrl.startAccessingSecurityScopedResource()
@@ -64,8 +66,8 @@ class Emulator {
                     let rightImage = rustVecToCIImage(frame.right)
 
                     // TODO: This should be flipped by Metal, not the CPU
-                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1))
-                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1))
+                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
 
                     await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
                 }

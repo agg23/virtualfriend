@@ -21,11 +21,12 @@ struct StereoImageView: View {
     let context: CIContext
 
     let stereoImageChannel: AsyncChannel<StereoImage>
+    @Binding var depth: Double
 
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncChannel<StereoImage>) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncChannel<StereoImage>, depth: Binding<Double>? = nil) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -37,6 +38,12 @@ struct StereoImageView: View {
         self.context = CIContext()
 
         self.stereoImageChannel = stereoImageChannel
+
+        if let depth = depth {
+            self._depth = depth
+        } else {
+            self._depth = .constant(1.0)
+        }
     }
 
     var body: some View {
@@ -83,7 +90,7 @@ struct StereoImageView: View {
         }
         // This constrains the plane to sit directly on top of the window
         // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
-        .frame(minDepth: 1, maxDepth: 1.1)
+        .frame(minDepth: self.depth, maxDepth: self.depth + 0.1)
         .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         // TODO: Change to onReceive
         .onAppear {

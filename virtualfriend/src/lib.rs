@@ -30,7 +30,6 @@ pub mod rom;
 pub mod timer;
 pub mod util;
 pub mod vip;
-mod virtualfriend;
 pub mod vsu;
 
 pub struct VirtualFriend {
@@ -82,9 +81,9 @@ impl VirtualFriend {
         let hardware = Hardware::new();
         let bus = Bus::new(rom, vip, vsu, hardware);
 
-        let mut temp_dir = env::temp_dir();
+        // let mut temp_dir = env::temp_dir();
 
-        println!("{temp_dir:?}");
+        // println!("{temp_dir:?}");
 
         // fs::create_dir_all(&temp_dir).unwrap();
         // temp_dir.push("instructions.log");
@@ -102,7 +101,7 @@ impl VirtualFriend {
 
         // let writer = BufWriter::with_capacity(4000, log_file);
 
-        cpu.debug_init();
+        // cpu.debug_init();
 
         VirtualFriend {
             cpu,
@@ -120,14 +119,20 @@ impl VirtualFriend {
             self.system_tick(&mut emu_audio_sink, &inputs);
 
             if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-                // Render framebuffer
-                return Frame {
-                    video: Some(VideoFrame {
-                        left: self.bus.vip.left_rendered_framebuffer.clone(),
-                        right: self.bus.vip.right_rendered_framebuffer.clone(),
-                    }),
-                    audio_buffer: emu_audio_sink.inner,
-                };
+                if !self.video_frame_serviced {
+                    // Render framebuffer
+                    self.video_frame_serviced = true;
+
+                    return Frame {
+                        video: Some(VideoFrame {
+                            left: self.bus.vip.left_rendered_framebuffer.clone(),
+                            right: self.bus.vip.right_rendered_framebuffer.clone(),
+                        }),
+                        audio_buffer: emu_audio_sink.inner,
+                    };
+                }
+            } else {
+                self.video_frame_serviced = false;
             }
         }
     }
@@ -142,8 +147,6 @@ impl VirtualFriend {
             //     .log_instruction(Some(&mut self.writer), self.cycle_count, None);
 
             self.system_tick(&mut emu_audio_sink, &inputs);
-
-            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {}
 
             if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
                 if !self.video_frame_serviced {

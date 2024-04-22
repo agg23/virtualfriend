@@ -41,6 +41,12 @@ struct FilePickerView: View {
                     Text("Choose folder")
                 }
             } else {
+//                NavigationSplitView {
+//                    Text("Sidebar")
+//                } detail: {
+//                    Text("Detail")
+//                }
+
                 ScrollView {
                     LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
                         // Make sure we always have 9 items and insert placeholders
