@@ -138,6 +138,10 @@ impl VirtualFriend {
     }
 
     pub fn run_audio_frame(&mut self, inputs: GamepadInputs, buffer_size: usize) -> Frame {
+        if buffer_size == 0 {
+            panic!("Invalid buffer_size {buffer_size}");
+        }
+
         let mut emu_audio_sink = SimpleAudioFrameSink::new();
 
         let mut buffered_video_frame: Option<VideoFrame> = None;

@@ -70,7 +70,7 @@ mod ffi {
         #[swift_bridge(init)]
         fn new(rom_data: &[u8]) -> VirtualFriend;
 
-        fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame;
+        fn run_audio_frame(&mut self, inputs: FFIGamepadInputs, buffer_size: usize) -> FFIFrame;
     }
 
     extern "Rust" {
@@ -89,8 +89,8 @@ impl VirtualFriend {
         }
     }
 
-    fn run_frame(&mut self, inputs: FFIGamepadInputs) -> FFIFrame {
-        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_video_frame(inputs.into()).into()
+    fn run_audio_frame(&mut self, inputs: FFIGamepadInputs, buffer_size: usize) -> FFIFrame {
+        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_audio_frame(inputs.into(), buffer_size).into()
     }
 }
 

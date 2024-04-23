@@ -8,11 +8,20 @@
 import SwiftUI
 import AsyncAlgorithms
 import GameController
+import AVFAudio
 
 class Emulator {
     private let actor: EmulatorActor
+    private let audioEngine: AVAudioEngine
+    private let audioNode: AVAudioPlayerNode
+    private let audioConverter: AVAudioConverter
 
-    var stereoImageChannel: AsyncChannel<StereoImage>!
+    private let audioInputBuffer: AVAudioPCMBuffer
+    private let audioOutputBuffer: AVAudioPCMBuffer
+
+    private var inputBufferLength: Int = 0
+
+    var stereoImageChannel: AsyncChannel<StereoImage> = AsyncChannel()
 
     var timer: Timer?
 
@@ -46,32 +55,152 @@ class Emulator {
         fileUrl.stopAccessingSecurityScopedResource()
 
         self.stereoImageChannel = AsyncChannel()
+
+        self.audioEngine = AVAudioEngine()
+        self.audioNode = AVAudioPlayerNode()
+        self.audioEngine.attach(self.audioNode)
+
+        guard let outputFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: 2),
+              let inputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 41667, channels: 2, interleaved: false),
+              let audioConverter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
+            return nil
+        }
+
+        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
+
+        self.audioConverter = audioConverter
+
+        guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(10000)),
+              let audioOutputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: AVAudioFrameCount(4096)) else {
+            return nil
+        }
+
+        self.audioInputBuffer = audioInputBuffer
+        self.audioOutputBuffer = audioOutputBuffer
+
+        // Capture the number of frames we expect given the resampling
+        audioConverter.convert(to: self.audioOutputBuffer, error: nil) { packetCount, status in
+            self.inputBufferLength = Int(packetCount)
+
+            status.pointee = .endOfStream
+
+            return nil
+        }
+
+        audioConverter.reset()
     }
 
     func start() {
-        self.timer = Timer.scheduledTimer(withTimeInterval: 1/50.0, repeats: true) { _ in
-            Task {
-                let frameTime = Date().timeIntervalSince1970
+        do {
+            try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(0.005)
+            try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
 
-//                print(frameTime - (self.prevFrameTime ?? frameTime))
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print(error)
+        }
 
-                self.prevFrameTime = frameTime
+        self.audioNode.reset()
 
-                let inputs = self.pollInput()
+        // Initial silence buffer
+        self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
 
-                let frame = await self.actor.runFrame(with: inputs)
+        do {
+            try self.audioEngine.start()
 
-                if let frame = frame.video {
-                    let leftImage = rustVecToCIImage(frame.left)
-                    let rightImage = rustVecToCIImage(frame.right)
+//            if #available(iOS 13.0, *) {}
+//            else
+//            {
+                self.audioNode.play()
+//            }
+        } catch {
+            print(error)
+        }
 
-                    // TODO: This should be flipped by Metal, not the CPU
-                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
+        self.runAudioGroupedFrame(4096)
 
-                    await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
-                }
+//        self.timer = Timer.scheduledTimer(withTimeInterval: 1/50.0, repeats: true) { _ in
+//            Task {
+//                let frameTime = Date().timeIntervalSince1970
+//
+////                print(frameTime - (self.prevFrameTime ?? frameTime))
+//
+//                self.prevFrameTime = frameTime
+//
+//                let inputs = self.pollInput()
+//
+//                let frame = await self.actor.runFrame(with: inputs)
+//
+//                if let frame = frame.video {
+//                    let leftImage = rustVecToCIImage(frame.left)
+//                    let rightImage = rustVecToCIImage(frame.right)
+//
+//                    // TODO: This should be flipped by Metal, not the CPU
+//                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+//                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
+//
+//                    await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+//                }
+//            }
+//        }
+    }
+
+    func runAudioGroupedFrame(_ bufferSize: UInt) {
+        Task {
+            let frameTime = Date().timeIntervalSince1970
+
+            //                print(frameTime - (self.prevFrameTime ?? frameTime))
+
+            self.prevFrameTime = frameTime
+
+            let inputs = self.pollInput()
+
+            let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
+
+            if let frame = frame.video {
+                let leftImage = rustVecToCIImage(frame.left)
+                let rightImage = rustVecToCIImage(frame.right)
+
+                // TODO: This should be flipped by Metal, not the CPU
+                let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+                let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
+
+                await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
             }
+
+            self.renderAudioBuffer(frame)
+        }
+    }
+
+    private func renderAudioBuffer(_ frame: FFIFrame) {
+        guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
+            return
+        }
+
+        var conversionError: NSError?
+
+        self.audioConverter.convert(to: self.audioOutputBuffer, error: &conversionError) { packetCount, status in
+//            self.audioOutputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
+
+            let channel0 = inputBuffer[0]
+            let channel1 = inputBuffer[1]
+
+            for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
+                channel0[i] = left
+                channel1[i] = right
+            }
+
+            status.pointee = .haveData
+
+            return self.audioInputBuffer
+        }
+
+        if let error = conversionError {
+            print(error, error.userInfo)
+        }
+
+        self.audioNode.scheduleBuffer(self.audioOutputBuffer) {
+            self.runAudioGroupedFrame(UInt(self.inputBufferLength))
         }
     }
 
@@ -149,7 +278,7 @@ private actor EmulatorActor {
         self.virtualFriend = virtualFriend
     }
 
-    func runFrame(with inputs: FFIGamepadInputs) -> FFIFrame {
-        return self.virtualFriend.run_frame(inputs)
+    func runAudioFrame(with inputs: FFIGamepadInputs, bufferSize: UInt) -> FFIFrame {
+        return self.virtualFriend.run_audio_frame(inputs, bufferSize)
     }
 }
