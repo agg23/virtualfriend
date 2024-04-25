@@ -71,7 +71,7 @@ class Emulator {
 
         self.audioConverter = audioConverter
 
-        let outputBufferCapacity = AVAudioFrameCount(2048)
+        let outputBufferCapacity = AVAudioFrameCount(4096)
 
         guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(20000)),
               let audioOutputBuffer0 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity),
@@ -117,11 +117,7 @@ class Emulator {
         do {
             try self.audioEngine.start()
 
-//            if #available(iOS 13.0, *) {}
-//            else
-//            {
-                self.audioNode.play()
-//            }
+            self.audioNode.play()
         } catch {
             print(error)
         }
@@ -130,8 +126,8 @@ class Emulator {
             // Run two sets of audio frames to speed up scheduling of buffers
             let frame0 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
             let frame1 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
-            self.renderAudioBuffer(frame0, useBuffer1: false)
-            self.renderAudioBuffer(frame1, useBuffer1: true)
+            self.renderAudioBuffer(frame0, buffer: self.audioOutputBuffer0)
+            self.renderAudioBuffer(frame1, buffer: self.audioOutputBuffer1)
         }
     }
 
@@ -143,7 +139,7 @@ class Emulator {
 
         print(actual, bufferSize, "Should be \(shouldBe)")
 
-        if shouldBe >= actual {
+        if shouldBe <= actual {
             print("Overran audio buffer")
         }
 
@@ -169,16 +165,14 @@ class Emulator {
         return frame
     }
 
-    private func renderAudioBuffer(_ frame: FFIFrame, useBuffer1: Bool) {
+    private func renderAudioBuffer(_ frame: FFIFrame, buffer: AVAudioPCMBuffer) {
         guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
             return
         }
 
-        let outputBuffer = self.buffer(useBuffer1: useBuffer1)
-
         var conversionError: NSError?
 
-        self.audioConverter.convert(to: outputBuffer, error: &conversionError) { packetCount, status in
+        self.audioConverter.convert(to: buffer, error: &conversionError) { packetCount, status in
             let channel0 = inputBuffer[0]
             let channel1 = inputBuffer[1]
 
@@ -197,28 +191,18 @@ class Emulator {
             print(error, error.userInfo)
         }
 
-        self.runAndScheduleFrame(useBuffer1: useBuffer1)
+        self.runAndScheduleFrame(buffer: buffer)
     }
 
-    private func runAndScheduleFrame(useBuffer1: Bool) {
+    private func runAndScheduleFrame(buffer: AVAudioPCMBuffer) {
         let start = Date().timeIntervalSince1970
-
-        let outputBuffer = self.buffer(useBuffer1: useBuffer1)
 
         Task {
             let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
 
-            await self.audioNode.scheduleBuffer(outputBuffer, completionCallbackType: .dataConsumed)
+            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
 
-            self.renderAudioBuffer(frame, useBuffer1: useBuffer1)
-        }
-    }
-
-    private func buffer(useBuffer1: Bool) -> AVAudioPCMBuffer {
-        if useBuffer1 {
-            return self.audioOutputBuffer1
-        } else {
-            return self.audioOutputBuffer0
+            self.renderAudioBuffer(frame, buffer: buffer)
         }
     }
 
