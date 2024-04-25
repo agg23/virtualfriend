@@ -21,6 +21,10 @@ pub enum ChannelType {
     },
     Noise {
         channel: Channel,
+        frequency_counter: usize,
+        shift: u16,
+        tap_bit: usize,
+        output: bool,
     },
 }
 
@@ -46,6 +50,11 @@ impl ChannelType {
     pub fn new_noise() -> Self {
         Self::Noise {
             channel: Channel::new(),
+            frequency_counter: 0,
+            shift: 0,
+            // A tap value of 0 corresponds to bit 14
+            tap_bit: 14,
+            output: false,
         }
     }
 
@@ -53,7 +62,7 @@ impl ChannelType {
         match self {
             ChannelType::PCM { channel, .. } => channel,
             ChannelType::PCMCh5 { channel, .. } => channel,
-            ChannelType::Noise { channel } => channel,
+            ChannelType::Noise { channel, .. } => channel,
         }
     }
 
@@ -61,7 +70,7 @@ impl ChannelType {
         match self {
             ChannelType::PCM { channel, .. } => channel,
             ChannelType::PCMCh5 { channel, .. } => channel,
-            ChannelType::Noise { channel } => channel,
+            ChannelType::Noise { channel, .. } => channel,
         }
     }
 
@@ -90,9 +99,31 @@ impl ChannelType {
                     } => {
                         *current_sample_index = 0;
                     }
-                    Self::Noise { .. } => {
-                        // TODO: Reset shift register
+                    Self::Noise { shift, output, .. } => {
+                        *shift = 0;
+                        *output = false;
                     }
+                }
+            }
+            0x14 => {
+                // Envelope Specification register 1
+                match self {
+                    Self::Noise { tap_bit, .. } => {
+                        let tap = (value >> 4) & 0x7;
+
+                        *tap_bit = match tap {
+                            0 => 14,
+                            1 => 10,
+                            2 => 13,
+                            3 => 4,
+                            4 => 8,
+                            5 => 6,
+                            6 => 9,
+                            7 => 11,
+                            _ => unreachable!(),
+                        }
+                    }
+                    _ => (),
                 }
             }
             0x18 => {
@@ -230,7 +261,7 @@ impl ChannelType {
     }
 
     ///
-    /// Moves to the next sample in the waveform. Does nothing on Noise channel
+    /// Moves to the next sample in the waveform, or chooses the next noise value
     ///
     fn increment_sample(&mut self) {
         match self {
@@ -245,7 +276,24 @@ impl ChannelType {
                 // Update sample index
                 *current_sample_index = (*current_sample_index + 1) & 0x1F;
             }
-            Self::Noise { .. } => (),
+            Self::Noise {
+                shift,
+                tap_bit,
+                output,
+                ..
+            } => {
+                let source_bit = *shift >> 7;
+                let tap_bit = *shift >> *tap_bit;
+
+                let output_bit = source_bit ^ tap_bit;
+                // Bit is inverted
+                let output_bit = !output_bit & 0x1;
+
+                *shift = (*shift << 1) & 0x7FFF;
+                *shift = *shift | output_bit;
+
+                *output = output_bit == 1;
+            }
         }
     }
 
@@ -279,9 +327,13 @@ impl ChannelType {
                     output
                 }
             }
-            Self::Noise { .. } => {
-                // TODO: Add noise sample
-                0
+            Self::Noise { output, .. } => {
+                if *output {
+                    // Output, if high, is 63
+                    63
+                } else {
+                    0
+                }
             }
         }
     }
@@ -290,10 +342,7 @@ impl ChannelType {
         match self {
             ChannelType::PCM { channel, .. } => channel.sampling_frequency,
             ChannelType::PCMCh5 { sweep_mod, .. } => sweep_mod.frequency(),
-            ChannelType::Noise { .. } => {
-                // TODO: Handle noise
-                return 0;
-            }
+            ChannelType::Noise { channel, .. } => channel.sampling_frequency,
         }
     }
 }

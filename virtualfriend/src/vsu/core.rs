@@ -138,7 +138,7 @@ impl VSU {
                 .for_each(|channel| channel.step_envelope());
             // self.channels[0].step_envelope();
 
-            // self.channels[4].step_sweep_modulate(&self.modulation);
+            self.channels[4].step_sweep_modulate(&self.modulation);
 
             // Actually take samples
             self.sample_output_counter += 1;
