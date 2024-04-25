@@ -144,6 +144,7 @@ fn main() {
 
     let rom_path = Path::new(
         "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
+        // "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb"
     );
 
     let rom = fs::read(rom_path).unwrap();

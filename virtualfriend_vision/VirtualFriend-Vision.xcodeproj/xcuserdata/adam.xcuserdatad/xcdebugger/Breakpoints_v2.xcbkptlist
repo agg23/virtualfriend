@@ -7,22 +7,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "FB63DCF1-392A-4E91-8083-28DA5A39A93F"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "VirtualFriend-Vision/Emulation/Emulator.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "199"
-            endingLineNumber = "199"
-            landmarkName = "renderAudioBuffer(_:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "39B36626-D575-45BD-8FF7-642D024F3AD0"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -30,25 +14,25 @@
             filePath = "VirtualFriend-Vision/Emulation/Emulator.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "185"
-            endingLineNumber = "185"
-            landmarkName = "renderAudioBuffer(_:)"
+            startingLineNumber = "216"
+            endingLineNumber = "216"
+            landmarkName = "renderAudioBuffer(_:buffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "BA285B37-9F7B-496F-A519-FD7CA47A4016"
+            uuid = "00D1654B-2F44-4D9E-B52D-F5086510D74D"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "VirtualFriend-Vision/Emulation/Emulator.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "202"
-            endingLineNumber = "202"
-            landmarkName = "renderAudioBuffer(_:)"
+            startingLineNumber = "211"
+            endingLineNumber = "211"
+            landmarkName = "renderAudioBuffer(_:buffer:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

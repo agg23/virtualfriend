@@ -13,7 +13,8 @@ import AVFAudio
 class Emulator {
     private let actor: EmulatorActor
     private let audioEngine: AVAudioEngine
-    private let audioNode: AVAudioPlayerNode
+//    private let audioNode: AVAudioPlayerNode
+    private var audioNode: AVAudioSourceNode!
     private let audioConverter: AVAudioConverter
 
     private let audioInputBuffer: AVAudioPCMBuffer
@@ -58,16 +59,12 @@ class Emulator {
         self.stereoImageChannel = AsyncChannel()
 
         self.audioEngine = AVAudioEngine()
-        self.audioNode = AVAudioPlayerNode()
-        self.audioEngine.attach(self.audioNode)
 
         guard let outputFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: 2),
               let inputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 41667, channels: 2, interleaved: false),
               let audioConverter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
             return nil
         }
-
-        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
 
         self.audioConverter = audioConverter
 
@@ -84,17 +81,53 @@ class Emulator {
         self.audioOutputBuffer1 = audioOutputBuffer1
 
         // Capture the number of frames we expect given the resampling
-        audioConverter.convert(to: self.audioOutputBuffer0, error: nil) { packetCount, status in
-            self.inputBufferLength = Int(packetCount)
-
-            status.pointee = .endOfStream
-
-            return nil
-        }
+//        audioConverter.convert(to: self.audioOutputBuffer0, error: nil) { packetCount, status in
+//            self.inputBufferLength = Int(packetCount)
+//
+//            status.pointee = .endOfStream
+//
+//            return nil
+//        }
 
         print("Expecting \(self.inputBufferLength) frames at a time")
 
         audioConverter.reset()
+
+        self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
+            print(frameCount)
+
+            Task {
+                let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
+                self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
+            }
+
+            let listBuffer = UnsafeMutableAudioBufferListPointer(outputBuffer)
+
+//            guard let inputChannelData = self.audioOutputBuffer0.floatChannelData else {
+//                fatalError("Could not get int16 channel data")
+//            }
+
+            guard let inputChannelData = self.audioInputBuffer.int16ChannelData else {
+                fatalError("Could not get int16 channel data")
+            }
+
+            let leftInputChannel = inputChannelData[0]
+            let rightInputChannel = inputChannelData[1]
+
+            let leftOutputChannel = UnsafeMutableBufferPointer<Int16>(listBuffer[0])
+            let rightOutputChannel = UnsafeMutableBufferPointer<Int16>(listBuffer[1])
+
+            for i in 0..<Int(frameCount) {
+                leftOutputChannel[i] = leftInputChannel[i]
+                rightOutputChannel[i] = rightInputChannel[i]
+            }
+
+            return 0
+        })
+        self.audioEngine.attach(self.audioNode)
+
+
+        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
     }
 
     func start() {
@@ -114,21 +147,26 @@ class Emulator {
         // Initial silence buffer
         self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
 
-        do {
-            try self.audioEngine.start()
-
-            self.audioNode.play()
-        } catch {
-            print(error)
-        }
-
         Task {
-            // Run two sets of audio frames to speed up scheduling of buffers
-            let frame0 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
-            let frame1 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
-            self.renderAudioBuffer(frame0, buffer: self.audioOutputBuffer0)
-            self.renderAudioBuffer(frame1, buffer: self.audioOutputBuffer1)
+            let frame = await self.runAudioGroupedFrame(UInt(487), interval: 0)
+            self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
+
+            do {
+                try self.audioEngine.start()
+
+    //            self.audioNode.play()
+            } catch {
+                print(error)
+            }
         }
+
+//        Task {
+//            // Run two sets of audio frames to speed up scheduling of buffers
+//            let frame0 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
+//            let frame1 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
+//            self.renderAudioBuffer(frame0, buffer: self.audioOutputBuffer0)
+//            self.renderAudioBuffer(frame1, buffer: self.audioOutputBuffer1)
+//        }
     }
 
     func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
@@ -172,26 +210,36 @@ class Emulator {
 
         var conversionError: NSError?
 
-        self.audioConverter.convert(to: buffer, error: &conversionError) { packetCount, status in
-            let channel0 = inputBuffer[0]
-            let channel1 = inputBuffer[1]
+//        self.audioConverter.convert(to: buffer, error: &conversionError) { packetCount, status in
+//            let channel0 = inputBuffer[0]
+//            let channel1 = inputBuffer[1]
+//
+//            for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
+//                channel0[i] = left
+//                channel1[i] = right
+//            }
+//
+//            status.pointee = .hasData
+//
+//            self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
+//            return self.audioInputBuffer
+//        }
 
-            for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
-                channel0[i] = left
-                channel1[i] = right
-            }
+        let channel0 = inputBuffer[0]
+        let channel1 = inputBuffer[1]
 
-            status.pointee = .haveData
-
-            self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
-            return self.audioInputBuffer
+        for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
+            channel0[i] = left
+            channel1[i] = right
         }
+
+        self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
 
         if let error = conversionError {
             print(error, error.userInfo)
         }
 
-        self.runAndScheduleFrame(buffer: buffer)
+//        self.runAndScheduleFrame(buffer: buffer)
     }
 
     private func runAndScheduleFrame(buffer: AVAudioPCMBuffer) {
@@ -200,7 +248,7 @@ class Emulator {
         Task {
             let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
 
-            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
+//            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
 
             self.renderAudioBuffer(frame, buffer: buffer)
         }
