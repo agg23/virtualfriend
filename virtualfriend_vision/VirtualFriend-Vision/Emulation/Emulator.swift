@@ -17,7 +17,8 @@ class Emulator {
     private let audioConverter: AVAudioConverter
 
     private let audioInputBuffer: AVAudioPCMBuffer
-    private let audioOutputBuffer: AVAudioPCMBuffer
+    private let audioOutputBuffer0: AVAudioPCMBuffer
+    private let audioOutputBuffer1: AVAudioPCMBuffer
 
     private var inputBufferLength: Int = 0
 
@@ -70,16 +71,20 @@ class Emulator {
 
         self.audioConverter = audioConverter
 
-        guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(10000)),
-              let audioOutputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: AVAudioFrameCount(4096)) else {
+        let outputBufferCapacity = AVAudioFrameCount(2048)
+
+        guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(20000)),
+              let audioOutputBuffer0 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity),
+              let audioOutputBuffer1 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity) else {
             return nil
         }
 
         self.audioInputBuffer = audioInputBuffer
-        self.audioOutputBuffer = audioOutputBuffer
+        self.audioOutputBuffer0 = audioOutputBuffer0
+        self.audioOutputBuffer1 = audioOutputBuffer1
 
         // Capture the number of frames we expect given the resampling
-        audioConverter.convert(to: self.audioOutputBuffer, error: nil) { packetCount, status in
+        audioConverter.convert(to: self.audioOutputBuffer0, error: nil) { packetCount, status in
             self.inputBufferLength = Int(packetCount)
 
             status.pointee = .endOfStream
@@ -87,11 +92,15 @@ class Emulator {
             return nil
         }
 
+        print("Expecting \(self.inputBufferLength) frames at a time")
+
         audioConverter.reset()
     }
 
     func start() {
         do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio, options: [])
+
             try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(0.005)
             try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
 
@@ -117,71 +126,59 @@ class Emulator {
             print(error)
         }
 
-        self.runAudioGroupedFrame(4096)
-
-//        self.timer = Timer.scheduledTimer(withTimeInterval: 1/50.0, repeats: true) { _ in
-//            Task {
-//                let frameTime = Date().timeIntervalSince1970
-//
-////                print(frameTime - (self.prevFrameTime ?? frameTime))
-//
-//                self.prevFrameTime = frameTime
-//
-//                let inputs = self.pollInput()
-//
-//                let frame = await self.actor.runFrame(with: inputs)
-//
-//                if let frame = frame.video {
-//                    let leftImage = rustVecToCIImage(frame.left)
-//                    let rightImage = rustVecToCIImage(frame.right)
-//
-//                    // TODO: This should be flipped by Metal, not the CPU
-//                    let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-//                    let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
-//
-//                    await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
-//                }
-//            }
-//        }
-    }
-
-    func runAudioGroupedFrame(_ bufferSize: UInt) {
         Task {
-            let frameTime = Date().timeIntervalSince1970
-
-            //                print(frameTime - (self.prevFrameTime ?? frameTime))
-
-            self.prevFrameTime = frameTime
-
-            let inputs = self.pollInput()
-
-            let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
-
-            if let frame = frame.video {
-                let leftImage = rustVecToCIImage(frame.left)
-                let rightImage = rustVecToCIImage(frame.right)
-
-                // TODO: This should be flipped by Metal, not the CPU
-                let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-                let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
-
-                await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
-            }
-
-            self.renderAudioBuffer(frame)
+            // Run two sets of audio frames to speed up scheduling of buffers
+            let frame0 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
+            let frame1 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
+            self.renderAudioBuffer(frame0, useBuffer1: false)
+            self.renderAudioBuffer(frame1, useBuffer1: true)
         }
     }
 
-    private func renderAudioBuffer(_ frame: FFIFrame) {
+    func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
+        let frameTime = Date().timeIntervalSince1970
+
+        let shouldBe = 1.0/41667.0 * Double(bufferSize)
+        let actual = frameTime - (self.prevFrameTime ?? frameTime)
+
+        print(actual, bufferSize, "Should be \(shouldBe)")
+
+        if shouldBe >= actual {
+            print("Overran audio buffer")
+        }
+
+        self.prevFrameTime = frameTime
+
+        let inputs = self.pollInput()
+
+        let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
+
+        if let frame = frame.video {
+            let leftImage = rustVecToCIImage(frame.left)
+            let rightImage = rustVecToCIImage(frame.right)
+
+            // TODO: This should be flipped by Metal, not the CPU
+            let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+            let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
+
+            await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+        }
+
+        print("Diff \(Date().timeIntervalSince1970 - interval)")
+
+        return frame
+    }
+
+    private func renderAudioBuffer(_ frame: FFIFrame, useBuffer1: Bool) {
         guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
             return
         }
 
+        let outputBuffer = self.buffer(useBuffer1: useBuffer1)
+
         var conversionError: NSError?
 
-        self.audioConverter.convert(to: self.audioOutputBuffer, error: &conversionError) { packetCount, status in
-//            self.audioOutputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
-
+        self.audioConverter.convert(to: outputBuffer, error: &conversionError) { packetCount, status in
             let channel0 = inputBuffer[0]
             let channel1 = inputBuffer[1]
 
@@ -192,6 +189,7 @@ class Emulator {
 
             status.pointee = .haveData
 
+            self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
             return self.audioInputBuffer
         }
 
@@ -199,8 +197,28 @@ class Emulator {
             print(error, error.userInfo)
         }
 
-        self.audioNode.scheduleBuffer(self.audioOutputBuffer) {
-            self.runAudioGroupedFrame(UInt(self.inputBufferLength))
+        self.runAndScheduleFrame(useBuffer1: useBuffer1)
+    }
+
+    private func runAndScheduleFrame(useBuffer1: Bool) {
+        let start = Date().timeIntervalSince1970
+
+        let outputBuffer = self.buffer(useBuffer1: useBuffer1)
+
+        Task {
+            let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
+
+            await self.audioNode.scheduleBuffer(outputBuffer, completionCallbackType: .dataConsumed)
+
+            self.renderAudioBuffer(frame, useBuffer1: useBuffer1)
+        }
+    }
+
+    private func buffer(useBuffer1: Bool) -> AVAudioPCMBuffer {
+        if useBuffer1 {
+            return self.audioOutputBuffer1
+        } else {
+            return self.audioOutputBuffer0
         }
     }
 
