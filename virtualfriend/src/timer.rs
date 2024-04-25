@@ -98,16 +98,17 @@ impl Timer {
                 TIMER_MIN_INTERVAL_CYCLE_COUNT * 5
             };
 
-            if self.tick_interval_counter == required_cycle_count {
+            self.tick_interval_counter += 1;
+
+            if self.tick_interval_counter >= required_cycle_count {
                 // Fire timer tick
                 self.tick_interval_counter = 0;
 
                 if self.tick() {
+                    println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
                     request_interrupt = true;
                 }
-            } else {
-                self.tick_interval_counter += 1;
             }
         }
 

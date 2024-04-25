@@ -430,6 +430,8 @@ impl VIP {
             // Drawing process
             if self.in_drawing {
                 // Display and drawing segments run in parallel
+                self.drawing_cycle_count += 1;
+
                 if self.drawing_cycle_count == DRAWING_BLOCK_CYCLE_COUNT {
                     self.drawing_cycle_count = 0;
 
@@ -461,23 +463,21 @@ impl VIP {
                         self.render_state.sbcount = 0;
                         self.interrupt_pending.set_xpend(true);
                     }
-                } else {
-                    self.drawing_cycle_count += 1;
                 }
             }
 
+            self.current_display_clock_cycle += 1;
+
             if self.current_display_clock_cycle == FRAME_COMPLETE_CYCLE_OFFSET {
                 self.current_display_clock_cycle = 0;
-            } else {
-                self.current_display_clock_cycle += 1;
             }
 
             if self.render_state.sbout {
                 // Run SBOUT timer
+                self.sbout_cycle_high_count += 1;
+
                 if self.sbout_cycle_high_count == SBOUT_HIGH_CYCLE_COUNT {
                     self.render_state.sbout = false;
-                } else {
-                    self.sbout_cycle_high_count += 1;
                 }
             }
         }

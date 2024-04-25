@@ -149,18 +149,18 @@ impl SweepModulate {
             SWEEP_SLOW_CYCLE_COUNT
         };
 
+        self.step_counter += 1;
+
         if self.step_counter >= period {
+            self.interval_counter += 1;
+
             if self.interval_counter >= self.modification_interval {
                 self.increment_sweep_mod(channel, modulation_data);
 
                 self.interval_counter = 0;
-            } else {
-                self.interval_counter += 1;
             }
 
             self.step_counter = 0;
-        } else {
-            self.step_counter += 1;
         }
     }
 

@@ -63,6 +63,8 @@ impl Gamepad {
     pub fn step(&mut self, cycles_to_run: usize, inputs: &GamepadInputs) {
         for _ in 0..cycles_to_run {
             if self.is_hardware_reading {
+                self.hardware_read_counter += 1;
+
                 if self.hardware_read_counter == GAMEPAD_HARDWARE_READ_CYCLE_COUNT {
                     // Read next button
                     self.hardware_read_counter = 0;
@@ -89,16 +91,12 @@ impl Gamepad {
                     self.button_state = (self.button_state << 1) | button_value;
 
                     // Reads at 31.25kHz, taking a total of 512us = 16 read operations of 640 cycles
+                    self.hardware_read_button_index += 1;
+
                     if self.hardware_read_button_index == 15 {
                         self.hardware_read_button_index = 0;
                         self.is_hardware_reading = false;
-                    } else {
-                        self.hardware_read_button_index += 1;
                     }
-
-                    // TODO: Read actual button
-                } else {
-                    self.hardware_read_counter += 1;
                 }
             }
         }

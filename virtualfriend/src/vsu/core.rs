@@ -20,10 +20,10 @@ impl VSU {
             waveforms: [Waveform::new(); 5],
             modulation: [0; 32],
             channels: [
-                ChannelType::new_pcm(),
-                ChannelType::new_pcm(),
-                ChannelType::new_pcm(),
-                ChannelType::new_pcm(),
+                ChannelType::new_pcm(0),
+                ChannelType::new_pcm(1),
+                ChannelType::new_pcm(2),
+                ChannelType::new_pcm(3),
                 ChannelType::new_pcm_ch5(),
                 ChannelType::new_noise(),
             ],
@@ -93,7 +93,7 @@ impl VSU {
         match address {
             0x400..=0x43F => {
                 let channel = &mut self.channels[0];
-                println!("Set ch0 {value:02X}");
+                // println!("Set ch0 {register_address:02X} {value:02X}");
                 channel.set_u8(register_address, value);
             }
             0x440..=0x47F => {
@@ -141,13 +141,13 @@ impl VSU {
             // self.channels[4].step_sweep_modulate(&self.modulation);
 
             // Actually take samples
+            self.sample_output_counter += 1;
+
             if self.sample_output_counter >= SOUND_SAMPLE_RATE_CYCLE_COUNT {
                 // Take sample
                 self.sample(audio_sink);
 
                 self.sample_output_counter = 0;
-            } else {
-                self.sample_output_counter += 1;
             }
         }
     }

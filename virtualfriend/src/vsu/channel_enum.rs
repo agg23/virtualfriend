@@ -8,6 +8,7 @@ use super::{channel::Channel, sweep_modulate::SweepModulate, waveform::Waveform}
 pub enum ChannelType {
     PCM {
         channel: Channel,
+        index: usize,
         waveform_bank_index: u8,
         current_sample_index: usize,
     },
@@ -24,9 +25,10 @@ pub enum ChannelType {
 }
 
 impl ChannelType {
-    pub fn new_pcm() -> Self {
+    pub fn new_pcm(index: usize) -> Self {
         Self::PCM {
             channel: Channel::new(),
+            index,
             waveform_bank_index: 0,
             current_sample_index: 0,
         }
@@ -60,6 +62,14 @@ impl ChannelType {
             ChannelType::PCM { channel, .. } => channel,
             ChannelType::PCMCh5 { channel, .. } => channel,
             ChannelType::Noise { channel } => channel,
+        }
+    }
+
+    pub fn index(&self) -> usize {
+        match self {
+            ChannelType::PCM { index, .. } => *index,
+            ChannelType::PCMCh5 { .. } => 4,
+            ChannelType::Noise { .. } => 5,
         }
     }
 
@@ -123,23 +133,23 @@ impl ChannelType {
     /// Turn off channel after period
     ///
     pub fn step_auto_deactivate(&mut self) {
-        let channel = self.channel_mut();
-
         // When firing, turn off channel
-        if channel.auto_deactivate {
-            if channel.live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
+        if self.channel().auto_deactivate {
+            self.channel_mut().live_interval_tick_counter += 1;
+
+            if self.channel().live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
                 // One tick of live interval
-                if channel.live_interval_counter >= (channel.live_interval + 1) {
+                self.channel_mut().live_interval_counter += 1;
+
+                if self.channel().live_interval_counter >= (self.channel().live_interval + 1) {
                     // Stop the channel
-                    channel.enable_playback = false;
-                    channel.live_interval_counter = 0;
-                } else {
-                    channel.live_interval_counter += 1;
+                    println!("Stopping channel {}", self.index());
+
+                    self.channel_mut().enable_playback = false;
+                    self.channel_mut().live_interval_counter = 0;
                 }
 
-                channel.live_interval_tick_counter = 0;
-            } else {
-                channel.live_interval_tick_counter += 1;
+                self.channel_mut().live_interval_tick_counter = 0;
             }
         }
     }
@@ -154,24 +164,22 @@ impl ChannelType {
             WAVE_CHANNEL_BASE_FREQUENCY_CYCLE_COUNT
         };
 
-        let channel = self.channel();
-
         // Sampling frequency
-        if channel.sampling_frequency_tick_counter >= cycles_per_frequency_tick {
+        self.channel_mut().sampling_frequency_tick_counter += 1;
+
+        if self.channel().sampling_frequency_tick_counter >= cycles_per_frequency_tick {
             // One tick of frequency step increment
-            if channel.sampling_frequency_counter > 2047 - self.frequency() {
+            self.channel_mut().sampling_frequency_counter += 1;
+
+            if self.channel().sampling_frequency_counter > 2047 - self.frequency() {
                 // Move to next sample
                 self.increment_sample();
                 // println!("Increment sample {}", self.channel().enable_playback);
 
                 self.channel_mut().sampling_frequency_counter = 0;
-            } else {
-                self.channel_mut().sampling_frequency_counter += 1;
             }
 
             self.channel_mut().sampling_frequency_tick_counter = 0;
-        } else {
-            self.channel_mut().sampling_frequency_tick_counter += 1;
         }
     }
 
@@ -181,6 +189,7 @@ impl ChannelType {
     pub fn step_envelope(&mut self) {
         let channel = self.channel_mut();
 
+        channel.envelope_tick_counter += 1;
         if channel.envelope_tick_counter >= ENVELOPE_CYCLE_COUNT {
             // One tick of envelope
             if channel.enable_envelope_modification {
@@ -196,13 +205,13 @@ impl ChannelType {
                         channel.envelope_level = channel.envelope_reload_value;
                     }
 
+                    panic!("Envelope tick {}", channel.envelope_step_counter);
+
                     channel.envelope_step_counter = 0;
                 }
             }
 
             channel.envelope_tick_counter = 0;
-        } else {
-            channel.envelope_tick_counter += 1;
         }
     }
 
@@ -246,9 +255,9 @@ impl ChannelType {
     fn output(&self, waveforms: &[Waveform; 5]) -> u8 {
         match self {
             ChannelType::PCM {
-                channel: _,
                 waveform_bank_index,
                 current_sample_index,
+                ..
             }
             | ChannelType::PCMCh5 {
                 waveform_bank_index,
