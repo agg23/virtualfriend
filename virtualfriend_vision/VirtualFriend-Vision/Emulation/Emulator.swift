@@ -23,7 +23,7 @@ class Emulator {
 
     private var inputBufferLength: Int = 0
 
-    var stereoImageChannel: AsyncChannel<StereoImage> = AsyncChannel()
+    var stereoImageChannel = AsyncImageChannel()
 
     var timer: Timer?
 
@@ -55,8 +55,6 @@ class Emulator {
         self.actor = EmulatorActor(virtualFriend: virtualFriend)
 
         fileUrl.stopAccessingSecurityScopedResource()
-
-        self.stereoImageChannel = AsyncChannel()
 
         self.audioEngine = AVAudioEngine()
 
@@ -195,7 +193,7 @@ class Emulator {
             let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
             let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
 
-            await self.stereoImageChannel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+            await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
         }
 
         print("Diff \(Date().timeIntervalSince1970 - interval)")

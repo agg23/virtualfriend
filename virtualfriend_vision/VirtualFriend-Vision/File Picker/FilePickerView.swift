@@ -18,46 +18,36 @@ struct FilePickerView: View {
 
     /// Binding to open fileImporter
     @State var selectFolder = false
-    @State var directoryContents: [(URL, String?)] = []
-
-    private let columns = [
-        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
-        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil),
-        GridItem(.fixed(IMAGE_WIDTH), spacing: GRID_SPACING, alignment: nil)
-    ]
+    @State var directoryContents: [FileEntry] = []
 
     var body: some View {
-        VStack {
-            if (directoryContents.isEmpty) {
-                Text("No games found. Please select a valid ROMs folder.")
-                    .font(.system(size: 24))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 500)
+        NavigationStack {
+            VStack {
+                if (directoryContents.isEmpty) {
+                    Text("No games found. Please select a valid ROMs folder.")
+                        .font(.system(size: 24))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 500)
 
-                Button {
-                    selectFolder.toggle()
-                } label: {
-                    Text("Choose folder")
-                }
-            } else {
-//                NavigationSplitView {
-//                    Text("Sidebar")
-//                } detail: {
-//                    Text("Detail")
-//                }
-
-                ScrollView {
-                    LazyVGrid(columns: self.columns, spacing: GRID_SPACING) {
-                        // Make sure we always have 9 items and insert placeholders
-                        ForEach(self.$directoryContents, id: \.0) { urlAndHash in
-                            FilePickerEntry(fileUrl: urlAndHash.0, hash: urlAndHash.1, imageWidth: IMAGE_WIDTH, imageHeight: IMAGE_HEIGHT)
-                        }
+                    Button {
+                        selectFolder.toggle()
+                    } label: {
+                        Text("Choose folder")
                     }
+                } else {
+                    //                NavigationSplitView {
+                    //                    Text("Sidebar")
+                    //                } detail: {
+                    //                    Text("Detail")
+                    //                }
+
+                    //                FilePickerGrid(directoryContents: self.$directoryContents)
+                    FilePickerFilesView(directoryContents: self.directoryContents)
                 }
             }
+            .padding(40.0)
         }
-        .padding(40.0)
         .onAppear {
             self.populateFromBookmark()
         }
@@ -122,7 +112,7 @@ struct FilePickerView: View {
                 let hash = hashOfFile(atUrl: url)
                 url.stopAccessingSecurityScopedResource()
 
-                return (url, hash)
+                return FileEntry(url: url, hash: hash)
             }
         } catch {
             // Directory not found

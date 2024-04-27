@@ -14,8 +14,8 @@
             filePath = "VirtualFriend-Vision/Emulation/Emulator.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "216"
-            endingLineNumber = "216"
+            startingLineNumber = "214"
+            endingLineNumber = "214"
             landmarkName = "renderAudioBuffer(_:buffer:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "VirtualFriend-Vision/Emulation/Emulator.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "211"
-            endingLineNumber = "211"
+            startingLineNumber = "209"
+            endingLineNumber = "209"
             landmarkName = "renderAudioBuffer(_:buffer:)"
             landmarkType = "7">
          </BreakpointContent>
