@@ -48,6 +48,7 @@ struct StereoImageView: View {
 
     var body: some View {
         ZStack {
+            // Background to prevent flash when loading
             Color.black
 
             GeometryReader { geometry in

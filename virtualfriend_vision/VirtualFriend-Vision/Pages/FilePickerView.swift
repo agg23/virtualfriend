@@ -38,7 +38,6 @@ struct FilePickerView: View {
                 }
                 .padding(40.0)
             } else {
-                //                FilePickerGrid(directoryContents: self.$directoryContents)
                 FilePickerFilesView(directoryContents: self.directoryContents)
             }
         }

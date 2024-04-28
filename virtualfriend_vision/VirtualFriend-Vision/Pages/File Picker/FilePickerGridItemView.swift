@@ -8,21 +8,17 @@
 import SwiftUI
 import AsyncAlgorithms
 
-struct FilePickerEntryView: View {
+struct FilePickerGridItemView: View {
     @Environment(\.openWindow) var openWindow
 
-    let imageWidth: CGFloat
-    let imageHeight: CGFloat
+    let CORNER_RADIUS = 20.0
 
     let entry: FileEntryWithManifest
 
     let stereoStreamChannel: AsyncImageChannel
 
-    init(entry: FileEntryWithManifest, imageWidth: CGFloat, imageHeight: CGFloat) {
+    init(entry: FileEntryWithManifest) {
         self.entry = entry
-
-        self.imageWidth = imageWidth
-        self.imageHeight = imageHeight
 
         guard let manifest = self.entry.manifest else {
             let manifest = FileEntry.getUnknownManifest()
@@ -54,30 +50,39 @@ struct FilePickerEntryView: View {
                 openWindow(id: "emu", value: self.entry.entry.url)
             } label: {
                 VStack {
-                    // Placeholder of the size of the StreamingStereoImageView
-                    Color(.clear)
-                        .frame(width: self.imageWidth, height: self.imageHeight)
+                    Color.black
+                        // Extra 16 to allow button press to keep 3D view hidden
+                        .aspectRatio(384.0/(224.0 + 16.0), contentMode: .fit)
+                        .ignoresSafeArea(edges: .horizontal)
+
                     Text(metadata?.title.toString() ?? self.entry.entry.url.deletingPathExtension().lastPathComponent)
                         .font(.title)
-                    if let metadata = metadata {
-                        Text(metadata.publisher.toString() + " " + metadata.year.toString())
-                    } else {
-                        // Placeholder
-                        // TODO: There should be something better that can be done here
-                        Text(" ")
+                        .lineLimit(1)
+                    Group {
+                        if let metadata = metadata {
+                            Text(metadata.publisher.toString() + " " + metadata.year.toString())
+                                .lineLimit(1)
+                        } else {
+                            // Placeholder
+                            // TODO: There should be something better that can be done here
+                            Text(" ")
+                        }
                     }
+                    .padding(.bottom, 8)
                 }
+                .background(.tertiary)
+//                    //                .clipShape(.rect(cornerRadius: 20.0))
+                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: CORNER_RADIUS))
+                .cornerRadius(CORNER_RADIUS)
             }
-            .buttonBorderShape(.roundedRectangle(radius: 20.0))
+            // Custom button style as we can't make the black above span the entire width of the button without it
+            .buttonStyle(.plain)
+            .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
 
             VStack {
-//                ZStack {
-//                    Color(.green)
-//                        .frame(width: self.imageWidth, height: self.imageHeight)
-//                StreamingStereoImageView(width: 384, height: 224, stereoImage: stereoImage, scale: 0.7)
-//                    .frame(width: self.imageWidth, height: self.imageHeight)
                 StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel)
-//                }
+                    .padding()
+
                 Spacer()
             }
         }
@@ -85,5 +90,5 @@ struct FilePickerEntryView: View {
 }
 
 #Preview {
-    FilePickerEntryView(entry: MOCK_FILE_ENTRY_WITH_MANIFEST(), imageWidth: 480, imageHeight: 300)
+    FilePickerGridItemView(entry: MOCK_FILE_ENTRY_WITH_MANIFEST())
 }
