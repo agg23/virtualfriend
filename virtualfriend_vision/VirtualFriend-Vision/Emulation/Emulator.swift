@@ -25,7 +25,7 @@ class Emulator {
 
     var stereoImageChannel = AsyncImageChannel()
 
-    var timer: Timer?
+    var executingTask: Task<(), Error>?
 
     var prevFrameTime: TimeInterval?
 
@@ -94,8 +94,13 @@ class Emulator {
         self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
             print(frameCount)
 
-            Task {
+            self.executingTask = Task {
                 let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
+
+                if Task.isCancelled {
+                    return
+                }
+
                 self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
             }
 
@@ -145,7 +150,7 @@ class Emulator {
         // Initial silence buffer
         self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
 
-        Task {
+        self.executingTask = Task {
             let frame = await self.runAudioGroupedFrame(UInt(487), interval: 0)
             self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
 
@@ -240,21 +245,23 @@ class Emulator {
 //        self.runAndScheduleFrame(buffer: buffer)
     }
 
-    private func runAndScheduleFrame(buffer: AVAudioPCMBuffer) {
-        let start = Date().timeIntervalSince1970
-
-        Task {
-            let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
-
-//            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
-
-            self.renderAudioBuffer(frame, buffer: buffer)
-        }
-    }
+//    private func runAndScheduleFrame(buffer: AVAudioPCMBuffer) {
+//        let start = Date().timeIntervalSince1970
+//
+//        Task {
+//            let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
+//
+////            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
+//
+//            self.renderAudioBuffer(frame, buffer: buffer)
+//        }
+//    }
 
     func stop() {
-        self.timer?.invalidate()
-        self.timer = nil
+        self.executingTask?.cancel()
+        self.executingTask = nil
+
+        self.audioEngine.stop()
     }
 
     private func pollInput() -> FFIGamepadInputs {
