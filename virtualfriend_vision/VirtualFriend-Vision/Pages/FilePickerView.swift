@@ -24,7 +24,7 @@ struct FilePickerView: View {
         NavigationStack {
             if (directoryContents.isEmpty) {
                 VStack {
-                    Text("No games found. Please select a valid ROMs folder.")
+                    Text("No titles found. Please select a valid titles folder.")
                         .font(.system(size: 24))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
