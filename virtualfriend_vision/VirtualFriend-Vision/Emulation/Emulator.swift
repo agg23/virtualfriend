@@ -31,6 +31,8 @@ class Emulator {
 
     var separation: Binding<Double>?
 
+    var enableSound: Bool = false
+
     init?(fileUrl: URL) {
         let _ = fileUrl.startAccessingSecurityScopedResource()
 
@@ -172,7 +174,33 @@ class Emulator {
 //        }
     }
 
-    func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
+    func stop() {
+        self.executingTask?.cancel()
+        self.executingTask = nil
+
+        self.audioEngine.stop()
+    }
+
+    func enableSound(_ enable: Bool) {
+        self.enableSound = enable
+
+        if !enable {
+            // Turn off sound, clear buffer
+            guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
+                return
+            }
+
+            let channel0 = inputBuffer[0]
+            let channel1 = inputBuffer[1]
+
+            for i in 0..<20000 {
+                channel0[Int(i)] = 0
+                channel1[Int(i)] = 0
+            }
+        }
+    }
+
+    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
         let frameTime = Date().timeIntervalSince1970
 
         let shouldBe = 1.0/41667.0 * Double(bufferSize)
@@ -207,6 +235,10 @@ class Emulator {
     }
 
     private func renderAudioBuffer(_ frame: FFIFrame, buffer: AVAudioPCMBuffer) {
+        guard self.enableSound else {
+            return
+        }
+
         guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
             return
         }
@@ -256,13 +288,6 @@ class Emulator {
 //            self.renderAudioBuffer(frame, buffer: buffer)
 //        }
 //    }
-
-    func stop() {
-        self.executingTask?.cancel()
-        self.executingTask = nil
-
-        self.audioEngine.stop()
-    }
 
     private func pollInput() -> FFIGamepadInputs {
         let keyboard = pollKeyboardInput()

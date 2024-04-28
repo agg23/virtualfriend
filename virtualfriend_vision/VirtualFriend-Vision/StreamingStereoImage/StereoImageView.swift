@@ -21,12 +21,11 @@ struct StereoImageView: View {
     let context: CIContext
 
     let stereoImageChannel: AsyncImageChannel
-    @Binding var depth: Double
 
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, depth: Binding<Double>? = nil) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -34,12 +33,6 @@ struct StereoImageView: View {
         self.context = CIContext()
 
         self.stereoImageChannel = stereoImageChannel
-
-        if let depth = depth {
-            self._depth = depth
-        } else {
-            self._depth = .constant(1.0)
-        }
 
         // Two screens, margin on either side = 4 * MARGIN
         self.drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: width * 2 + MARGIN * 4, height: height + MARGIN * 2, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
@@ -102,7 +95,7 @@ struct StereoImageView: View {
             }
             // This constrains the plane to sit directly on top of the window
             // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
-            .frame(minDepth: self.depth, maxDepth: self.depth + 0.1)
+            .frame(minDepth: 1.0, maxDepth: 1.1)
         }
         .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         .onChange(of: self.stereoImageChannel, initial: true, { _, _ in
