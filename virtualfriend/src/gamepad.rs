@@ -93,7 +93,7 @@ impl Gamepad {
                     // Reads at 31.25kHz, taking a total of 512us = 16 read operations of 640 cycles
                     self.hardware_read_button_index += 1;
 
-                    if self.hardware_read_button_index == 15 {
+                    if self.hardware_read_button_index == 16 {
                         self.hardware_read_button_index = 0;
                         self.is_hardware_reading = false;
                     }
