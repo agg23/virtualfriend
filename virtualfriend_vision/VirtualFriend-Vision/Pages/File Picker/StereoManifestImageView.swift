@@ -9,9 +9,9 @@ import SwiftUI
 import AsyncAlgorithms
 
 struct StereoManifestImageView: View {
-    let entry: FileEntryWithManifest
-
     @State var stereoStreamChannel = AsyncImageChannel()
+
+    let entry: FileEntryWithManifest
 
     var body: some View {
         StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel)

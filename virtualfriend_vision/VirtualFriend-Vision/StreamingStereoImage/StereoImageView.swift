@@ -22,10 +22,12 @@ struct StereoImageView: View {
 
     let stereoImageChannel: AsyncImageChannel
 
+    let onTap: (() -> Void)?
+
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, onTap: (() -> Void)? = nil) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -33,6 +35,8 @@ struct StereoImageView: View {
         self.context = CIContext()
 
         self.stereoImageChannel = stereoImageChannel
+
+        self.onTap = onTap
 
         // Two screens, margin on either side = 4 * MARGIN
         self.drawableQueue = try! TextureResource.DrawableQueue(.init(pixelFormat: .bgra8Unorm, width: width * 2 + MARGIN * 4, height: height + MARGIN * 2, usage: [.renderTarget, .shaderRead, .shaderWrite], mipmapsMode: .none))
@@ -47,6 +51,11 @@ struct StereoImageView: View {
             GeometryReader { geometry in
                 RealityView { content in
                     let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
+
+                    // Set up gesture support
+                    entity.generateCollisionShapes(recursive: false)
+                    entity.components.set(InputTargetComponent())
+
                     content.add(entity)
 
                     guard var material = await StereoImageMaterial.shared.material else {
@@ -92,6 +101,7 @@ struct StereoImageView: View {
 
                     entity.transform.scale = [xScale, yScale, 1.0]
                 }
+                .gesture(self.tap)
             }
             // This constrains the plane to sit directly on top of the window
             // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
@@ -106,6 +116,14 @@ struct StereoImageView: View {
             self.displayTask?.cancel()
             self.displayTask = nil
         }
+    }
+
+    var tap: some Gesture {
+        SpatialTapGesture()
+            .targetedToAnyEntity()
+            .onEnded { _ in
+                self.onTap?()
+            }
     }
 
     /// Require that both RealityView render and onAppear have triggered before we start receiving frames

@@ -80,8 +80,10 @@ struct FilePickerGridItemView: View {
             .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
 
             VStack {
-                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel)
-                    .padding()
+                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel) {
+                    openWindow(id: "emu", value: self.entry.entry.url)
+                }
+                .padding()
 
                 Spacer()
             }
