@@ -74,6 +74,9 @@ struct EmuView: View {
 }
 
 private struct EmuContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openWindow) var openWindow
+
     let emulator: Emulator
     @Binding var controlVisibility: Visibility
 
@@ -92,36 +95,45 @@ private struct EmuContentView: View {
         VStack {
             StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel, depth: self.$depth)
                 .overlay {
-                    ZStack(alignment: .topTrailing) {
+                    ZStack(alignment: .top) {
                         // Clear does not get drawn on top of the StereoImageView for some reason
                         Color.white.opacity(0.0001)
 
                         if self.controlVisibility == .visible {
                             HStack {
-                                Spacer()
-                                VStack {
-                                    Spacer()
-                                    Text("Overlay")
-                                        .font(.largeTitle)
-                                    Spacer()
+                                Button {
+                                    openWindow(value: "main" as String?)
+                                } label: {
+                                    Label {
+                                        Text("Back")
+                                    } icon: {
+                                        Image(systemName: Icon.back)
+                                    }
                                 }
-                                Spacer()
-                            }
+                                .help("Back")
+                                .labelStyle(.iconOnly)
+                                .buttonBorderShape(.circle)
+                                .controlSize(.large)
+                                .padding([.leading, .top], 40)
 
-                            Button {
-                                self.onRestart()
-                            } label: {
-                                Label {
-                                    Text("Restart")
-                                } icon: {
-                                    Image(systemName: Icon.restart)
+                                Spacer()
+
+                                Button {
+                                    self.onRestart()
+                                } label: {
+                                    Label {
+                                        Text("Restart")
+                                    } icon: {
+                                        Image(systemName: Icon.restart)
+                                    }
                                 }
+                                .help("Restart")
+                                .labelStyle(.iconOnly)
+                                .buttonBorderShape(.circle)
+                                .controlSize(.large)
+                                .padding([.trailing, .top], 40)
+
                             }
-                            .help("Restart")
-                            .labelStyle(.iconOnly)
-                            .buttonBorderShape(.circle)
-                            .controlSize(.large)
-                            .padding([.trailing, .top], 40)
                         }
                     }
                     .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
@@ -169,6 +181,12 @@ private struct EmuContentView: View {
                         .safeAreaPadding()
                         .frame(width: 600)
                         .glassBackgroundEffect()
+                    }
+                }
+                .onChange(of: self.scenePhase) { _, newPhase in
+                    if newPhase == .background {
+                        // Stop emulation
+                        self.emulator.stop()
                     }
                 }
                 .onAppear {

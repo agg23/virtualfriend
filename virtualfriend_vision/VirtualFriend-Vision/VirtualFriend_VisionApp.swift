@@ -15,9 +15,15 @@ struct VirtualFriend_VisionApp: App {
     }
 
     var body: some Scene {
-        WindowGroup(id: "filepicker") {
-            MainWindowView()
+        // We use a data type (for:) so we can reopen/focus the same window
+        WindowGroup(for: String?.self) { $id in
+            // This `nil` ID is used to bypass a bug. See inside of `MainWindowView`
+            MainWindowView(id: id)
                 .frame(minWidth: 600, minHeight: 400)
+        } defaultValue: {
+            // Set default value so there's a shared ID we can use to reuse the window
+            // TODO: This doesn't work for some reason
+            return "main" as String?
         }
         .windowResizability(.contentSize)
         // Default window size
