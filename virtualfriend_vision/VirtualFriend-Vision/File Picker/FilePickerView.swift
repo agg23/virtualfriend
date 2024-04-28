@@ -22,8 +22,8 @@ struct FilePickerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                if (directoryContents.isEmpty) {
+            if (directoryContents.isEmpty) {
+                VStack {
                     Text("No games found. Please select a valid ROMs folder.")
                         .font(.system(size: 24))
                         .multilineTextAlignment(.center)
@@ -35,18 +35,12 @@ struct FilePickerView: View {
                     } label: {
                         Text("Choose folder")
                     }
-                } else {
-                    //                NavigationSplitView {
-                    //                    Text("Sidebar")
-                    //                } detail: {
-                    //                    Text("Detail")
-                    //                }
-
-                    //                FilePickerGrid(directoryContents: self.$directoryContents)
-                    FilePickerFilesView(directoryContents: self.directoryContents)
                 }
+                .padding(40.0)
+            } else {
+                //                FilePickerGrid(directoryContents: self.$directoryContents)
+                FilePickerFilesView(directoryContents: self.directoryContents)
             }
-            .padding(40.0)
         }
         .onAppear {
             self.populateFromBookmark()

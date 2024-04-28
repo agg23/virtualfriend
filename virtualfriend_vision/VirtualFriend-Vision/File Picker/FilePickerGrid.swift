@@ -22,6 +22,7 @@ struct FilePickerGrid: View {
     ]
 
     var body: some View {
+        // TODO: Add padding
         ScrollView {
             LazyVGrid(columns: self.columns, spacing: FilePickerGrid.GRID_SPACING) {
                 ForEach(self.files, id: \.entry.id) { entry in

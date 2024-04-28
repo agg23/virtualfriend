@@ -47,58 +47,62 @@ struct StereoImageView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            RealityView { content in
-                let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
-                content.add(entity)
+        ZStack {
+            Color.black
 
-                guard var material = await StereoImageMaterial.shared.material else {
-                    return
+            GeometryReader { geometry in
+                RealityView { content in
+                    let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
+                    content.add(entity)
+
+                    guard var material = await StereoImageMaterial.shared.material else {
+                        return
+                    }
+
+                    // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
+                    let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
+                    let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
+
+                    do {
+                        let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
+                        texture.replace(withDrawables: self.drawableQueue)
+
+                        try material.setParameter(name: "Image", value: .textureResource(texture))
+                    } catch is CancellationError {
+                        // Do nothing
+                    } catch {
+                        fatalError(error.localizedDescription)
+                    }
+
+                    entity.model?.materials = [material]
+
+                    self.onAppear()
+                } update: { content in
+                    guard let entity = content.entities.first as? ModelEntity, let model = entity.model else {
+                        return
+                    }
+
+                    // Update bounds
+                    let leftPoint = content.convert(Point3D(simd_float3(0, 0, 0)), from: .local, to: .scene)
+                    let rightPoint = content.convert(Point3D(simd_float3(Float(geometry.size.width), Float(geometry.size.height), 1)), from: .local, to: .scene)
+
+                    let diff = rightPoint - leftPoint
+
+                    let leftBound = model.mesh.bounds.min
+                    let rightBound = model.mesh.bounds.max
+
+                    let boundDiff = rightBound - leftBound
+
+                    let xScale = abs(diff.x) / abs(boundDiff.x)
+                    let yScale = abs(diff.y) / abs(boundDiff.y)
+
+                    entity.transform.scale = [xScale, yScale, 1.0]
                 }
-
-                // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
-                let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
-                let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
-
-                do {
-                    let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
-                    texture.replace(withDrawables: self.drawableQueue)
-
-                    try material.setParameter(name: "Image", value: .textureResource(texture))
-                } catch is CancellationError {
-                    // Do nothing
-                } catch {
-                    fatalError(error.localizedDescription)
-                }
-
-                entity.model?.materials = [material]
-
-                self.onAppear()
-            } update: { content in
-                guard let entity = content.entities.first as? ModelEntity, let model = entity.model else {
-                    return
-                }
-
-                // Update bounds
-                let leftPoint = content.convert(Point3D(simd_float3(0, 0, 0)), from: .local, to: .scene)
-                let rightPoint = content.convert(Point3D(simd_float3(Float(geometry.size.width), Float(geometry.size.height), 1)), from: .local, to: .scene)
-
-                let diff = rightPoint - leftPoint
-
-                let leftBound = model.mesh.bounds.min
-                let rightBound = model.mesh.bounds.max
-
-                let boundDiff = rightBound - leftBound
-
-                let xScale = abs(diff.x) / abs(boundDiff.x)
-                let yScale = abs(diff.y) / abs(boundDiff.y)
-
-                entity.transform.scale = [xScale, yScale, 1.0]
             }
+            // This constrains the plane to sit directly on top of the window
+            // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
+            .frame(minDepth: self.depth, maxDepth: self.depth + 0.1)
         }
-        // This constrains the plane to sit directly on top of the window
-        // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
-        .frame(minDepth: self.depth, maxDepth: self.depth + 0.1)
         .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         .onChange(of: self.stereoImageChannel, initial: true, { _, _ in
             self.onAppear()

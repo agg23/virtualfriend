@@ -15,7 +15,7 @@ struct FilePickerListView: View {
     let files: [FileEntryWithManifest]
 
     var body: some View {
-        Grid {
+        Grid(horizontalSpacing: 0) {
             GridRow {
                 ForEach(0..<3) { _ in
                     EmptyView()
@@ -27,38 +27,19 @@ struct FilePickerListView: View {
                 self.details
             }
         }
-//        List(self.files, id: \.entry.id) { entry in
-//            let metadata = entry.manifest?.metadata
-//
-//            Button {
-//                openWindow(id: "emu", value: entry.entry.url)
-//            } label: {
-//                HStack {
-//                    Text(metadata?.title.toString() ?? entry.entry.url.deletingPathExtension().lastPathComponent)
-//                        .font(.title)
-//                    if let metadata = metadata {
-//                        Text(metadata.publisher.toString() + " " + metadata.year.toString())
-//                    } else {
-//                        // Placeholder
-//                        // TODO: There should be something better that can be done here
-//                        Text(" ")
-//                    }
-//                }
-//            }
-//        }
     }
 
     @ViewBuilder
     var list: some View {
         List(selection: self.$selectedFile) {
             ForEach(self.files, id: \.entry.id) { entry in
-                let metadata = entry.manifest?.metadata
-
                 HStack {
                     Text(self.title(from: entry))
                         .font(.title)
-                    if let metadata = metadata {
+                        .lineLimit(1)
+                    if let metadata = entry.manifest?.metadata {
                         Text(metadata.publisher.toString() + " " + metadata.year.toString())
+                            .lineLimit(1)
                     } else {
                         // Placeholder
                         // TODO: There should be something better that can be done here
@@ -66,6 +47,11 @@ struct FilePickerListView: View {
                     }
                 }
                 .tag(entry)
+            }
+        }
+        .onChange(of: self.files, initial: true) { _, newValue in
+            if self.selectedFile == nil {
+                self.selectedFile = newValue.first
             }
         }
     }
@@ -77,10 +63,36 @@ struct FilePickerListView: View {
                 .ignoresSafeArea()
 
             if let selectedFile = self.selectedFile {
-                StereoManifestImageView(entry: selectedFile)
-                    .id(selectedFile)
+                VStack {
+                    StereoManifestImageView(entry: selectedFile)
 
-                Text(self.title(from: selectedFile))
+                    Text(self.title(from: selectedFile))
+                        .font(.largeTitle)
+                        .lineLimit(1)
+
+                    // TODO: Replace this
+                    if let metadata = selectedFile.manifest?.metadata {
+                        Text(metadata.publisher.toString() + " " + metadata.year.toString())
+                            .lineLimit(1)
+                    } else {
+                        // Placeholder
+                        // TODO: There should be something better that can be done here
+                        Text(" ")
+                    }
+
+                    Button("Play", systemImage: "play.fill") {
+                        openWindow(id: "emu", value: selectedFile.entry.url)
+                    }
+                    .padding()
+
+                    Spacer()
+
+                    if selectedFile.manifest == nil {
+                        Text(selectedFile.entry.url.lastPathComponent)
+                            .font(.footnote)
+                            .padding()
+                    }
+                }
             }
         }
     }

@@ -27,52 +27,29 @@ struct FilePickerFilesView: View {
                 FilePickerGrid(files: self.files)
             }
         }
-        .animation(.default, value: self.fileViewType)
+        .navigationTitle("VirtualFriend")
         .toolbar {
-            Picker("View Style", selection: self.$fileViewType) {
-                Button("List", systemImage: "list.bullet") {
+            ToolbarItem(placement: .navigation) {
+                HStack {
+                    Picker("View Style", selection: self.$fileViewType) {
+                        Button("List", systemImage: "list.bullet") {
 
+                        }
+                        .help("List")
+                        .tag(FilePickerViewType.list)
+
+                        Button("Grid", systemImage: "square.grid.2x2") {
+
+                        }
+                        .help("Grid")
+                        .tag(FilePickerViewType.grid)
+                    }
+                    .pickerStyle(.segmented)
+
+                    Spacer()
                 }
-                .help("List")
-                .tag(FilePickerViewType.list)
-
-                Button("Grid", systemImage: "square.grid.2x2") {
-
-                }
-                .help("Grid")
-                .tag(FilePickerViewType.grid)
             }
-            .pickerStyle(.segmented)
         }
-
-//        NavigationSplitView(columnVisibility: splitViewVisibility, sidebar: {
-//            Group {
-//                switch self.fileViewType {
-//                case .list:
-//                    Text("list")
-//                case .grid:
-//                    FilePickerGrid(directoryContents: self.$directoryContents)
-//                }
-//            }
-//            Text("list")
-//        }, detail: {
-//            Text("Foo")
-//                .toolbar {
-//                    Text("")
-//                    Picker("View Style", selection: self.$fileViewType) {
-//                        Button("List", systemImage: "list.bullet") {
-//
-//                        }
-//                        .tag(FilePickerViewType.list)
-//
-//                        Button("Grid", systemImage: "square.grid.2x2") {
-//
-//                        }
-//                        .tag(FilePickerViewType.grid)
-//                    }
-//                    .pickerStyle(.segmented)
-//                }
-//        })
     }
 }
 
