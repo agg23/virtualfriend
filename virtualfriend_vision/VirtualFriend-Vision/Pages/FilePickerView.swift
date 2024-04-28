@@ -45,15 +45,11 @@ struct FilePickerView: View {
         .onAppear {
             self.populateFromBookmark()
         }
-        .fileImporter(isPresented: $selectFolder, allowedContentTypes: [.folder]) { result in
-            switch result {
-            case .success(let url):
-                self.buildDirectoryContents(from: url)
-                print("Selected \(url)")
-            case .failure(let failure):
-                print("Failed to open folder: \(failure)")
-            }
-        }
+        .customFileImporter(self.$selectFolder, onOpen: { url, bookmark in
+            self.romDirectoryBookmark = bookmark
+
+            self.buildDirectoryContents(from: url)
+        })
     }
 
     func populateFromBookmark() {
@@ -81,10 +77,6 @@ struct FilePickerView: View {
             }
 
             defer { url.stopAccessingSecurityScopedResource() }
-
-            // Update bookmark
-            let bookmarkData = try? url.bookmarkData(options: .minimalBookmark)
-            self.romDirectoryBookmark = bookmarkData
 
             var error: NSError? = nil
             NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { (url) in

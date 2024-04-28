@@ -16,7 +16,7 @@ struct VirtualFriend_VisionApp: App {
 
     var body: some Scene {
         WindowGroup(id: "filepicker") {
-            FilePickerView()
+            MainWindowView()
                 .frame(minWidth: 600, minHeight: 400)
         }
         .windowResizability(.contentSize)
