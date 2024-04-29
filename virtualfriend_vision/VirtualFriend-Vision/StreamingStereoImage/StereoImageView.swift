@@ -49,63 +49,17 @@ struct StereoImageView: View {
             Color.black
 
             GeometryReader { geometry in
-                RealityView { content in
-                    let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
-
-                    // Set up gesture support
-                    entity.generateCollisionShapes(recursive: false)
-                    entity.components.set(InputTargetComponent())
-
-                    content.add(entity)
-
-                    guard var material = await StereoImageMaterial.shared.material else {
-                        return
-                    }
-
-                    // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
-                    let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
-                    let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
-
-                    do {
-                        let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
-                        texture.replace(withDrawables: self.drawableQueue)
-
-                        try material.setParameter(name: "Image", value: .textureResource(texture))
-                    } catch is CancellationError {
-                        // Do nothing
-                    } catch {
-                        fatalError(error.localizedDescription)
-                    }
-
-                    entity.model?.materials = [material]
-
-                    self.onAppear()
-                } update: { content in
-                    guard let entity = content.entities.first as? ModelEntity, let model = entity.model else {
-                        return
-                    }
-
-                    // Update bounds
-                    let leftPoint = content.convert(Point3D(simd_float3(0, 0, 0)), from: .local, to: .scene)
-                    let rightPoint = content.convert(Point3D(simd_float3(Float(geometry.size.width), Float(geometry.size.height), 1)), from: .local, to: .scene)
-
-                    let diff = rightPoint - leftPoint
-
-                    let leftBound = model.mesh.bounds.min
-                    let rightBound = model.mesh.bounds.max
-
-                    let boundDiff = rightBound - leftBound
-
-                    let xScale = abs(diff.x) / abs(boundDiff.x)
-                    let yScale = abs(diff.y) / abs(boundDiff.y)
-
-                    entity.transform.scale = [xScale, yScale, 1.0]
+                if self.onTap != nil {
+                    self.realityView(geometry)
+                        .gesture(self.tap)
+                } else {
+                    self.realityView(geometry)
                 }
-                .gesture(self.tap)
             }
             // This constrains the plane to sit directly on top of the window
             // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
-            .frame(minDepth: 1.0, maxDepth: 1.1)
+            // Higher depth to allow tapping on the view in EmuView
+            .frame(minDepth: 4.0, maxDepth: 4.1)
         }
         .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         .onChange(of: self.stereoImageChannel, initial: true, { _, _ in
@@ -116,6 +70,63 @@ struct StereoImageView: View {
             self.displayTask?.cancel()
             self.displayTask = nil
         }
+    }
+
+    @ViewBuilder
+    func realityView(_ geometry: GeometryProxy) -> some View {
+        RealityView { content in
+            let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
+
+            // Set up gesture support
+            entity.generateCollisionShapes(recursive: false)
+            entity.components.set(InputTargetComponent())
+
+            content.add(entity)
+
+            guard var material = await StereoImageMaterial.shared.material else {
+                return
+            }
+
+            // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
+            let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
+            let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
+
+            do {
+                let texture = try await TextureResource.generate(from: image, options: .init(semantic: .color))
+                texture.replace(withDrawables: self.drawableQueue)
+
+                try material.setParameter(name: "Image", value: .textureResource(texture))
+            } catch is CancellationError {
+                // Do nothing
+            } catch {
+                fatalError(error.localizedDescription)
+            }
+
+            entity.model?.materials = [material]
+
+            self.onAppear()
+        } update: { content in
+            guard let entity = content.entities.first as? ModelEntity, let model = entity.model else {
+                return
+            }
+
+            // Update bounds
+            let leftPoint = content.convert(Point3D(simd_float3(0, 0, 0)), from: .local, to: .scene)
+            let rightPoint = content.convert(Point3D(simd_float3(Float(geometry.size.width), Float(geometry.size.height), 1)), from: .local, to: .scene)
+
+            let diff = rightPoint - leftPoint
+
+            let leftBound = model.mesh.bounds.min
+            let rightBound = model.mesh.bounds.max
+
+            let boundDiff = rightBound - leftBound
+
+            let xScale = abs(diff.x) / abs(boundDiff.x)
+            let yScale = abs(diff.y) / abs(boundDiff.y)
+
+            entity.transform.scale = [xScale, yScale, 1.0]
+        }
+
     }
 
     var tap: some Gesture {
