@@ -136,7 +136,7 @@ impl ChannelType {
                     | Self::PCMCh5 {
                         ref mut waveform_bank_index,
                         ..
-                    } => *waveform_bank_index = value & 0x5,
+                    } => *waveform_bank_index = value & 0x7,
                     _ => {}
                 }
             }
