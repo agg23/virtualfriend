@@ -255,11 +255,32 @@ impl CpuV810 {
         }
 
         if self.psw.nmi_pending {
-            todo!("Fatal exception")
+            // Fatal exception. Terminating program and halting
+            panic!(
+                "Fatal exception. Code: {:04X}, PSW: {:08X}, PC: {:08X}",
+                request.code(),
+                self.psw.get(),
+                self.pc
+            )
         }
 
         if self.psw.exception_pending {
-            todo!("Duplexed exception")
+            // Duplexed exception
+            // Set duplex code
+            self.ecr = ((request.code() as u32 & 0xFFFF) << 16) | self.ecr;
+            // Backup PSW and PC
+            self.fepsw = self.psw.get();
+            self.fepc = self.pc;
+            // Prevent further stacked exceptions
+            self.psw.nmi_pending = true;
+
+            // We always jump to a particular duplexed exception program
+            self.pc = 0xFFFF_FFD0;
+
+            self.psw.interrupt_disable = true;
+            self.psw.address_trap_enable = false;
+
+            return;
         }
 
         let code = request.code();
@@ -283,7 +304,7 @@ impl CpuV810 {
 
     fn perform_exception(&mut self, code: usize) {
         // Set interrupt code into cause code segment
-        self.ecr = code as u32;
+        self.ecr = (self.ecr & 0xFFFF_0000) | code as u32;
         // Backup PSW
         self.eipsw = self.psw.get();
         // Backup PC
@@ -398,7 +419,7 @@ impl CpuV810 {
     fn set_gen_purpose_reg(&mut self, index: usize, value: u32) {
         if index == 0 {
             // Do not write to r0
-            println!("Attempted write to register 0");
+            // println!("Attempted write to register 0");
             return;
         }
 
