@@ -77,13 +77,6 @@ struct FilePickerView: View {
 
             defer { url.stopAccessingSecurityScopedResource() }
 
-            var error: NSError? = nil
-            NSFileCoordinator().coordinate(readingItemAt: url, error: &error) { (url) in
-                for case let file as URL in FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.nameKey])! {
-                    print("Opening", file.startAccessingSecurityScopedResource())
-                }
-            }
-
             let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey])
 
             let filteredUrls = urls.filter { url in
@@ -93,9 +86,8 @@ struct FilePickerView: View {
             }
 
             self.directoryContents = filteredUrls.map { url in
-                let _ = url.startAccessingSecurityScopedResource()
+                // For some reason this doesn't need `startAccessingSecurityScopedResource`?
                 let hash = hashOfFile(atUrl: url)
-                url.stopAccessingSecurityScopedResource()
 
                 return FileEntry(url: url, hash: hash)
             }

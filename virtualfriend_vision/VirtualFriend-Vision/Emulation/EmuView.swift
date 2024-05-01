@@ -15,7 +15,13 @@ struct EmuView: View {
 
     let fileUrl: URL
 
-    @State private var emulator: Emulator?
+    private enum EmulatorStatus {
+        case emulator(_ emulator: Emulator)
+        case error(_ message: String)
+        case none
+    }
+
+    @State private var emulator: EmulatorStatus = .none
 
     @State private var controlVisibilityTimer: Timer?
     @State private var preventControlDismiss: Bool = false
@@ -27,15 +33,22 @@ struct EmuView: View {
             Color.black
                 .ignoresSafeArea()
 
-            if let emulator = self.emulator {
+            switch self.emulator {
+            case .emulator(let emulator):
                 EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss) {
-                    self.emulator = nil
+                    self.emulator = .none
                     // TODO: Make Emulator stereoImageChannel updates cause rerenders
                     DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
-                        self.emulator = Emulator(fileUrl: self.fileUrl)
+                        self.createEmulator(self.fileUrl)
                     }))
                 }
-            } else {
+            case .error(let message):
+                VStack(alignment: .center) {
+                    Text("Could not start emulator")
+
+                    Text(message)
+                }
+            case .none:
                 EmptyView()
             }
         }
@@ -43,7 +56,7 @@ struct EmuView: View {
             self.toggleVisibility()
         }
         .onChange(of: self.fileUrl, initial: true) { _, newValue in
-            self.emulator = Emulator(fileUrl: newValue)
+            self.createEmulator(newValue)
         }
         .onChange(of: self.preventControlDismiss) { _, newValue in
             if newValue {
@@ -51,6 +64,15 @@ struct EmuView: View {
             } else {
                 self.resetTimer()
             }
+        }
+    }
+
+    func createEmulator(_ url: URL) {
+        do {
+            let emulator = try Emulator(fileUrl: url)
+            self.emulator = .emulator(emulator)
+        } catch {
+            self.emulator = .error(error.localizedDescription)
         }
     }
 

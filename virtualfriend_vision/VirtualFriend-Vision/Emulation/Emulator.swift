@@ -33,16 +33,16 @@ class Emulator {
 
     var enableSound: Bool = false
 
-    init?(fileUrl: URL) {
-        let _ = fileUrl.startAccessingSecurityScopedResource()
+    init(fileUrl: URL) throws {
+        let didAccessScope = fileUrl.startAccessingSecurityScopedResource()
 
         let data: Data
 
         do {
             data = try Data(contentsOf: fileUrl)
         } catch {
-            print(error)
-            return nil
+            print(didAccessScope, error)
+            throw error
         }
 
         let array = data.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [UInt8] in
@@ -63,7 +63,7 @@ class Emulator {
         guard let outputFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: 2),
               let inputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 41667, channels: 2, interleaved: false),
               let audioConverter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
-            return nil
+            throw EmulatorError.audioFormatInit
         }
 
         self.audioConverter = audioConverter
@@ -73,7 +73,7 @@ class Emulator {
         guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(20000)),
               let audioOutputBuffer0 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity),
               let audioOutputBuffer1 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity) else {
-            return nil
+            throw EmulatorError.audioBufferInit
         }
 
         self.audioInputBuffer = audioInputBuffer
@@ -361,4 +361,9 @@ private actor EmulatorActor {
     func runAudioFrame(with inputs: FFIGamepadInputs, bufferSize: UInt) -> FFIFrame {
         return self.virtualFriend.run_audio_frame(inputs, bufferSize)
     }
+}
+
+enum EmulatorError: Error {
+    case audioFormatInit
+    case audioBufferInit
 }

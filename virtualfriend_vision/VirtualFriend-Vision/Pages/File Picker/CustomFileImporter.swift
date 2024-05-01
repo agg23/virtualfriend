@@ -26,7 +26,7 @@ struct CustomFileImporter: ViewModifier {
                     defer { url.stopAccessingSecurityScopedResource() }
 
                     // Update bookmark
-                    let bookmarkData = try? url.bookmarkData(options: .minimalBookmark)
+                    let bookmarkData = try? url.bookmarkData()
                     self.onOpen(url, bookmarkData)
                 case .failure(let failure):
                     print("Failed to open folder: \(failure)")
