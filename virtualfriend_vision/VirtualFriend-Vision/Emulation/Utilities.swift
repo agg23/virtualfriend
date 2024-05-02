@@ -8,26 +8,32 @@
 import Foundation
 import CoreImage
 
-let PIXEL_WIDTH = 384
-let PIXEL_HEIGHT = 224
-let PIXEL_COUNT = PIXEL_WIDTH * PIXEL_HEIGHT
-let PIXEL_BYTE_COUNT = PIXEL_COUNT * 4
+private let PIXEL_WIDTH = 384
+private let PIXEL_HEIGHT = 224
+private let PIXEL_COUNT = PIXEL_WIDTH * PIXEL_HEIGHT
+private let PIXEL_BYTE_COUNT = PIXEL_COUNT * 4
 
-func rustVecToCIImage(_ vec: RustVec<UInt8>) -> CIImage {
-    var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
+extension RustVec<UInt8> {
+    func ciImage(highlightColor: CGColor, backgroundColor: CGColor) -> CIImage {
+        let highlightComponents = highlightColor.components!
+        let backgroundComponents = backgroundColor.components!
 
-    for i in 0..<PIXEL_COUNT {
-        let value = vec[i]
+        var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
 
-        bytes[i * 4] = value
-        bytes[i * 4 + 1] = 0
-        bytes[i * 4 + 2] = 0
-        // Alpha
-        bytes[i * 4 + 3] = 255
+        for i in 0..<PIXEL_COUNT {
+            let value = self[i]
+
+            let percent = Double(value) / 255.0
+
+            bytes[i * 4] = UInt8((backgroundComponents[0] + (highlightComponents[0] - backgroundComponents[0]) * percent) * 255.0)
+            bytes[i * 4 + 1] = UInt8((backgroundComponents[1] + (highlightComponents[1] - backgroundComponents[1]) * percent) * 255.0)
+            bytes[i * 4 + 2] = UInt8((backgroundComponents[2] + (highlightComponents[2] - backgroundComponents[2]) * percent) * 255.0)
+            // Alpha
+            bytes[i * 4 + 3] = 255
+        }
+
+        let bitmapData = Data(bytes)
+
+        return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
     }
-
-    let bitmapData = Data(bytes)
-
-    return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
 }
-

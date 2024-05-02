@@ -248,8 +248,8 @@ class Emulator {
         let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
 
         if let frame = frame.video {
-            let leftImage = rustVecToCIImage(frame.left)
-            let rightImage = rustVecToCIImage(frame.right)
+            let leftImage = frame.left.ciImage(highlightColor: Color.white.resolve(in: .init()).cgColor, backgroundColor: Color.green.resolve(in: .init()).cgColor)
+            let rightImage = frame.right.ciImage(highlightColor: Color.white.resolve(in: .init()).cgColor, backgroundColor: Color.green.resolve(in: .init()).cgColor)
 
             // TODO: This should be flipped by Metal, not the CPU
             let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))

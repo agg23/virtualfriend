@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 struct FileEntry {
     let url: URL
@@ -63,8 +64,8 @@ struct FileEntry {
     }
 
     static func image(from manifest: FFIManifest) -> StereoImage {
-        let left = rustVecToCIImage(manifest.left_frame)
-        let right = rustVecToCIImage(manifest.right_frame)
+        let left = manifest.left_frame.ciImage(highlightColor: Color.red.resolve(in: .init()).cgColor, backgroundColor: Color.black.resolve(in: .init()).cgColor)
+        let right = manifest.right_frame.ciImage(highlightColor: Color.red.resolve(in: .init()).cgColor, backgroundColor: Color.black.resolve(in: .init()).cgColor)
 
         let leftTransformedImage = left.transformed(by: .init(scaleX: 1, y: -1))
         let rightTransformedImage = right.transformed(by: .init(scaleX: 1, y: -1))
