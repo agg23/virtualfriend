@@ -32,6 +32,8 @@ struct EmuView: View {
             // Black to surround the view and pad out the window AR
             Color.black
                 .ignoresSafeArea()
+                // Default system corner radius
+                .clipShape(.rect(cornerRadius: 56))
 
             switch self.emulator {
             case .emulator(let emulator):
@@ -42,6 +44,7 @@ struct EmuView: View {
                         self.createEmulator(self.fileUrl)
                     }))
                 }
+                .padding(.vertical, 16)
             case .error(let message):
                 VStack(alignment: .center) {
                     Text("Could not start emulator")
@@ -124,98 +127,96 @@ private struct EmuContentView: View {
     }
 
     var body: some View {
-        VStack {
-            StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel)
-                .overlay {
-                    ZStack(alignment: .top) {
-                        // Clear does not get drawn on top of the StereoImageView for some reason
-                        Color.white.opacity(0.0001)
+        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel)
+            .overlay {
+                ZStack(alignment: .top) {
+                    // Clear does not get drawn on top of the StereoImageView for some reason
+                    Color.white.opacity(0.0001)
 
-                        if self.controlVisibility == .visible {
-                            HStack {
-                                Button {
-                                    openWindow(value: "main" as String?)
-                                } label: {
-                                    Label {
-                                        Text("Back")
-                                    } icon: {
-                                        Image(systemName: Icon.back)
-                                    }
+                    if self.controlVisibility == .visible {
+                        HStack {
+                            Button {
+                                openWindow(value: "main" as String?)
+                            } label: {
+                                Label {
+                                    Text("Back")
+                                } icon: {
+                                    Image(systemName: Icon.back)
                                 }
-                                .help("Back")
-                                .labelStyle(.iconOnly)
-                                .buttonBorderShape(.circle)
-                                .controlSize(.large)
-                                .padding([.leading, .top], 40)
-
-                                Spacer()
-
-                                Button {
-                                    self.onRestart()
-                                } label: {
-                                    Label {
-                                        Text("Restart")
-                                    } icon: {
-                                        Image(systemName: Icon.restart)
-                                    }
-                                }
-                                .help("Restart")
-                                .labelStyle(.iconOnly)
-                                .buttonBorderShape(.circle)
-                                .controlSize(.large)
-                                .padding([.trailing, .top], 40)
-
                             }
+                            .help("Back")
+                            .labelStyle(.iconOnly)
+                            .buttonBorderShape(.circle)
+                            .controlSize(.large)
+                            .padding([.leading, .top], 40)
+
+                            Spacer()
+
+                            Button {
+                                self.onRestart()
+                            } label: {
+                                Label {
+                                    Text("Restart")
+                                } icon: {
+                                    Image(systemName: Icon.restart)
+                                }
+                            }
+                            .help("Restart")
+                            .labelStyle(.iconOnly)
+                            .buttonBorderShape(.circle)
+                            .controlSize(.large)
+                            .padding([.trailing, .top], 40)
+
                         }
                     }
-                    .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
                 }
-                .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
+                .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
+            }
+            .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
+                VStack {
+                    // Add spacing between main window and ornament content to allow for the window resizer
+                    Color.clear.frame(height: 180.0)
+
                     VStack {
-                        // Add spacing between main window and ornament content to allow for the window resizer
-                        Color.clear.frame(height: 180.0)
+                        HStack {
+                            Text("Separation")
 
-                        VStack {
-                            HStack {
+                            Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
                                 Text("Separation")
-
-                                Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
-                                    Text("Separation")
-                                }, minimumValueLabel: {
-                                    Text("-5")
-                                }, maximumValueLabel: {
-                                    Text("5")
-                                }) { editing in
-                                    self.preventControlDismiss = editing
-                                }
+                            }, minimumValueLabel: {
+                                Text("-5")
+                            }, maximumValueLabel: {
+                                Text("5")
+                            }) { editing in
+                                self.preventControlDismiss = editing
                             }
-                            Text("\(self.separation)")
-
-                            Toggle("Enable sound", isOn: self.$sound)
-                            Text("Note: Sound is extremely beta and likely broken")
-                                .font(.footnote)
                         }
-                        .padding(24)
-                        .frame(width: 600)
-                        .glassBackgroundEffect()
+                        Text("\(self.separation)")
+
+                        Toggle("Enable sound", isOn: self.$sound)
+                        Text("Note: Sound is extremely beta and likely broken")
+                            .font(.footnote)
                     }
+                    .padding(24)
+                    .frame(width: 600)
+                    .glassBackgroundEffect()
                 }
-                .onChange(of: self.scenePhase) { _, newPhase in
-                    if newPhase == .background {
-                        // Stop emulation
-                        self.emulator.shutdown()
-                    }
-                }
-                .onChange(of: self.sound, { _, newValue in
-                    self.emulator.enableSound(newValue)
-                })
-                .onAppear {
-                    self.emulator.separation = self.$separation
-                    self.emulator.start()
-                }
-                .onDisappear {
+            }
+            .onChange(of: self.scenePhase) { _, newPhase in
+                if newPhase == .background {
+                    // Stop emulation
                     self.emulator.shutdown()
                 }
-        }
+            }
+            .onChange(of: self.sound, { _, newValue in
+                self.emulator.enableSound(newValue)
+            })
+            .onAppear {
+                self.emulator.separation = self.$separation
+                self.emulator.start()
+            }
+            .onDisappear {
+                self.emulator.shutdown()
+            }
     }
 }
