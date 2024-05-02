@@ -14,7 +14,7 @@ use crate::{
 
 pub struct Bus {
     wram: [u16; 0x1_0000 / 2],
-    rom: ROM,
+    pub rom: ROM,
     pub vip: VIP,
     vsu: VSU,
     // TODO: Remove pub

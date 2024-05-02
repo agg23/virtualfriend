@@ -63,9 +63,19 @@ impl ROM {
     }
 
     pub fn debug_dump(&self) {
+        fs::write("mem.dump", self.dump_ram()).unwrap();
+    }
+
+    pub fn dump_ram(&self) -> Vec<u8> {
         let array = unsafe { from_raw_parts(self.ram.as_ptr() as *const u8, self.ram.len()) };
 
-        fs::write("mem.dump", array).unwrap();
+        Vec::from(array)
+    }
+
+    pub fn load_ram(&mut self, ram: Vec<u8>) {
+        let array = unsafe { from_raw_parts(ram.as_ptr() as *const u16, ram.len() * 2) };
+
+        self.ram = Vec::from(array).into_boxed_slice();
     }
 
     pub fn get_rom(&self, address: usize) -> u16 {

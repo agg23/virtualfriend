@@ -176,6 +176,14 @@ impl VirtualFriend {
         }
     }
 
+    pub fn load_ram(&mut self, ram: Vec<u8>) {
+        self.bus.rom.load_ram(ram)
+    }
+
+    pub fn dump_ram(&self) -> Vec<u8> {
+        self.bus.rom.dump_ram()
+    }
+
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {
         let step_cycle_count = self.cpu.step(&mut self.bus);
 

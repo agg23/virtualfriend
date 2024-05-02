@@ -6,6 +6,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 use audio_driver::AudioDriver;
@@ -142,19 +143,41 @@ fn main() {
             select: false,
         });
 
-    let rom_path = Path::new(
-        "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
-        // "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb"
-    );
+    // let rom_name = "Red Alarm (USA)";
+    let rom_name = "Virtual Boy Wario Land (Japan, USA)";
 
-    let rom = fs::read(rom_path).unwrap();
+    let rom_directory = Path::new("/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/");
+
+    let rom_path = rom_directory.join(format!("{rom_name}.vb"));
+    let save_path = rom_directory.join(format!("{rom_name}.sav"));
+
+    // let rom_path = Path::new(
+    //     // "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Mario's Tennis (Japan, USA).vb",
+    //     // "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Virtual Boy Wario Land (Japan, USA).vb"
+    //     // "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/3-D Tetris (USA).vb",
+    //     "/Users/adam/Downloads/mednafen/Nintendo - Virtual Boy/Red Alarm (USA).vb",
+    // );
+
+    let rom = fs::read(&rom_path).unwrap();
     let mut virtualfriend = VirtualFriend::new(rom);
 
+    if let Ok(ram) = fs::read(&save_path) {
+        // We have save RAM. Upload it
+        println!("Loading save");
+        virtualfriend.load_ram(ram);
+    }
+
     let mut frame_id = 0;
+    let virtualfriend = Arc::new(Mutex::new(virtualfriend));
+
+    let virtualfriend_audio = virtualfriend.clone();
 
     // 41.667kHz
     let audio_driver = AudioDriver::new(41667, 20, move |sample_count| {
-        let frame = virtualfriend.run_audio_frame(inputs_receiver.latest().clone(), sample_count);
+        let frame = virtualfriend_audio
+            .lock()
+            .unwrap()
+            .run_audio_frame(inputs_receiver.latest().clone(), sample_count);
 
         if let Some(video) = frame.video {
             // Send updated video frame
@@ -230,7 +253,7 @@ fn main() {
                     if capture_next_frame {
                         capture_next_frame = false;
 
-                        let mut base_path = PathBuf::from(rom_path);
+                        let mut base_path = PathBuf::from(&rom_path);
                         base_path.set_extension("vf");
 
                         let mut file = File::create(base_path).unwrap();
@@ -294,6 +317,10 @@ fn main() {
                     event: WindowEvent::CloseRequested,
                 } => {
                     if window_id == window.id() {
+                        // Update save
+                        let ram = virtualfriend.lock().unwrap().dump_ram();
+                        fs::write(&save_path, ram);
+
                         window_target.exit();
                     }
                 }
