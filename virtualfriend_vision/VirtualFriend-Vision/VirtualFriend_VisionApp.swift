@@ -12,6 +12,17 @@ struct VirtualFriend_VisionApp: App {
     init() {
         // Print simulator run location
         print(NSHomeDirectory())
+
+        // Create Saves directory
+        var savesUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        savesUrl.append(component: "Saves")
+
+        // withIntermediateDirectories allows the call to succeed even if there's no directory created
+        do {
+            try FileManager.default.createDirectory(at: savesUrl, withIntermediateDirectories: true)
+        } catch {
+            print("Could not create saves directory \(error)")
+        }
     }
 
     var body: some Scene {

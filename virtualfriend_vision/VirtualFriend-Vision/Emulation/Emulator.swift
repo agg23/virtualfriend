@@ -11,6 +11,7 @@ import GameController
 import AVFAudio
 
 class Emulator {
+    private let fileName: String
     private let actor: EmulatorActor
     private let audioEngine: AVAudioEngine
 //    private let audioNode: AVAudioPlayerNode
@@ -52,6 +53,23 @@ class Emulator {
 
         let virtualFriend = array.withUnsafeBufferPointer { pointer in
             return VirtualFriend(pointer)
+        }
+
+        self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
+
+        do {
+            let saveData = try Data(contentsOf: saveUrl(for: self.fileName))
+
+            let array = saveData.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [UInt8] in
+                let buffer = pointer.bindMemory(to: UInt8.self)
+                return buffer.map { UInt8($0) }
+            }
+
+            array.withUnsafeBufferPointer { pointer in
+                virtualFriend.load_ram(pointer)
+            }
+        } catch {
+            print("Save load error \(error)")
         }
 
         self.actor = EmulatorActor(virtualFriend: virtualFriend)
@@ -179,6 +197,17 @@ class Emulator {
         self.executingTask = nil
 
         self.audioEngine.stop()
+    }
+
+    func shutdown() {
+        self.stop()
+
+        let saveData = Data(self.actor.virtualFriend.save_ram())
+        do {
+            try saveData.write(to: saveUrl(for: self.fileName))
+        } catch {
+            print("Could not write save \(error)")
+        }
     }
 
     func enableSound(_ enable: Bool) {
@@ -348,6 +377,14 @@ class Emulator {
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
     }
+}
+
+private func saveUrl(for name: String) -> URL {
+    var saveUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    saveUrl.append(component: "Saves")
+    saveUrl.append(component: "\(name).sav")
+
+    return saveUrl
 }
 
 /// Used to prevent concurrent access to Rust code

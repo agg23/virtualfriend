@@ -203,7 +203,7 @@ private struct EmuContentView: View {
                 .onChange(of: self.scenePhase) { _, newPhase in
                     if newPhase == .background {
                         // Stop emulation
-                        self.emulator.stop()
+                        self.emulator.shutdown()
                     }
                 }
                 .onChange(of: self.sound, { _, newValue in
@@ -214,7 +214,7 @@ private struct EmuContentView: View {
                     self.emulator.start()
                 }
                 .onDisappear {
-                    self.emulator.stop()
+                    self.emulator.shutdown()
                 }
         }
     }
