@@ -11,15 +11,13 @@ import VBStereoRenderRealityKit
 import AsyncAlgorithms
 
 struct EmuView: View {
-    let controlsTimerDuration = 3.0
-
-    let fileUrl: URL
-
     private enum EmulatorStatus {
         case emulator(_ emulator: Emulator)
         case error(_ message: String)
         case none
     }
+
+    @LEDBackgroundColor var ledBackgroundColor;
 
     @State private var emulator: EmulatorStatus = .none
 
@@ -27,10 +25,14 @@ struct EmuView: View {
     @State private var preventControlDismiss: Bool = false
     @State private var controlVisibility: Visibility = .hidden
 
+    let controlsTimerDuration = 3.0
+
+    let fileUrl: URL
+
     var body: some View {
         ZStack {
-            // Black to surround the view and pad out the window AR
-            Color.black
+            // Background color to surround the view and pad out the window AR
+            self.ledBackgroundColor
                 .ignoresSafeArea()
                 // Default system corner radius
                 .clipShape(.rect(cornerRadius: 56))
@@ -109,6 +111,9 @@ struct EmuView: View {
 private struct EmuContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openWindow) var openWindow
+
+    @LEDBackgroundColor var ledBackgroundColor;
+    @LEDForegroundColor var ledForegroundColor;
 
     let emulator: Emulator
     @Binding var controlVisibility: Visibility
@@ -211,7 +216,15 @@ private struct EmuContentView: View {
             .onChange(of: self.sound, { _, newValue in
                 self.emulator.enableSound(newValue)
             })
+            .onChange(of: self.ledBackgroundColor) { _, _ in
+                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+            }
+            .onChange(of: self.ledForegroundColor) { _, _ in
+                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+            }
             .onAppear {
+                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+
                 self.emulator.separation = self.$separation
                 self.emulator.start()
             }

@@ -6,18 +6,27 @@
 //
 
 import SwiftUI
-import AsyncAlgorithms
 
 struct StereoManifestImageView: View {
     @LEDBackgroundColor var ledBackgroundColor;
     @LEDForegroundColor var ledForegroundColor;
 
     @State var stereoStreamChannel = AsyncImageChannel()
+    @State var task: Task<(), Error>?
 
     let entry: FileEntryWithManifest
+    let onTap: (() -> Void)?
+
+    init(entry: FileEntryWithManifest, onTap: (() -> Void)? = nil) {
+        self.entry = entry
+        self.onTap = onTap
+    }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel)
+        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap)
+            .onDisappear {
+                self.task?.cancel()
+            }
             .onChange(of: self.entry, initial: true) { _, _ in
                 self.generateImage()
             }
@@ -30,12 +39,12 @@ struct StereoManifestImageView: View {
     }
 
     func generateImage() {
-        Task {
+        self.task?.cancel()
+
+        self.task = Task {
             let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
 
-            print("Sending image")
             await self.stereoStreamChannel.channel.send(stereoImage)
-            print("Sent image")
         }
     }
 }

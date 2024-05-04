@@ -21,6 +21,9 @@ extension Color {
         get {
             self.resolve(in: .init()).cgColor
         }
+        set {
+            
+        }
     }
 }
 

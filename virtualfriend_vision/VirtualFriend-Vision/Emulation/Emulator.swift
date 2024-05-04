@@ -24,6 +24,9 @@ class Emulator {
 
     private var inputBufferLength: Int = 0
 
+    private var backgroundColor: CGColor = .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+    private var foregroundColor: CGColor = .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+
     var stereoImageChannel = AsyncImageChannel()
 
     var executingTask: Task<(), Error>?
@@ -66,6 +69,7 @@ class Emulator {
             }
 
             array.withUnsafeBufferPointer { pointer in
+                print(pointer)
                 virtualFriend.load_ram(pointer)
             }
         } catch {
@@ -203,6 +207,7 @@ class Emulator {
         self.stop()
 
         let saveData = Data(self.actor.virtualFriend.save_ram())
+        print("Saving \(saveData.count)")
         do {
             try saveData.write(to: saveUrl(for: self.fileName))
         } catch {
@@ -229,6 +234,11 @@ class Emulator {
         }
     }
 
+    func set(foregroundColor: CGColor, backgroundColor: CGColor) {
+        self.foregroundColor = foregroundColor
+        self.backgroundColor = backgroundColor
+    }
+
     private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
         let frameTime = Date().timeIntervalSince1970
 
@@ -248,8 +258,8 @@ class Emulator {
         let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
 
         if let frame = frame.video {
-            let leftImage = frame.left.ciImage(foregroundColor: Color.white.resolve(in: .init()).cgColor, backgroundColor: Color.green.resolve(in: .init()).cgColor)
-            let rightImage = frame.right.ciImage(foregroundColor: Color.white.resolve(in: .init()).cgColor, backgroundColor: Color.green.resolve(in: .init()).cgColor)
+            let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
+            let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
 
             // TODO: This should be flipped by Metal, not the CPU
             let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))

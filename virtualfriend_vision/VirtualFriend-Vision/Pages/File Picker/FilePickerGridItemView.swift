@@ -14,7 +14,6 @@ struct FilePickerGridItemView: View {
     let CORNER_RADIUS = 20.0
 
     @LEDBackgroundColor var ledBackgroundColor;
-    @LEDForegroundColor var ledForegroundColor;
 
     let entry: FileEntryWithManifest
 
@@ -35,7 +34,7 @@ struct FilePickerGridItemView: View {
                 openWindow(id: "emu", value: self.entry.entry.url)
             } label: {
                 VStack {
-                    Color.black
+                    self.ledBackgroundColor
                         // Extra 16 to allow button press to keep 3D view hidden
                         .aspectRatio(384.0/(224.0 + 16.0), contentMode: .fit)
                         .ignoresSafeArea(edges: .horizontal)
@@ -65,38 +64,13 @@ struct FilePickerGridItemView: View {
             .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
 
             VStack {
-                StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel) {
+                StereoManifestImageView(entry: self.entry) {
                     openWindow(id: "emu", value: self.entry.entry.url)
                 }
                 .padding()
 
                 Spacer()
             }
-        }
-        .onChange(of: self.ledBackgroundColor, initial: true) { _, _ in
-            self.generateImage()
-        }
-        .onChange(of: self.ledForegroundColor) { _, _ in
-            self.generateImage()
-        }
-    }
-
-    func generateImage() {
-        guard let manifest = self.entry.manifest else {
-            let manifest = FileEntry.getUnknownManifest()
-            let stereoImage = FileEntry.image(from: manifest, foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
-
-            Task {
-                await self.stereoStreamChannel.channel.send(stereoImage)
-            }
-
-            return
-        }
-
-        let stereoImage = FileEntry.image(from: manifest, foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
-
-        Task {
-            await self.stereoStreamChannel.channel.send(stereoImage)
         }
     }
 }

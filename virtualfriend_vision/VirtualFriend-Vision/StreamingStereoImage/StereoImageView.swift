@@ -14,10 +14,14 @@ struct StereoImageView: View {
     let height: Int
     let scale: Float
 
-    @State private var didRender: BoolWrapper = BoolWrapper()
-    @State var displayTask: Task<(), Error>?
+    /// Tracks whether one of the two appear callbacks (onAppear and RealityView) have run
+    @State private var firstAppearRan: BoolWrapper = BoolWrapper()
+    @State private var displayTask: Task<(), Error>?
 
-    @State var drawableQueue: TextureResource.DrawableQueue
+    @State private var drawableQueue: TextureResource.DrawableQueue
+
+    @Binding private var backgroundColor: CGColor
+
     let context: CIContext
 
     let stereoImageChannel: AsyncImageChannel
@@ -27,13 +31,20 @@ struct StereoImageView: View {
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, onTap: (() -> Void)? = nil) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<Color>? = nil, onTap: (() -> Void)? = nil) {
         self.width = width
         self.height = height
         self.scale = scale
 
         self.context = CIContext()
 
+        if let backgroundColor = backgroundColor {
+            self._backgroundColor = backgroundColor.rawCGColor
+        } else {
+            self._backgroundColor = Binding {
+                CGColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
+            } set: { _ in }
+        }
         self.stereoImageChannel = stereoImageChannel
 
         self.onTap = onTap
@@ -66,7 +77,6 @@ struct StereoImageView: View {
             self.onAppear()
         })
         .onDisappear {
-            self.didRender.value = false
             self.displayTask?.cancel()
             self.displayTask = nil
         }
@@ -88,7 +98,7 @@ struct StereoImageView: View {
             }
 
             // This will appear if it doesn't receive a value from the DrawableQueue quickly enough
-            let baseColor = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
+            let baseColor = CIImage(color: CIColor(cgColor: self.backgroundColor)).cropped(to: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)))
             let image = self.context.createCGImage(baseColor, from: baseColor.extent)!
 
             do {
@@ -139,8 +149,9 @@ struct StereoImageView: View {
 
     /// Require that both RealityView render and onAppear have triggered before we start receiving frames
     func onAppear() {
-        if !self.didRender.value {
-            self.didRender.value = true
+        if !self.firstAppearRan.value {
+            // Only care about `firstAppearRan
+            self.firstAppearRan.value = true
 
             return
         }
@@ -154,7 +165,7 @@ struct StereoImageView: View {
 
             print("Awaiting image")
 
-            for await image in self.stereoImageChannel.channel {
+            for await image in self.stereoImageChannel.channel.buffer(policy: .bounded(1)) {
                 if Task.isCancelled {
                     return
                 }
@@ -207,19 +218,30 @@ struct StereoImageView: View {
         let left = image.left
         let right = image.right
 
+        let colorspace = CGColorSpace(name: CGColorSpace.sRGB)!
+
+        // Clear texture with background color. How expensive is this?
+        // TODO: This doesn't seem to work correctly
+        await self.context.render(CIImage(color: CIColor(cgColor: self.backgroundColor)), to: drawable.texture, commandBuffer: nil, bounds: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)), colorSpace: colorspace)
+
         // Time to draw
         let width = left.extent.width + CGFloat(MARGIN) * 2
         let height = left.extent.height + CGFloat(MARGIN) * 2
 
         let leftBounds = CGRect(x: -CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width, height: height)
         let rightBounds = CGRect(x: -width - CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width + right.extent.width + CGFloat(MARGIN) * 2, height: height)
-        await self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-        await self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        await self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: colorspace)
+        await self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: colorspace)
 
         drawable.present()
     }
 }
 
+/// Wrapper to update state without causing a rerender
 private class BoolWrapper {
-    var value: Bool = false
+    var value: Bool
+
+    init(value: Bool = false) {
+        self.value = value
+    }
 }
