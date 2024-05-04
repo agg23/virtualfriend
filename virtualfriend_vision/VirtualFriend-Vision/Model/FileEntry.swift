@@ -63,16 +63,15 @@ struct FileEntry {
         return manifest
     }
 
-    static func image(from manifest: FFIManifest) -> StereoImage {
-        let left = manifest.left_frame.ciImage(highlightColor: Color.red.resolve(in: .init()).cgColor, backgroundColor: Color.black.resolve(in: .init()).cgColor)
-        let right = manifest.right_frame.ciImage(highlightColor: Color.red.resolve(in: .init()).cgColor, backgroundColor: Color.black.resolve(in: .init()).cgColor)
+    static func image(from manifest: FFIManifest, foregroundColor: CGColor, backgroundColor: CGColor) -> StereoImage {
+        let left = manifest.left_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
+        let right = manifest.right_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
 
         let leftTransformedImage = left.transformed(by: .init(scaleX: 1, y: -1))
         let rightTransformedImage = right.transformed(by: .init(scaleX: 1, y: -1))
 
         return StereoImage(left: leftTransformedImage, right: rightTransformedImage)
     }
-
 }
 
 extension FileEntry: Identifiable {

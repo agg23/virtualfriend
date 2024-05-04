@@ -14,8 +14,8 @@ private let PIXEL_COUNT = PIXEL_WIDTH * PIXEL_HEIGHT
 private let PIXEL_BYTE_COUNT = PIXEL_COUNT * 4
 
 extension RustVec<UInt8> {
-    func ciImage(highlightColor: CGColor, backgroundColor: CGColor) -> CIImage {
-        let highlightComponents = highlightColor.components!
+    func ciImage(foregroundColor: CGColor, backgroundColor: CGColor) -> CIImage {
+        let highlightComponents = foregroundColor.components!
         let backgroundComponents = backgroundColor.components!
 
         var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)

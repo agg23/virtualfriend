@@ -13,6 +13,9 @@ struct FilePickerGridItemView: View {
 
     let CORNER_RADIUS = 20.0
 
+    @LEDBackgroundColor var ledBackgroundColor;
+    @LEDForegroundColor var ledForegroundColor;
+
     let entry: FileEntryWithManifest
 
     let stereoStreamChannel: AsyncImageChannel
@@ -20,25 +23,7 @@ struct FilePickerGridItemView: View {
     init(entry: FileEntryWithManifest) {
         self.entry = entry
 
-        guard let manifest = self.entry.manifest else {
-            let manifest = FileEntry.getUnknownManifest()
-            let stereoImage = FileEntry.image(from: manifest)
-
-            let channel = AsyncImageChannel()
-            Task {
-                await channel.channel.send(stereoImage)
-            }
-            self.stereoStreamChannel = channel
-
-            return
-        }
-
-        let stereoImage = FileEntry.image(from: manifest)
-
         let channel = AsyncImageChannel()
-        Task {
-            await channel.channel.send(stereoImage)
-        }
         self.stereoStreamChannel = channel
     }
 
@@ -87,6 +72,31 @@ struct FilePickerGridItemView: View {
 
                 Spacer()
             }
+        }
+        .onChange(of: self.ledBackgroundColor, initial: true) { _, _ in
+            self.generateImage()
+        }
+        .onChange(of: self.ledForegroundColor) { _, _ in
+            self.generateImage()
+        }
+    }
+
+    func generateImage() {
+        guard let manifest = self.entry.manifest else {
+            let manifest = FileEntry.getUnknownManifest()
+            let stereoImage = FileEntry.image(from: manifest, foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+
+            Task {
+                await self.stereoStreamChannel.channel.send(stereoImage)
+            }
+
+            return
+        }
+
+        let stereoImage = FileEntry.image(from: manifest, foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+
+        Task {
+            await self.stereoStreamChannel.channel.send(stereoImage)
         }
     }
 }
