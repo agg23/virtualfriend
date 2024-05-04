@@ -63,13 +63,14 @@ class Emulator {
         do {
             let saveData = try Data(contentsOf: saveUrl(for: self.fileName))
 
+            print("Loading save size \(saveData.count)")
+
             let array = saveData.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [UInt8] in
                 let buffer = pointer.bindMemory(to: UInt8.self)
                 return buffer.map { UInt8($0) }
             }
 
             array.withUnsafeBufferPointer { pointer in
-                print(pointer)
                 virtualFriend.load_ram(pointer)
             }
         } catch {
@@ -116,8 +117,6 @@ class Emulator {
         audioConverter.reset()
 
         self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
-            print(frameCount)
-
             self.executingTask = Task {
                 let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
 
@@ -207,7 +206,7 @@ class Emulator {
         self.stop()
 
         let saveData = Data(self.actor.virtualFriend.save_ram())
-        print("Saving \(saveData.count)")
+        print("Saving size \(saveData.count)")
         do {
             try saveData.write(to: saveUrl(for: self.fileName))
         } catch {

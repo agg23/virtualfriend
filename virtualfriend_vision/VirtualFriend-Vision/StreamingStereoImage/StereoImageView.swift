@@ -163,18 +163,12 @@ struct StereoImageView: View {
         self.displayTask = Task {
             try await Task.sleep(for: .milliseconds(10))
 
-            print("Awaiting image")
-
             for await image in self.stereoImageChannel.channel.buffer(policy: .bounded(1)) {
                 if Task.isCancelled {
                     return
                 }
 
-                print("Received image")
-
                 await self.step(image)
-
-                print("Awaiting image")
             }
         }
     }

@@ -73,9 +73,15 @@ impl ROM {
     }
 
     pub fn load_ram(&mut self, ram: Vec<u8>) {
-        let array = unsafe { from_raw_parts(ram.as_ptr() as *const u16, ram.len() * 2) };
+        let array = unsafe { from_raw_parts(ram.as_ptr() as *const u16, ram.len() / 2) };
 
-        self.ram = Vec::from(array).into_boxed_slice();
+        // Reinit RAM
+        self.ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
+
+        // Copy save words
+        for i in 0..array.len() {
+            self.ram[i] = array[i];
+        }
     }
 
     pub fn get_rom(&self, address: usize) -> u16 {
