@@ -41,6 +41,8 @@ struct FileImporter {
         // Start by rescanning existing titles
         self.rescanTitles()
 
+        let _ = url.startAccessingSecurityScopedResource()
+
         if !url.isDirectory {
             // User selected a single file
             files = [url]
@@ -59,10 +61,8 @@ struct FileImporter {
         }
 
         for file in files {
-            guard file.startAccessingSecurityScopedResource() else {
-                print("Could not obtain security scope to \(file)")
-                return
-            }
+            // Attempt to open it, but ignore the result
+            let _ = file.startAccessingSecurityScopedResource()
 
             defer { file.stopAccessingSecurityScopedResource() }
 
@@ -92,5 +92,7 @@ struct FileImporter {
 
             self.knownTitles[hash] = destinationUrl
         }
+
+        url.stopAccessingSecurityScopedResource()
     }
 }
