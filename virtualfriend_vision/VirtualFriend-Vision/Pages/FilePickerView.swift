@@ -14,7 +14,7 @@ let IMAGE_HEIGHT = 224.0
 let GRID_SPACING = 40.0
 
 struct FilePickerView: View {
-    @AppStorage("romDirectoryBookmark") var romDirectoryBookmark: Data?
+    @State var fileImporter = FileImporter()
 
     /// Binding to open fileImporter
     @State var selectFolder = false
@@ -22,78 +22,31 @@ struct FilePickerView: View {
 
     var body: some View {
         NavigationStack {
-            if (directoryContents.isEmpty) {
-                VStack {
-                    Text("No titles found. Please select a valid titles folder.")
-                        .font(.system(size: 24))
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 500)
-
-                    Button {
-                        selectFolder.toggle()
-                    } label: {
-                        Text("Choose folder")
-                    }
-                }
-                .padding(40.0)
-            } else {
-                FilePickerFilesView(directoryContents: self.directoryContents)
+            FilePickerFilesView(directoryContents: self.directoryContents) {
+                self.selectFolder.toggle()
             }
         }
         .onAppear {
-            self.populateFromBookmark()
-        }
-        .customFileImporter(self.$selectFolder, onOpen: { url, bookmark in
-            self.romDirectoryBookmark = bookmark
+            self.fileImporter.rescanTitles()
 
-            self.buildDirectoryContents(from: url)
+            self.buildEntries()
+        }
+        .customFileImporter(self.$selectFolder, onOpen: { url, _ in
+            Task {
+                self.fileImporter.importFiles(from: url)
+
+                self.buildEntries()
+            }
         })
     }
 
-    func populateFromBookmark() {
-        guard let bookmarkData = self.romDirectoryBookmark else {
-            return
-        }
-
-        var isStale = false
-
-        let url = try? URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
-
-        guard let url = url, !isStale else {
-            print("Could not resolve bookmark")
-            return
-        }
-
-        self.buildDirectoryContents(from: url)
-    }
-
-    func buildDirectoryContents(from url: URL) {
-        do {
-            guard url.startAccessingSecurityScopedResource() else {
-                print("Could not obtain security scope")
-                return
-            }
-
-            defer { url.stopAccessingSecurityScopedResource() }
-
-            let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isRegularFileKey])
-
-            let filteredUrls = urls.filter { url in
-                url.pathExtension == "vb"
-            }.sorted { a, b in
-                a.lastPathComponent < b.lastPathComponent
-            }
-
-            self.directoryContents = filteredUrls.map { url in
-                // For some reason this doesn't need `startAccessingSecurityScopedResource`?
-                let hash = hashOfFile(atUrl: url)
-
-                return FileEntry(url: url, hash: hash)
-            }
-        } catch {
-            // Directory not found
-            print(error)
+    func buildEntries() {
+        self.directoryContents = self.fileImporter.knownTitles.filter { (_, url) in
+            url.pathExtension == "vb"
+        }.sorted { a, b in
+            a.value.lastPathComponent < b.value.lastPathComponent
+        }.map { (hash, url) in
+            FileEntry(url: url, hash: hash)
         }
     }
 }

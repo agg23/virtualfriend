@@ -13,7 +13,7 @@ struct CustomFileImporter: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .fileImporter(isPresented: isPresented, allowedContentTypes: [.folder]) { result in
+            .fileImporter(isPresented: isPresented, allowedContentTypes: [.folder, FileType.vb]) { result in
                 switch result {
                 case .success(let url):
                     print("Selected \(url)")

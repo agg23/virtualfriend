@@ -11,11 +11,13 @@ struct FilePickerFilesView: View {
     @AppStorage("fileViewType") fileprivate var fileViewType: FilePickerViewType = .list
 
     let files: [FileEntryWithManifest]
+    let onImport: () -> Void
 
-    init(directoryContents: [FileEntry]) {
+    init(directoryContents: [FileEntry], onImport: @escaping () -> Void) {
         self.files = directoryContents.map { entry in
             entry.withManifest
         }
+        self.onImport = onImport
     }
 
     var body: some View {
@@ -49,6 +51,12 @@ struct FilePickerFilesView: View {
                     Spacer()
                 }
             }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Import", systemImage: "plus") {
+                    self.onImport()
+                }
+            }
         }
     }
 }
@@ -60,6 +68,6 @@ private enum FilePickerViewType: String {
 
 #Preview {
     NavigationStack {
-        FilePickerFilesView(directoryContents: MOCK_FILE_ENTRIES())
+        FilePickerFilesView(directoryContents: MOCK_FILE_ENTRIES(), onImport: {})
     }
 }

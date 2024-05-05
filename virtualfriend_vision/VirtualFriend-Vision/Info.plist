@@ -20,5 +20,26 @@
 			<string>ExtendedGamepad</string>
 		</dict>
 	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>im.agg.virtualboy</string>
+			<key>UTTypeDescription</key>
+			<string>Virtual Boy software titles</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.content</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>vb</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>
