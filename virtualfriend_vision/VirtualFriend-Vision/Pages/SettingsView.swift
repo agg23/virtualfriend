@@ -38,13 +38,6 @@ struct SettingsView: View {
                         ColorPicker("Foreground Color", selection: self.$ledForegroundColor, supportsOpacity: false)
                         ColorPicker("Background Color", selection: self.$ledBackgroundColor, supportsOpacity: false)
 
-                        Button {
-                            self.ledForegroundColor = Color(red: 1.0, green: 0.0, blue: 0.0)
-                            self.ledBackgroundColor = Color(red: 0.0, green: 0.0, blue: 0.0)
-                        } label: {
-                            Text("Reset Colors")
-                        }
-
                         HStack {
                             Spacer()
 
@@ -64,26 +57,21 @@ struct SettingsView: View {
                         }
                         .onChange(of: self.ledBackgroundColor) { _, _ in
                             self.regenerateColorImage()
-
-//                            Settings.storeColor(for: Settings.ledBackgroundColorKey, color: self.ledBackgroundColor)
                         }
                         .onChange(of: self.ledForegroundColor) { _, _ in
                             self.regenerateColorImage()
-
-//                            Settings.storeColor(for: Settings.ledForegroundColorKey, color: self.ledForegroundColor)
                         }
                         .onAppear {
-                            // Load default colors
-//                            if let ledBackgroundColor = Settings.parseStoredColor(for: Settings.ledBackgroundColorKey) {
-//                                self.ledBackgroundColor = ledBackgroundColor
-//                            }
-//
-//                            if let ledForegroundColor = Settings.parseStoredColor(for: Settings.ledForegroundColorKey) {
-//                                self.ledForegroundColor = ledForegroundColor
-//                            }
-
                             self.regenerateColorImage()
                         }
+                    }
+
+                    Section("Presets") {
+                        self.presetButton("Default", foregroundColor: Color(red: 1.0, green: 0.0, blue: 0.0), backgroundColor: Color(red: 0.0, green: 0.0, blue: 0.0))
+
+                        self.presetButton("Greyscale", foregroundColor: Color(red: 1.0, green: 1.0, blue: 1.0), backgroundColor: Color(red: 0.0, green: 0.0, blue: 0.0))
+
+                        self.presetButton("Inverted", foregroundColor: Color(red: 0.0, green: 0.0, blue: 0.0), backgroundColor: Color(red: 1.0, green: 0.0, blue: 0.0))
                     }
                 }
 
@@ -92,15 +80,38 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
+    func presetButton(_ title: String, foregroundColor: Color, backgroundColor: Color) -> some View {
+        Button {
+            self.ledForegroundColor = foregroundColor
+            self.ledBackgroundColor = backgroundColor
+        } label: {
+            HStack {
+                Text(title)
+
+                Spacer()
+
+                Image(uiImage: self.generateImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }
+        }
+        .frame(height: 64)
+    }
+
     func regenerateColorImage() {
+        self.colorImage = self.generateImage(foregroundColor: self.ledForegroundColor, backgroundColor: self.ledBackgroundColor)
+    }
+
+    func generateImage(foregroundColor: Color, backgroundColor: Color) -> UIImage {
         let manifest = FileEntry.getUnknownManifest()
-        let ciImage = manifest.left_frame.ciImage(foregroundColor: self.ledForegroundColor.resolve(in: .init()).cgColor, backgroundColor: self.ledBackgroundColor.resolve(in: .init()).cgColor)
+        let ciImage = manifest.left_frame.ciImage(foregroundColor: foregroundColor.resolve(in: .init()).cgColor, backgroundColor: backgroundColor.resolve(in: .init()).cgColor)
 
         let context = CIContext()
         context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: 384, height: 224))
 
         // Going directly from CIImage to UIImage doesn't seem to work
-        self.colorImage = UIImage(cgImage: context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: 384, height: 224))!)
+        return UIImage(cgImage: context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: 384, height: 224))!)
     }
 }
 
