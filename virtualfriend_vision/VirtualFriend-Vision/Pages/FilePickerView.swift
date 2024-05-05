@@ -22,8 +22,25 @@ struct FilePickerView: View {
 
     var body: some View {
         NavigationStack {
-            FilePickerFilesView(directoryContents: self.directoryContents) {
-                self.selectFolder.toggle()
+            if (directoryContents.isEmpty) {
+                VStack {
+                    Text("No titles found. Please select folders or files to import.")
+                        .font(.system(size: 24))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 500)
+
+                    Button {
+                        self.selectFolder.toggle()
+                    } label: {
+                        Text("Import Titles")
+                    }
+                }
+                .padding(40.0)
+            } else {
+                FilePickerFilesView(directoryContents: self.directoryContents) {
+                    self.selectFolder.toggle()
+                }
             }
         }
         .onAppear {

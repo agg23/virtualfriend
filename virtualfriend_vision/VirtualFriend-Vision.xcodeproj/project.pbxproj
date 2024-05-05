@@ -35,6 +35,7 @@
 		66A061332BE7D2530043D170 /* FileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061322BE7D2530043D170 /* FileType.swift */; };
 		66A061352BE7D2AE0043D170 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66A061342BE7D2AE0043D170 /* UniformTypeIdentifiers.framework */; };
 		66A061372BE7D5680043D170 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061362BE7D5680043D170 /* FileImporter.swift */; };
+		66A061392BE7EC8B0043D170 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061382BE7EC8B0043D170 /* URL.swift */; };
 		66C4BC2C2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */; };
 		66C4BC2E2BCC271D00AA8732 /* Emulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2D2BCC271D00AA8732 /* Emulator.swift */; };
 		66C4BC302BCCC05500AA8732 /* Icon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2F2BCCC05500AA8732 /* Icon.swift */; };
@@ -88,6 +89,7 @@
 		66A061322BE7D2530043D170 /* FileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileType.swift; sourceTree = "<group>"; };
 		66A061342BE7D2AE0043D170 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		66A061362BE7D5680043D170 /* FileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporter.swift; sourceTree = "<group>"; };
+		66A061382BE7EC8B0043D170 /* URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL.swift; sourceTree = "<group>"; };
 		66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+WindowGeometryPreferences.swift"; sourceTree = "<group>"; };
 		66C4BC2D2BCC271D00AA8732 /* Emulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emulator.swift; sourceTree = "<group>"; };
 		66C4BC2F2BCCC05500AA8732 /* Icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icon.swift; sourceTree = "<group>"; };
@@ -263,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				66A061302BE67F5F0043D170 /* Color.swift */,
+				66A061382BE7EC8B0043D170 /* URL.swift */,
 				66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */,
 			);
 			path = Extensions;
@@ -434,6 +437,7 @@
 				66A061332BE7D2530043D170 /* FileType.swift in Sources */,
 				665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */,
 				665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */,
+				66A061392BE7EC8B0043D170 /* URL.swift in Sources */,
 				66635BA32B66D1F6004FD096 /* Files.swift in Sources */,
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,
 				669729892BDD54B50013BCE2 /* FilePickerGrid.swift in Sources */,

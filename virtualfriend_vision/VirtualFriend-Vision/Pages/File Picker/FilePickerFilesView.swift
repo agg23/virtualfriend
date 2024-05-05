@@ -53,7 +53,7 @@ struct FilePickerFilesView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Import", systemImage: "plus") {
+                Button("Import Titles", systemImage: "plus") {
                     self.onImport()
                 }
             }

@@ -41,7 +41,10 @@ struct FileImporter {
         // Start by rescanning existing titles
         self.rescanTitles()
 
-        if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
+        if !url.isDirectory {
+            // User selected a single file
+            files = [url]
+        } else if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
             for case let fileUrl as URL in enumerator {
                 do {
                     let attributes = try fileUrl.resourceValues(forKeys: [.isRegularFileKey])
