@@ -61,6 +61,7 @@ pub fn render_normal_or_hbias_background(
         for window_x in 0..world_width {
             // Loop over all columns in the row
             // Get the final pixel column corresponding to that world column, after background shift
+            // A negative value will be some high number, and thus >= DISPLAY_WIDTH
             let pixel_x = window_x.wrapping_add(parallax_x as u32);
 
             // TODO: I don't like this. I would rather loop over exactly the elements we need

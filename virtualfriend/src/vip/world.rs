@@ -91,8 +91,8 @@ impl World {
         let screen_x_size = ((value >> 10) & 0x3) as u8;
         let background_type = (value >> 12) & 0x3;
 
-        let left_display_on = value & 0x4000 != 0;
-        let right_display_on = value & 0x8000 != 0;
+        let right_display_on = value & 0x4000 != 0;
+        let left_display_on = value & 0x8000 != 0;
 
         let display_state = match (left_display_on, right_display_on) {
             (true, true) => WorldDisplayState::Both,
