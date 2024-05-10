@@ -25,9 +25,9 @@ extension RustVec<UInt8> {
 
             let percent = Double(value) / 255.0
 
-            bytes[i * 4] = UInt8((backgroundComponents[0] + (highlightComponents[0] - backgroundComponents[0]) * percent) * 255.0)
-            bytes[i * 4 + 1] = UInt8((backgroundComponents[1] + (highlightComponents[1] - backgroundComponents[1]) * percent) * 255.0)
-            bytes[i * 4 + 2] = UInt8((backgroundComponents[2] + (highlightComponents[2] - backgroundComponents[2]) * percent) * 255.0)
+            bytes[i * 4] = UInt8(truncating: (backgroundComponents[0] + (highlightComponents[0] - backgroundComponents[0]) * percent) * 255.0 as NSNumber)
+            bytes[i * 4 + 1] = UInt8(truncating: (backgroundComponents[1] + (highlightComponents[1] - backgroundComponents[1]) * percent) * 255.0 as NSNumber)
+            bytes[i * 4 + 2] = UInt8(truncating: (backgroundComponents[2] + (highlightComponents[2] - backgroundComponents[2]) * percent) * 255.0 as NSNumber)
             // Alpha
             bytes[i * 4 + 3] = 255
         }
