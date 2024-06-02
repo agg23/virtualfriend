@@ -1,5 +1,5 @@
 //
-//  VirtualFriend_VisionApp.swift
+//  VirtualFriend_AppleMobile.swift
 //  VirtualFriend-Vision
 //
 //  Created by Adam Gastineau on 1/9/24.

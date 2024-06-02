@@ -10,7 +10,7 @@
 		660955622B62202700A47B1B /* StereoImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660955612B62202700A47B1B /* StereoImage.swift */; };
 		661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */ = {isa = PBXBuildFile; productRef = 661265C52B54460900D1B343 /* VBStereoRenderRealityKit */; };
 		661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 661265CB2B54533800D1B343 /* libresolv.tbd */; };
-		6629A1D52B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */; };
+		6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */; };
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
@@ -57,8 +57,8 @@
 		661265CB2B54533800D1B343 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		66136E242B5B419600D580BF /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros-sim/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66136E262B5D948300D580BF /* libvirtualfriend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend.a; path = "../virtualfriend/target/aarch64-apple-xros-sim/debug/libvirtualfriend.a"; sourceTree = "<group>"; };
-		6629A1CD2B4E538200FE2AB3 /* VirtualFriend-Vision.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VirtualFriend-Vision.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualFriend_VisionApp.swift; sourceTree = "<group>"; };
+		6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VirtualFriend-AppleMobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualFriend_AppleMobile.swift; sourceTree = "<group>"; };
 		6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */ = {isa = PBXFileReference; lastKnownFileType = file.skybox; path = ImageBasedLighting.skybox; sourceTree = "<group>"; };
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -149,7 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				6688DECA2B5DAC33004B2123 /* generated */,
-				6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */,
+				6629A1CF2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */,
 				6629A1D02B4E538200FE2AB3 /* Packages */,
 				6629A1CE2B4E538200FE2AB3 /* Products */,
 				661265C82B54531200D1B343 /* Frameworks */,
@@ -159,12 +159,12 @@
 		6629A1CE2B4E538200FE2AB3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6629A1CD2B4E538200FE2AB3 /* VirtualFriend-Vision.app */,
+				6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6629A1CF2B4E538200FE2AB3 /* VirtualFriend-Vision */ = {
+		6629A1CF2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */ = {
 			isa = PBXGroup;
 			children = (
 				66635BA02B66D002004FD096 /* manifests */,
@@ -176,14 +176,14 @@
 				6609555E2B621FE200A47B1B /* StreamingStereoImage */,
 				665489132BDDC9D400C2BD96 /* Windows */,
 				66C60F2B2B66BA6A00C1FDF4 /* Utilities */,
-				6629A1D42B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift */,
+				6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */,
 				6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */,
 				6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */,
 				6629A1E12B4E538300FE2AB3 /* Info.plist */,
 				6629A1DE2B4E538300FE2AB3 /* Preview Content */,
 				66654C072B5B3F97008E283D /* Bridging-Header.h */,
 			);
-			path = "VirtualFriend-Vision";
+			path = "VirtualFriend-AppleMobile";
 			sourceTree = "<group>";
 		};
 		6629A1D02B4E538200FE2AB3 /* Packages */ = {
@@ -315,9 +315,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6629A1CC2B4E538200FE2AB3 /* VirtualFriend-Vision */ = {
+		6629A1CC2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-Vision" */;
+			buildConfigurationList = 6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-AppleMobile" */;
 			buildPhases = (
 				6688DED22B5DB65E004B2123 /* ShellScript */,
 				6629A1C92B4E538200FE2AB3 /* Sources */,
@@ -328,13 +328,13 @@
 			);
 			dependencies = (
 			);
-			name = "VirtualFriend-Vision";
+			name = "VirtualFriend-AppleMobile";
 			packageProductDependencies = (
 				661265C52B54460900D1B343 /* VBStereoRenderRealityKit */,
 				66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */,
 			);
 			productName = "VirtualFriend-Vision";
-			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-Vision.app */;
+			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -352,7 +352,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 6629A1C82B4E538200FE2AB3 /* Build configuration list for PBXProject "VirtualFriend-Vision" */;
+			buildConfigurationList = 6629A1C82B4E538200FE2AB3 /* Build configuration list for PBXProject "VirtualFriend-AppleMobile" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -369,7 +369,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6629A1CC2B4E538200FE2AB3 /* VirtualFriend-Vision */,
+				6629A1CC2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */,
 			);
 		};
 /* End PBXProject section */
@@ -422,7 +422,7 @@
 				66C60F2D2B66BA7F00C1FDF4 /* Hash.swift in Sources */,
 				669729912BDD56EF0013BCE2 /* MockFileEntry.swift in Sources */,
 				669729972BDD94E70013BCE2 /* AsyncImageChannel.swift in Sources */,
-				6629A1D52B4E538200FE2AB3 /* VirtualFriend_VisionApp.swift in Sources */,
+				6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */,
 				6688DED72B5DF876004B2123 /* EmuView.swift in Sources */,
 				660955622B62202700A47B1B /* StereoImage.swift in Sources */,
 				66A061312BE67F5F0043D170 /* Color.swift in Sources */,
@@ -579,7 +579,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-Vision/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-AppleMobile/Preview Content\"";
 				DEVELOPMENT_TEAM = 58JLRGUCJQ;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = "";
@@ -599,7 +599,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-Vision/Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-AppleMobile/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 			};
@@ -612,7 +612,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-Vision/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"VirtualFriend-AppleMobile/Preview Content\"";
 				DEVELOPMENT_TEAM = 58JLRGUCJQ;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = x86_64;
@@ -631,7 +631,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-Vision/Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-AppleMobile/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 			};
@@ -640,7 +640,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		6629A1C82B4E538200FE2AB3 /* Build configuration list for PBXProject "VirtualFriend-Vision" */ = {
+		6629A1C82B4E538200FE2AB3 /* Build configuration list for PBXProject "VirtualFriend-AppleMobile" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6629A1E22B4E538300FE2AB3 /* Debug */,
@@ -649,7 +649,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-Vision" */ = {
+		6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-AppleMobile" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6629A1E52B4E538300FE2AB3 /* Debug */,

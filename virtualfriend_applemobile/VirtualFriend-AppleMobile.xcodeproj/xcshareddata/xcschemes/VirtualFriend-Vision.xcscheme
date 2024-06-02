@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-               BuildableName = "VirtualFriend-Vision.app"
-               BlueprintName = "VirtualFriend-Vision"
-               ReferencedContainer = "container:VirtualFriend-Vision.xcodeproj">
+               BuildableName = "VirtualFriend-AppleMobile.app"
+               BlueprintName = "VirtualFriend-AppleMobile"
+               ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -30,7 +30,7 @@
       shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-            BuildableName = "VirtualFriend-Vision.app"
-            BlueprintName = "VirtualFriend-Vision"
-            ReferencedContainer = "container:VirtualFriend-Vision.xcodeproj">
+            BuildableName = "VirtualFriend-AppleMobile.app"
+            BlueprintName = "VirtualFriend-AppleMobile"
+            ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,9 +61,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-            BuildableName = "VirtualFriend-Vision.app"
-            BlueprintName = "VirtualFriend-Vision"
-            ReferencedContainer = "container:VirtualFriend-Vision.xcodeproj">
+            BuildableName = "VirtualFriend-AppleMobile.app"
+            BlueprintName = "VirtualFriend-AppleMobile"
+            ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
