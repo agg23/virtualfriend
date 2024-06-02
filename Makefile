@@ -16,3 +16,6 @@ leaks:
 
 vision:
 	cd virtualfriend_swift && xargo build --target aarch64-apple-visionos --release && xargo build --target aarch64-apple-visionos-sim --release
+
+ios:
+	cd virtualfriend_swift && cargo build --target aarch64-apple-ios --release && cargo build --target aarch64-apple-ios-sim --release

@@ -8,6 +8,7 @@
 import Foundation
 import RealityKit
 
+#if os(visionOS)
 class StereoImageMaterial {
     static let shared = StereoImageMaterial()
 
@@ -29,3 +30,4 @@ class StereoImageMaterial {
         }
     }
 }
+#endif

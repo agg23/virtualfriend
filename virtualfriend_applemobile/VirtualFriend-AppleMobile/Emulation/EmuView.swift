@@ -7,7 +7,6 @@
 
 import SwiftUI
 import RealityKit
-import VBStereoRenderRealityKit
 import AsyncAlgorithms
 
 struct EmuView: View {
@@ -177,6 +176,7 @@ private struct EmuContentView: View {
                 }
                 .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
             }
+            #if os(visionOS)
             .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
                 VStack {
                     // Add spacing between main window and ornament content to allow for the window resizer
@@ -207,6 +207,7 @@ private struct EmuContentView: View {
                     .glassBackgroundEffect()
                 }
             }
+            #endif
             .onChange(of: self.scenePhase) { _, newPhase in
                 if newPhase == .background {
                     // Stop emulation

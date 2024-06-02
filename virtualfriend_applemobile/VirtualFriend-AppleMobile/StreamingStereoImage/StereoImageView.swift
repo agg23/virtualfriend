@@ -67,10 +67,12 @@ struct StereoImageView: View {
                     self.realityView(geometry)
                 }
             }
+            #if os(visionOS)
             // This constrains the plane to sit directly on top of the window
             // Unsure why this works at 1+, but not at say 0, .1 (which caused zfighting)
             // Higher depth to allow tapping on the view in EmuView
             .frame(minDepth: 4.0, maxDepth: 4.1)
+            #endif
         }
         .aspectRatio(CGSize(width: self.width + MARGIN * 2, height: self.height + MARGIN * 2), contentMode: .fit)
         .onChange(of: self.stereoImageChannel, initial: true, { _, _ in
@@ -84,6 +86,7 @@ struct StereoImageView: View {
 
     @ViewBuilder
     func realityView(_ geometry: GeometryProxy) -> some View {
+        #if os(visionOS)
         RealityView { content in
             let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
 
@@ -136,12 +139,16 @@ struct StereoImageView: View {
 
             entity.transform.scale = [xScale, yScale, 1.0]
         }
-
+        #else
+        EmptyView()
+        #endif
     }
 
     var tap: some Gesture {
         SpatialTapGesture()
+            #if os(visionOS)
             .targetedToAnyEntity()
+            #endif
             .onEnded { _ in
                 self.onTap?()
             }

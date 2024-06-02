@@ -28,13 +28,16 @@ struct FilePickerView: View {
                         .font(.system(size: 24))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
+                        #if os(visionOS)
                         .frame(width: 500)
+                        #endif
 
                     Button {
                         self.selectFolder.toggle()
                     } label: {
                         Text("Import Titles")
                     }
+                    .padding(.top, 16)
                 }
                 .padding(40.0)
             } else {

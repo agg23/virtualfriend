@@ -1,4 +1,5 @@
 {
+  "originHash" : "13678df8bf756b5a26255707c7a7a2f70f4fa09e8466f4b4d0ca97436222d7d0",
   "pins" : [
     {
       "identity" : "swift-async-algorithms",
@@ -19,5 +20,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

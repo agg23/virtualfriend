@@ -35,7 +35,9 @@ struct VirtualFriend_VisionApp: App {
         WindowGroup(for: String?.self) { $id in
             // This `nil` ID is used to bypass a bug. See inside of `MainWindowView`
             MainWindowView(id: id)
+                #if os(visionOS)
                 .frame(minWidth: 600, minHeight: 400)
+                #endif
         } defaultValue: {
             // Set default value so there's a shared ID we can use to reuse the window
             // TODO: This doesn't work for some reason
@@ -43,18 +45,24 @@ struct VirtualFriend_VisionApp: App {
         }
         .windowResizability(.contentSize)
         // Default window size
+        #if os(visionOS)
         .defaultSize(width: 1280, height: 720)
+        #endif
 
         WindowGroup(id: "emu", for: URL.self) { url in
             if let url = url.wrappedValue {
                 EmuView(fileUrl: url)
+                    #if os(visionOS)
                     .windowGeometryPreferences(minimumSize: CGSize(width: 384 + 2, height: 224 + 2), resizingRestrictions: .uniform)
+                    #endif
             } else {
                 Text("Could not start emulator")
             }
         }
         .windowResizability(.contentSize)
+        #if os(visionOS)
         .windowStyle(.plain)
         .defaultSize(width: 2, height: 2, depth: 0.1, in: .meters)
+        #endif
     }
 }

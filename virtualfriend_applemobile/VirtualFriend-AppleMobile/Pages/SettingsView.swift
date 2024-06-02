@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("romDirectoryBookmark") var romDirectoryBookmark: Data?
-
     @LEDBackgroundColor var ledBackgroundColor;
     @LEDForegroundColor var ledForegroundColor;
 
@@ -21,19 +19,6 @@ struct SettingsView: View {
         NavigationStack {
             VStack {
                 Form {
-                    Section {
-                        Button {
-                            self.selectFolder.toggle()
-                        } label: {
-                            Text("Choose title directory")
-                        }
-                        .customFileImporter(self.$selectFolder, onOpen: { _, bookmark in
-                            self.romDirectoryBookmark = bookmark
-
-                            self.selectFolder = false
-                        })
-                    }
-
                     Section("Color") {
                         ColorPicker("Foreground Color", selection: self.$ledForegroundColor, supportsOpacity: false)
                         ColorPicker("Background Color", selection: self.$ledBackgroundColor, supportsOpacity: false)
@@ -105,13 +90,7 @@ struct SettingsView: View {
 
     func generateImage(foregroundColor: Color, backgroundColor: Color) -> UIImage {
         let manifest = FileEntry.getUnknownManifest()
-        let ciImage = manifest.left_frame.ciImage(foregroundColor: foregroundColor.resolve(in: .init()).cgColor, backgroundColor: backgroundColor.resolve(in: .init()).cgColor)
-
-        let context = CIContext()
-        context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: 384, height: 224))
-
-        // Going directly from CIImage to UIImage doesn't seem to work
-        return UIImage(cgImage: context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: 384, height: 224))!)
+        return manifest.left_frame.uiImage(foregroundColor: foregroundColor.resolve(in: .init()).cgColor, backgroundColor: backgroundColor.resolve(in: .init()).cgColor)
     }
 }
 

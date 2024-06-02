@@ -3,17 +3,17 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		660955622B62202700A47B1B /* StereoImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660955612B62202700A47B1B /* StereoImage.swift */; };
-		661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */ = {isa = PBXBuildFile; productRef = 661265C52B54460900D1B343 /* VBStereoRenderRealityKit */; };
 		661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 661265CB2B54533800D1B343 /* libresolv.tbd */; };
 		6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */; };
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
+		665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 665022C12C0CDF470012E9D4 /* AsyncAlgorithms */; };
 		665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489142BDDC9F000C2BD96 /* MainWindowView.swift */; };
 		665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489172BDDCA3B00C2BD96 /* SettingsView.swift */; };
 		6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */; };
@@ -47,12 +47,10 @@
 		66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B12BC755F500BE5C0F /* StereoImageView.swift */; };
 		66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */; };
 		66CB32B62BC758F600BE5C0F /* StereoImageMaterial.usda in Resources */ = {isa = PBXBuildFile; fileRef = 66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */; };
-		66E8CC8F2BCA2FF70068223A /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		660955612B62202700A47B1B /* StereoImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImage.swift; sourceTree = "<group>"; };
-		661265C72B54486500D1B343 /* VBStereoRenderRealityKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = VBStereoRenderRealityKit; sourceTree = "<group>"; };
 		661265C92B54531200D1B343 /* libvirtualfriend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend.a; path = "../virtualfriend/target/aarch64-apple-ios-sim/release/libvirtualfriend.a"; sourceTree = "<group>"; };
 		661265CB2B54533800D1B343 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		66136E242B5B419600D580BF /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros-sim/debug/libxrostest.a"; sourceTree = "<group>"; };
@@ -108,11 +106,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				661265C62B54460900D1B343 /* VBStereoRenderRealityKit in Frameworks */,
 				6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */,
 				661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */,
-				66E8CC8F2BCA2FF70068223A /* AsyncAlgorithms in Frameworks */,
 				66A061352BE7D2AE0043D170 /* UniformTypeIdentifiers.framework in Frameworks */,
+				665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -189,7 +186,6 @@
 		6629A1D02B4E538200FE2AB3 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				661265C72B54486500D1B343 /* VBStereoRenderRealityKit */,
 			);
 			path = Packages;
 			sourceTree = "<group>";
@@ -330,8 +326,7 @@
 			);
 			name = "VirtualFriend-AppleMobile";
 			packageProductDependencies = (
-				661265C52B54460900D1B343 /* VBStereoRenderRealityKit */,
-				66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */,
+				665022C12C0CDF470012E9D4 /* AsyncAlgorithms */,
 			);
 			productName = "VirtualFriend-Vision";
 			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */;
@@ -362,8 +357,7 @@
 			);
 			mainGroup = 6629A1C42B4E538200FE2AB3;
 			packageReferences = (
-				661265C42B54460900D1B343 /* XCLocalSwiftPackageReference "Packages/VBStereoRenderRealityKit" */,
-				66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
+				665022C02C0CDF470012E9D4 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			productRefGroup = 6629A1CE2B4E538200FE2AB3 /* Products */;
 			projectDirPath = "";
@@ -407,7 +401,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd ../\n# Load Rust PATH\n. ~/.cargo/env\nmake vision\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd ../\n# Load Rust PATH\n. ~/.cargo/env\nmake vision\nmake ios\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -587,17 +581,20 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*]" = "$(PROJECT_DIR)/../target/aarch64-apple-ios/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-ios-sim/release";
 				"LIBRARY_SEARCH_PATHS[sdk=xros*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
 				"LIBRARY_SEARCH_PATHS[sdk=xrsimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-AppleMobile/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -619,17 +616,21 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*]" = "$(PROJECT_DIR)/../target/aarch64-apple-ios/release";
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-ios-sim/release";
 				"LIBRARY_SEARCH_PATHS[sdk=xros*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos/release";
 				"LIBRARY_SEARCH_PATHS[sdk=xrsimulator*]" = "$(PROJECT_DIR)/../target/aarch64-apple-visionos-sim/release";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "im.agg.VirtualFriend-Vision";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/VirtualFriend-AppleMobile/Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -660,15 +661,8 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		661265C42B54460900D1B343 /* XCLocalSwiftPackageReference "Packages/VBStereoRenderRealityKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Packages/VBStereoRenderRealityKit;
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
-		66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+		665022C02C0CDF470012E9D4 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
 			requirement = {
@@ -679,13 +673,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		661265C52B54460900D1B343 /* VBStereoRenderRealityKit */ = {
+		665022C12C0CDF470012E9D4 /* AsyncAlgorithms */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = VBStereoRenderRealityKit;
-		};
-		66E8CC8E2BCA2FF70068223A /* AsyncAlgorithms */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 66E8CC8D2BCA2FF70068223A /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			package = 665022C02C0CDF470012E9D4 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;
 		};
 /* End XCSwiftPackageProductDependency section */

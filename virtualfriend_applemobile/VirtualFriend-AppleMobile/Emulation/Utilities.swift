@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreImage
+import UIKit
 
 private let PIXEL_WIDTH = 384
 private let PIXEL_HEIGHT = 224
@@ -35,5 +36,15 @@ extension RustVec<UInt8> {
         let bitmapData = Data(bytes)
 
         return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+    }
+
+    func uiImage(foregroundColor: CGColor, backgroundColor: CGColor) -> UIImage {
+        let ciImage = self.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
+
+        let context = CIContext()
+        context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: PIXEL_WIDTH, height: PIXEL_HEIGHT))
+
+        // Going directly from CIImage to UIImage doesn't seem to work
+        return UIImage(cgImage: context.createCGImage(ciImage, from: .init(x: 0, y: 0, width: PIXEL_WIDTH, height: PIXEL_HEIGHT))!)
     }
 }
