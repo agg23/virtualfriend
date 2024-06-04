@@ -30,6 +30,9 @@
 		669729932BDD67AA0013BCE2 /* FilePickerListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669729922BDD67AA0013BCE2 /* FilePickerListView.swift */; };
 		669729952BDD91AA0013BCE2 /* StereoManifestImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669729942BDD91AA0013BCE2 /* StereoManifestImageView.swift */; };
 		669729972BDD94E70013BCE2 /* AsyncImageChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 669729962BDD94E70013BCE2 /* AsyncImageChannel.swift */; };
+		6697F38B2C0E75B600229BDD /* Metal2DUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6697F38A2C0E75B600229BDD /* Metal2DUIView.swift */; };
+		6697F38D2C0E788100229BDD /* Metal2DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6697F38C2C0E788100229BDD /* Metal2DView.swift */; };
+		6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6697F38E2C0EAE9E00229BDD /* StereoImageVisionView.swift */; };
 		66A0612F2BE679BF0043D170 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A0612E2BE679BF0043D170 /* Settings.swift */; };
 		66A061312BE67F5F0043D170 /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061302BE67F5F0043D170 /* Color.swift */; };
 		66A061332BE7D2530043D170 /* FileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061322BE7D2530043D170 /* FileType.swift */; };
@@ -82,6 +85,9 @@
 		669729922BDD67AA0013BCE2 /* FilePickerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerListView.swift; sourceTree = "<group>"; };
 		669729942BDD91AA0013BCE2 /* StereoManifestImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoManifestImageView.swift; sourceTree = "<group>"; };
 		669729962BDD94E70013BCE2 /* AsyncImageChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncImageChannel.swift; sourceTree = "<group>"; };
+		6697F38A2C0E75B600229BDD /* Metal2DUIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metal2DUIView.swift; sourceTree = "<group>"; };
+		6697F38C2C0E788100229BDD /* Metal2DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metal2DView.swift; sourceTree = "<group>"; };
+		6697F38E2C0EAE9E00229BDD /* StereoImageVisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageVisionView.swift; sourceTree = "<group>"; };
 		66A0612E2BE679BF0043D170 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		66A061302BE67F5F0043D170 /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		66A061322BE7D2530043D170 /* FileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileType.swift; sourceTree = "<group>"; };
@@ -119,9 +125,11 @@
 		6609555E2B621FE200A47B1B /* StreamingStereoImage */ = {
 			isa = PBXGroup;
 			children = (
+				6697F3892C0E759F00229BDD /* Metal */,
 				660955612B62202700A47B1B /* StereoImage.swift */,
-				66CB32B12BC755F500BE5C0F /* StereoImageView.swift */,
 				66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */,
+				66CB32B12BC755F500BE5C0F /* StereoImageView.swift */,
+				6697F38E2C0EAE9E00229BDD /* StereoImageVisionView.swift */,
 				66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */,
 			);
 			path = StreamingStereoImage;
@@ -255,6 +263,15 @@
 				669729902BDD56EF0013BCE2 /* MockFileEntry.swift */,
 			);
 			path = Mocks;
+			sourceTree = "<group>";
+		};
+		6697F3892C0E759F00229BDD /* Metal */ = {
+			isa = PBXGroup;
+			children = (
+				6697F38A2C0E75B600229BDD /* Metal2DUIView.swift */,
+				6697F38C2C0E788100229BDD /* Metal2DView.swift */,
+			);
+			path = Metal;
 			sourceTree = "<group>";
 		};
 		66C4BC2A2BCC22FB00AA8732 /* Extensions */ = {
@@ -414,6 +431,7 @@
 				669729952BDD91AA0013BCE2 /* StereoManifestImageView.swift in Sources */,
 				6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */,
 				66C60F2D2B66BA7F00C1FDF4 /* Hash.swift in Sources */,
+				6697F38D2C0E788100229BDD /* Metal2DView.swift in Sources */,
 				669729912BDD56EF0013BCE2 /* MockFileEntry.swift in Sources */,
 				669729972BDD94E70013BCE2 /* AsyncImageChannel.swift in Sources */,
 				6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */,
@@ -426,6 +444,7 @@
 				669729932BDD67AA0013BCE2 /* FilePickerListView.swift in Sources */,
 				66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */,
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
+				6697F38B2C0E75B600229BDD /* Metal2DUIView.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
 				66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */,
 				66A061332BE7D2530043D170 /* FileType.swift in Sources */,
@@ -436,6 +455,7 @@
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,
 				669729892BDD54B50013BCE2 /* FilePickerGrid.swift in Sources */,
 				6697298D2BDD56770013BCE2 /* FileEntry.swift in Sources */,
+				6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */,
 				66C4BC2E2BCC271D00AA8732 /* Emulator.swift in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerGridItemView.swift in Sources */,
 				66A0612F2BE679BF0043D170 /* Settings.swift in Sources */,

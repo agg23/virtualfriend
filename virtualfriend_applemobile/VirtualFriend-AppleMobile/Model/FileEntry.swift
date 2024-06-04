@@ -67,10 +67,7 @@ struct FileEntry {
         let left = manifest.left_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
         let right = manifest.right_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
 
-        let leftTransformedImage = left.transformed(by: .init(scaleX: 1, y: -1))
-        let rightTransformedImage = right.transformed(by: .init(scaleX: 1, y: -1))
-
-        return StereoImage(left: leftTransformedImage, right: rightTransformedImage)
+        return StereoImage(left: left, right: right)
     }
 }
 

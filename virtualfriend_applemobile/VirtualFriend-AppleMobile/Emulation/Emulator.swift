@@ -260,9 +260,9 @@ class Emulator {
             let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
             let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
 
-            // TODO: This should be flipped by Metal, not the CPU
-            let leftTransformedImage = leftImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-            let rightTransformedImage = rightImage.transformed(by: .init(scaleX: 1, y: -1).translatedBy(x: (self.separation?.wrappedValue ?? 0.0), y: 0))
+            // TODO: This should be moved by Metal, not the CPU
+            let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+            let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
 
             await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
         }
