@@ -24,7 +24,11 @@ struct FilePickerFilesView: View {
         Group {
             switch self.fileViewType {
             case .list:
+                #if os(iOS)
+                FilePickerListiOSView(files: self.files)
+                #else
                 FilePickerListView(files: self.files)
+                #endif
             case .grid:
                 FilePickerGrid(files: self.files)
             }

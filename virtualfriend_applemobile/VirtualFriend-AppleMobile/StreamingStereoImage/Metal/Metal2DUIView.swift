@@ -43,7 +43,6 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
     private let context: CIContext
     private let commandQueue: MTLCommandQueue
     private var nearestNeighborRendering: Bool
-    private var integerScaling: Bool
     private var currentScale: CGFloat = 1.0
     private var viewportOffset: CGPoint = CGPoint.zero
     private var screenTransform: CGAffineTransform = CGAffineTransform.identity
@@ -101,6 +100,8 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
             self.mtkView(self, drawableSizeWillChange: self.drawableSize)
         }
     }
+
+    var integerScaling: Bool = true
 
     // MARK: - MTKViewDelegate
 

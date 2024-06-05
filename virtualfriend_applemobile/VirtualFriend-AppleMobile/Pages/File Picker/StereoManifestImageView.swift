@@ -16,14 +16,16 @@ struct StereoManifestImageView: View {
 
     let entry: FileEntryWithManifest
     let onTap: (() -> Void)?
+    let integerScaling: Bool?
 
-    init(entry: FileEntryWithManifest, onTap: (() -> Void)? = nil) {
+    init(entry: FileEntryWithManifest, onTap: (() -> Void)? = nil, integerScaling: Bool? = true) {
         self.entry = entry
         self.onTap = onTap
+        self.integerScaling = integerScaling
     }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap)
+        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap, integerScaling: self.integerScaling)
             .onDisappear {
                 self.task?.cancel()
             }
