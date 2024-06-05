@@ -96,17 +96,23 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
         }
     }
 
+    var expectedSize: CGSize = CGSize(width: 100, height: 100) {
+        didSet {
+            self.mtkView(self, drawableSizeWillChange: self.drawableSize)
+        }
+    }
+
     // MARK: - MTKViewDelegate
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize)
     {
-//        let exactScale: CGFloat = size.width / self.drawableSize.width
-//        self.currentScale = self.integerScaling ? floor(exactScale) : exactScale
-//        self.viewportOffset = self.integerScaling ? CGPoint(x: (size.width - (self.drawableSize.width * self.currentScale)) * 0.5, y: (size.height - (self.drawableSize.height * self.currentScale)) * 0.5) : CGPoint.zero
-//
-//        let t1: CGAffineTransform = CGAffineTransform(scaleX: self.currentScale, y: self.currentScale)
-//        let t2: CGAffineTransform = self.integerScaling ? CGAffineTransform(translationX: self.viewportOffset.x, y: self.viewportOffset.y) : CGAffineTransform.identity
-//        self.screenTransform = t1.concatenating(t2)
+        let exactScale: CGFloat = size.width / self.expectedSize.width
+        self.currentScale = self.integerScaling ? floor(exactScale) : exactScale
+        self.viewportOffset = self.integerScaling ? CGPoint(x: (size.width - (self.expectedSize.width * self.currentScale)) * 0.5, y: (size.height - (self.expectedSize.height * self.currentScale)) * 0.5) : CGPoint.zero
+
+        let t1: CGAffineTransform = CGAffineTransform(scaleX: self.currentScale, y: self.currentScale)
+        let t2: CGAffineTransform = self.integerScaling ? CGAffineTransform(translationX: self.viewportOffset.x, y: self.viewportOffset.y) : CGAffineTransform.identity
+        self.screenTransform = t1.concatenating(t2)
     }
 
     func draw(in view: MTKView)
@@ -118,16 +124,16 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
             return
         }
 
-        let transformedImage = self.image.transformed(by: .init(translationX: -self.image.extent.origin.x, y: -self.image.extent.origin.y))
+        var transformedImage = self.image.transformed(by: .init(translationX: -self.image.extent.origin.x, y: -self.image.extent.origin.y))
 
-//        if self.nearestNeighborRendering
-//        {
-//            transformedImage = transformedImage.samplingNearest().transformed(by: self.screenTransform)
-//        }
-//        else
-//        {
-//            transformedImage = transformedImage.transformed(by: self.screenTransform)
-//        }
+        if self.nearestNeighborRendering
+        {
+            transformedImage = transformedImage.samplingNearest().transformed(by: self.screenTransform)
+        }
+        else
+        {
+            transformedImage = transformedImage.transformed(by: self.screenTransform)
+        }
 
         let renderDestination = CIRenderDestination(width: Int(self.drawableSize.width), height: Int(self.drawableSize.height), pixelFormat: self.colorPixelFormat, commandBuffer: safeCommandBuffer) {
             () -> MTLTexture in return safeCurrentDrawable.texture

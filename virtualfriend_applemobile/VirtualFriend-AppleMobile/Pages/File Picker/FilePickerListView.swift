@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FilePickerListView: View {
-    @Environment(\.openWindow) var openWindow
+    @Environment(MainRouter.self) private var router
 
     @State var selectedFile: FileEntryWithManifest?
 
@@ -81,7 +81,7 @@ struct FilePickerListView: View {
                     }
 
                     Button("Play", systemImage: "play.fill") {
-                        openWindow(id: "emu", value: selectedFile.entry.url)
+                        self.router.currentRoute = .emulator(url: selectedFile.entry.url)
                     }
                     .padding()
 

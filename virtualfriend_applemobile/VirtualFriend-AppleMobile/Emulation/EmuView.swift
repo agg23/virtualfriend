@@ -30,11 +30,13 @@ struct EmuView: View {
 
     var body: some View {
         ZStack {
+            #if os(visionOS)
             // Background color to surround the view and pad out the window AR
             self.ledBackgroundColor
                 .ignoresSafeArea()
                 // Default system corner radius
                 .clipShape(.rect(cornerRadius: 56))
+            #endif
 
             switch self.emulator {
             case .emulator(let emulator):

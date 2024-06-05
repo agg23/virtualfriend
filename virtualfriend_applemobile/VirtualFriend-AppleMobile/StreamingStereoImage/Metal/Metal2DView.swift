@@ -23,8 +23,7 @@ struct Metal2DView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: Metal2DUIView, context: Context) {
-        uiView.drawableSize = self.size
-//        uiView.image = self.image
+        uiView.expectedSize = self.size
         context.coordinator.task?.cancel()
         context.coordinator.task = Task {
             for await image in self.stereoImageChannel.channel.buffer(policy: .bounded(1)) {
