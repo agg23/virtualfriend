@@ -23,12 +23,12 @@ struct MainWindowView: View {
                 TabView {
                     FilePickerView()
                         .tabItem {
-                            Label("Titles", systemImage: "rectangle.stack")
+                            Label("Library", systemImage: Icon.library)
                         }
 
                     SettingsView()
                         .tabItem {
-                            Label("Settings", systemImage: "gear")
+                            Label("Settings", systemImage: Icon.settings)
                         }
                 }
                 .onAppear {

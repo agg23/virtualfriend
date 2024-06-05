@@ -8,6 +8,9 @@
 import Foundation
 
 struct Icon {
+    static let library = "square.stack.3d.down.right.fill"
+    static let settings = "gear"
+
     static let restart = "arrow.clockwise"
     static let back = "chevron.backward"
 }
