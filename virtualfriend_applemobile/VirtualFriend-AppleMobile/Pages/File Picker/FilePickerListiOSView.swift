@@ -24,7 +24,6 @@ struct FilePickerListiOSView: View {
                     VStack(alignment: .leading) {
                         Text(self.title(from: file))
                             .font(.title3)
-                            .foregroundStyle(.primary)
                             .lineLimit(1)
 
                         if let metadata = file.manifest?.metadata {

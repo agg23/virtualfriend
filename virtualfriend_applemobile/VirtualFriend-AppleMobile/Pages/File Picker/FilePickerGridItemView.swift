@@ -9,6 +9,7 @@ import SwiftUI
 import AsyncAlgorithms
 
 struct FilePickerGridItemView: View {
+    @Environment(MainRouter.self) private var router
     @Environment(\.openWindow) var openWindow
 
     let CORNER_RADIUS = 20.0
@@ -29,48 +30,72 @@ struct FilePickerGridItemView: View {
     var body: some View {
         let metadata = self.entry.manifest?.metadata
 
-        ZStack {
-            Button {
-                openWindow(id: "emu", value: self.entry.entry.url)
-            } label: {
-                VStack {
-                    self.ledBackgroundColor
-                        // Extra 16 to allow button press to keep 3D view hidden
-                        .aspectRatio(384.0/(224.0 + 16.0), contentMode: .fit)
-                        .ignoresSafeArea(edges: .horizontal)
+        #if os(visionOS)
+        // Extra 16 to allow button press to keep 3D view hidden
+        let videoAspectRatio = 384.0/(224.0 + 16.0)
+        #else
+        let videoAspectRatio = 384.0/224.0
+        #endif
 
-                    Text(metadata?.title.toString() ?? self.entry.entry.url.deletingPathExtension().lastPathComponent)
-                        .font(.title)
-                        .lineLimit(1)
-                    Group {
-                        if let metadata = metadata {
-                            Text(metadata.publisher.toString() + " " + metadata.year.toString())
-                                .lineLimit(1)
-                        } else {
-                            // Placeholder
-                            // TODO: There should be something better that can be done here
-                            Text(" ")
-                        }
-                    }
-                    .padding(.bottom, 8)
-                }
-                .background(.tertiary)
-//                    //                .clipShape(.rect(cornerRadius: 20.0))
-                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: CORNER_RADIUS))
-                .cornerRadius(CORNER_RADIUS)
-            }
-            // Custom button style as we can't make the black above span the entire width of the button without it
-            .buttonStyle(.plain)
-            .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
+        let videoView = StereoManifestImageView(entry: self.entry, onTap: {
+            self.router.currentRoute = .emulator(url: self.entry.entry.url)
+        }, integerScaling: false)
 
+        let button = Button {
+            self.router.currentRoute = .emulator(url: self.entry.entry.url)
+        } label: {
             VStack {
-                StereoManifestImageView(entry: self.entry) {
-                    openWindow(id: "emu", value: self.entry.entry.url)
+                #if os(visionOS)
+                self.ledBackgroundColor
+                    .aspectRatio(videoAspectRatio, contentMode: .fit)
+                    .ignoresSafeArea(edges: .horizontal)
+                #else
+                videoView
+                #endif
+
+                Text(metadata?.title.toString() ?? self.entry.entry.url.deletingPathExtension().lastPathComponent)
+                    #if os(visionOS)
+                    .font(.title)
+                    #else
+                    .font(.title3)
+                    #endif
+                    .lineLimit(1)
+                Group {
+                    if let metadata = metadata {
+                        Text(metadata.publisher.toString() + " " + metadata.year.toString())
+                            .lineLimit(1)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        // Placeholder
+                        // TODO: There should be something better that can be done here
+                        Text(" ")
+                    }
                 }
-                .padding()
+                .padding(.bottom, 8)
+            }
+            #if os(visionOS)
+            .background(.tertiary)
+//                    //                .clipShape(.rect(cornerRadius: 20.0))
+            .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: CORNER_RADIUS))
+            .cornerRadius(CORNER_RADIUS)
+            #endif
+        }
+        // Custom button style as we can't make the black above span the entire width of the button without it
+        .buttonStyle(.plain)
+        .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
+
+        ZStack {
+            #if os(visionOS)
+            button
+            VStack {
+                videoView
+                    .padding()
 
                 Spacer()
             }
+            #else
+            button
+            #endif
         }
     }
 }
