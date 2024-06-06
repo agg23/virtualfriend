@@ -128,9 +128,9 @@ struct EmuView: View {
                     }
                     Text("\(self.separation)")
 
-                    Toggle("Enable sound", isOn: self.$sound)
-                    Text("Note: Sound is extremely beta and likely broken")
-                        .font(.footnote)
+//                    Toggle("Enable sound", isOn: self.$sound)
+//                    Text("Note: Sound is extremely beta and likely broken")
+//                        .font(.footnote)
                 }
                 .padding(24)
                 .frame(width: 600)
@@ -209,7 +209,6 @@ private struct EmuContentView: View {
     @Binding var preventControlDismiss: Bool
 
     @State private var separation: Double = 0.0
-    @State private var sound: Bool = false
 
     init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>) {
         self.emulator = emulator
@@ -225,9 +224,6 @@ private struct EmuContentView: View {
                     self.emulator.shutdown()
                 }
             }
-            .onChange(of: self.sound, { _, newValue in
-                self.emulator.enableSound(newValue)
-            })
             .onChange(of: self.ledBackgroundColor) { _, _ in
                 self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
             }

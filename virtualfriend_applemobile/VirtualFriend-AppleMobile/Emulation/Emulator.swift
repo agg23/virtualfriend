@@ -35,7 +35,7 @@ class Emulator {
 
     var separation: Binding<Double>?
 
-    var enableSound: Bool = false
+    var enableSound: Bool = true
 
     init(fileUrl: URL) throws {
         let didAccessScope = fileUrl.startAccessingSecurityScopedResource()
