@@ -10,7 +10,6 @@ import AsyncAlgorithms
 
 struct FilePickerGridItemView: View {
     @Environment(MainRouter.self) private var router
-    @Environment(\.openWindow) var openWindow
 
     let CORNER_RADIUS = 20.0
 

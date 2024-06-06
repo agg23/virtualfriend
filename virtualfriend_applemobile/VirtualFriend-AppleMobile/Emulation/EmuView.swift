@@ -16,6 +16,8 @@ struct EmuView: View {
         case none
     }
 
+    @Environment(MainRouter.self) private var router
+
     @LEDBackgroundColor var ledBackgroundColor;
 
     @State private var emulator: EmulatorStatus = .none
@@ -30,24 +32,20 @@ struct EmuView: View {
 
     var body: some View {
         ZStack {
-            #if os(visionOS)
             // Background color to surround the view and pad out the window AR
             self.ledBackgroundColor
                 .ignoresSafeArea()
                 // Default system corner radius
+                #if os(visionOS)
+                // Make window appear to be rounded
                 .clipShape(.rect(cornerRadius: 56))
-            #endif
+                #endif
+
 
             switch self.emulator {
             case .emulator(let emulator):
-                EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss) {
-                    self.emulator = .none
-                    // TODO: Make Emulator stereoImageChannel updates cause rerenders
-                    DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
-                        self.createEmulator(self.fileUrl)
-                    }))
-                }
-                .padding(.vertical, 16)
+                EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
+                    .padding(.vertical, 16)
             case .error(let message):
                 VStack(alignment: .center) {
                     Text("Could not start emulator")
@@ -58,6 +56,88 @@ struct EmuView: View {
                 EmptyView()
             }
         }
+        .overlay {
+            #if os(visionOS)
+            let buttonPadding = 40.0
+            #else
+            let buttonPadding = 8.0
+            #endif
+
+            ZStack(alignment: .top) {
+                // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
+                Color.white.opacity(0.0001)
+
+                if self.controlVisibility == .visible {
+                    HStack {
+                        Button {
+                            self.router.currentRoute = .main
+                        } label: {
+                            Label {
+                                Text("Back")
+                            } icon: {
+                                Image(systemName: Icon.back)
+                            }
+                        }
+                        .help("Back")
+                        .labelStyle(.iconOnly)
+                        .buttonBorderShape(.circle)
+                        .controlSize(.large)
+                        .padding([.leading, .top], buttonPadding)
+
+                        Spacer()
+
+                        Button {
+                            self.restart()
+                        } label: {
+                            Label {
+                                Text("Restart")
+                            } icon: {
+                                Image(systemName: Icon.restart)
+                            }
+                        }
+                        .help("Restart")
+                        .labelStyle(.iconOnly)
+                        .buttonBorderShape(.circle)
+                        .controlSize(.large)
+                        .padding([.trailing, .top], buttonPadding)
+
+                    }
+                }
+            }
+            .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
+        }
+        #if os(visionOS)
+        .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
+            VStack {
+                // Add spacing between main window and ornament content to allow for the window resizer
+                Color.clear.frame(height: 180.0)
+
+                VStack {
+                    HStack {
+                        Text("Separation")
+
+                        Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
+                            Text("Separation")
+                        }, minimumValueLabel: {
+                            Text("-5")
+                        }, maximumValueLabel: {
+                            Text("5")
+                        }) { editing in
+                            self.preventControlDismiss = editing
+                        }
+                    }
+                    Text("\(self.separation)")
+
+                    Toggle("Enable sound", isOn: self.$sound)
+                    Text("Note: Sound is extremely beta and likely broken")
+                        .font(.footnote)
+                }
+                .padding(24)
+                .frame(width: 600)
+                .glassBackgroundEffect()
+            }
+        }
+        #endif
         .onTapGesture {
             self.toggleVisibility()
         }
@@ -80,6 +160,14 @@ struct EmuView: View {
         } catch {
             self.emulator = .error(error.localizedDescription)
         }
+    }
+
+    func restart() {
+        self.emulator = .none
+        // TODO: Make Emulator stereoImageChannel updates cause rerenders
+        DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
+            self.createEmulator(self.fileUrl)
+        }))
     }
 
     func resetTimer() {
@@ -120,96 +208,17 @@ private struct EmuContentView: View {
     @Binding var controlVisibility: Visibility
     @Binding var preventControlDismiss: Bool
 
-    let onRestart: () -> Void
-
     @State private var separation: Double = 0.0
     @State private var sound: Bool = false
 
-    init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>, onRestart: @escaping () -> Void) {
+    init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>) {
         self.emulator = emulator
         self._controlVisibility = controlVisibility
         self._preventControlDismiss = preventControlDismiss
-        self.onRestart = onRestart
     }
 
     var body: some View {
         StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel)
-            .overlay {
-                ZStack(alignment: .top) {
-                    // Clear does not get drawn on top of the StereoImageView for some reason
-                    Color.white.opacity(0.0001)
-
-                    if self.controlVisibility == .visible {
-                        HStack {
-                            Button {
-                                openWindow(value: "main" as String?)
-                            } label: {
-                                Label {
-                                    Text("Back")
-                                } icon: {
-                                    Image(systemName: Icon.back)
-                                }
-                            }
-                            .help("Back")
-                            .labelStyle(.iconOnly)
-                            .buttonBorderShape(.circle)
-                            .controlSize(.large)
-                            .padding([.leading, .top], 40)
-
-                            Spacer()
-
-                            Button {
-                                self.onRestart()
-                            } label: {
-                                Label {
-                                    Text("Restart")
-                                } icon: {
-                                    Image(systemName: Icon.restart)
-                                }
-                            }
-                            .help("Restart")
-                            .labelStyle(.iconOnly)
-                            .buttonBorderShape(.circle)
-                            .controlSize(.large)
-                            .padding([.trailing, .top], 40)
-
-                        }
-                    }
-                }
-                .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
-            }
-            #if os(visionOS)
-            .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
-                VStack {
-                    // Add spacing between main window and ornament content to allow for the window resizer
-                    Color.clear.frame(height: 180.0)
-
-                    VStack {
-                        HStack {
-                            Text("Separation")
-
-                            Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
-                                Text("Separation")
-                            }, minimumValueLabel: {
-                                Text("-5")
-                            }, maximumValueLabel: {
-                                Text("5")
-                            }) { editing in
-                                self.preventControlDismiss = editing
-                            }
-                        }
-                        Text("\(self.separation)")
-
-                        Toggle("Enable sound", isOn: self.$sound)
-                        Text("Note: Sound is extremely beta and likely broken")
-                            .font(.footnote)
-                    }
-                    .padding(24)
-                    .frame(width: 600)
-                    .glassBackgroundEffect()
-                }
-            }
-            #endif
             .onChange(of: self.scenePhase) { _, newPhase in
                 if newPhase == .background {
                     // Stop emulation
