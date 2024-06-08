@@ -706,8 +706,8 @@ impl CpuV810 {
 
         self.set_gen_purpose_reg(reg2_index, result);
         self.psw.update_alu_flags(result, false, None);
-        // Special case, sign is always false
-        self.psw.sign = false;
+        // There appears to be a docs bug that indicates that sign is always false. Both Mednafen and rustual-boy don't have this
+        // self.psw.sign = false;
 
         (1, BusActivity::Standard)
     }

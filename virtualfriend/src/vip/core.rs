@@ -160,23 +160,23 @@ impl VIP {
                 // Displaying left framebuffer 0
                 value.set(
                     2,
-                    self.render_state.drawing_framebuffer_1
+                    !self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     3,
-                    self.render_state.drawing_framebuffer_1
+                    !self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Right,
                 );
                 // Displaying left framebuffer 1
                 value.set(
                     4,
-                    !self.render_state.drawing_framebuffer_1
+                    self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     5,
-                    !self.render_state.drawing_framebuffer_1
+                    self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Right,
                 );
 
@@ -187,6 +187,7 @@ impl VIP {
                 value.set(7, self.fclk);
                 value.set(8, self.refresh_ram);
                 value.set(9, self.sync_enabled);
+                // TODO: Implement
                 value.set(10, self.lock_column_table);
 
                 value.load()
@@ -275,7 +276,7 @@ impl VIP {
             }
             0x5_F802..=0x5_F803 => {
                 // INTENB Interrupt enable
-                self.interrupt_enabled.0 = value;
+                self.interrupt_enabled.0 = value & 0xE014;
             }
             0x5_F804..=0x5F805 => {
                 // INTCLEAR Interrupt clear
@@ -448,10 +449,11 @@ impl VIP {
                             // Found rows. Fire SBHit
                             // Fire interrupt
                             self.interrupt_pending.set_sbhit(true);
-                        }
 
-                        self.render_state.sbout = true;
-                        self.sbout_cycle_high_count = 0;
+                            // Reset SBOUT timer
+                            self.sbout_cycle_high_count = 0;
+                            self.render_state.sbout = true;
+                        }
 
                         self.render_state.sbcount += 1;
                     } else {
@@ -460,7 +462,6 @@ impl VIP {
 
                         // println!("Ended drawing");
 
-                        self.render_state.sbcount = 0;
                         self.interrupt_pending.set_xpend(true);
                     }
                 }

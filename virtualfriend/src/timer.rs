@@ -105,7 +105,7 @@ impl Timer {
                 self.tick_interval_counter = 0;
 
                 if self.tick() {
-                    println!("Timer fire");
+                    // println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
                     request_interrupt = true;
                 }

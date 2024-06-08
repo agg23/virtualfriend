@@ -120,10 +120,6 @@ impl Bus {
     }
 
     pub fn set_u16(&mut self, address: u32, value: u16) {
-        if address == 0x0600012C {
-            println!("Hit address");
-        }
-
         // Mask top 5 bits to mirror bus
         let address = address & 0x07FF_FFFF;
 
