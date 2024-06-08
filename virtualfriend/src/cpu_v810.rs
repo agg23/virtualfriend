@@ -632,10 +632,15 @@ impl CpuV810 {
         let reg1 = self.general_purpose_reg[reg1_index] as i32;
         let reg2 = self.general_purpose_reg[reg2_index] as i32;
 
-        let (result, overflow) = (reg1 as i64).overflowing_mul(reg2 as i64);
+        // We don't do an overflowing_mul because we're looking for a 32 bit overflow, not 64 bit, but
+        // we still want to calculate the lower 32 bits of the result
+        let result = (reg1 as i64) * (reg2 as i64);
         let result = result as u64;
 
         let result_low = (result & 0xFFFF_FFFF) as u32;
+
+        // If low 32 bits (sign extended) are not the same as the final result, we overflowed 32 bits
+        let overflow = result != ((result_low as i32) as u64);
 
         self.set_gen_purpose_reg(30, (result >> 32) as u32);
         self.set_gen_purpose_reg(reg2_index, result_low);
@@ -651,8 +656,13 @@ impl CpuV810 {
         let reg1 = self.general_purpose_reg[reg1_index];
         let reg2 = self.general_purpose_reg[reg2_index];
 
-        let (result, overflow) = (reg1 as u64).overflowing_mul(reg2 as u64);
+        // We don't do an overflowing_mul because we're looking for a 32 bit overflow, not 64 bit, but
+        // we still want to calculate the lower 32 bits of the result
+        let result = (reg1 as u64) * (reg2 as u64);
         let result_low = (result & 0xFFFF_FFFF) as u32;
+
+        // If low 32 bits are not the same as the final result, we overflowed 32 bits
+        let overflow = result != (result_low as u64);
 
         self.set_gen_purpose_reg(30, (result >> 32) as u32);
         self.set_gen_purpose_reg(reg2_index, result_low);
@@ -1181,7 +1191,7 @@ impl CpuV810 {
 
         self.processing_bitstring = false;
 
-        if sub_opcode < 5 {
+        if sub_opcode < 4 {
             // Search operation
             let (upwards_direction, match_1) = match sub_opcode {
                 0b0_0001 => {
@@ -1496,6 +1506,7 @@ impl CpuV810 {
 
     fn bit_string_process_upwards(&mut self, bus: &mut Bus, sub_opcode: usize) {
         println!("Running bit string. May have errors?");
+        // Docs seem to be wrong about masking out 26 bits?
         let mut dest_offset = self.general_purpose_reg[26] & 0x1F;
         self.set_gen_purpose_reg(26, dest_offset);
 
