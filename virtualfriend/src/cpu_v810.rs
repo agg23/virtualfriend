@@ -866,14 +866,14 @@ impl CpuV810 {
     fn xor(&mut self, instruction: u16, use_immediate: bool, bus: &mut Bus) -> (u32, BusActivity) {
         let (reg1_index, reg2_index) = extract_reg1_2_index(instruction);
 
-        let reg2 = self.general_purpose_reg[reg2_index];
+        let reg1 = self.general_purpose_reg[reg1_index];
         let value = if use_immediate {
             self.fetch_instruction_word(bus) as u32
         } else {
-            self.general_purpose_reg[reg1_index]
+            self.general_purpose_reg[reg2_index]
         };
 
-        let result = reg2 ^ value;
+        let result = reg1 ^ value;
 
         self.set_gen_purpose_reg(reg2_index, result);
         self.psw.update_alu_flags(result, false, None);
