@@ -249,8 +249,17 @@ impl CpuV810 {
 
     /// Performs the necessary operations to jump to an interrupt, if valid
     pub fn request_interrupt(&mut self, request: InterruptRequest) {
-        if self.psw.interrupt_disable {
+        // Interrupts are disabled during a duplexed exception (i.e. it only applies for internal exceptions)
+        if self.psw.interrupt_disable || self.psw.exception_pending || self.psw.nmi_pending {
             // Ignore
+            return;
+        }
+
+        // Second nibble is the same as interrupt level
+        let interrupt_level = ((request.code() >> 4) & 0xF) as u8;
+
+        if interrupt_level < self.psw.interrupt_level {
+            // Level not high enough to perform interrupt. Skip
             return;
         }
 
@@ -264,36 +273,7 @@ impl CpuV810 {
             )
         }
 
-        if self.psw.exception_pending {
-            // Duplexed exception
-            // Set duplex code
-            self.ecr = ((request.code() as u32 & 0xFFFF) << 16) | self.ecr;
-            // Backup PSW and PC
-            self.fepsw = self.psw.get();
-            self.fepc = self.pc;
-            // Prevent further stacked exceptions
-            self.psw.nmi_pending = true;
-
-            // We always jump to a particular duplexed exception program
-            self.pc = 0xFFFF_FFD0;
-
-            self.psw.interrupt_disable = true;
-            self.psw.address_trap_enable = false;
-
-            return;
-        }
-
-        let code = request.code();
-
-        // Second nibble is the same as interrupt level
-        let interrupt_level = ((code >> 4) & 0xF) as u8;
-
-        if interrupt_level < self.psw.interrupt_level {
-            // Level not high enough to perform interrupt. Skip
-            return;
-        }
-
-        self.perform_exception(code);
+        self.perform_exception(request.code());
 
         if self.psw.interrupt_level < 15 {
             // Mask interrupts at this level or lower
@@ -303,17 +283,32 @@ impl CpuV810 {
     }
 
     fn perform_exception(&mut self, code: usize) {
-        // Set interrupt code into cause code segment
-        self.ecr = (self.ecr & 0xFFFF_0000) | code as u32;
-        // Backup PSW
-        self.eipsw = self.psw.get();
-        // Backup PC
-        self.eipc = self.pc;
+        if self.psw.exception_pending {
+            // Duplexed exception
+            // Set duplex code
+            self.ecr = ((code as u32 & 0xFFFF) << 16) | (self.ecr & 0xFFFF);
+            // Backup PSW and PC
+            self.fepsw = self.psw.get();
+            self.fepc = self.pc;
+            // Prevent further stacked exceptions
+            self.psw.nmi_pending = true;
+
+            // We always jump to a particular duplexed exception program
+            self.pc = 0xFFFF_FFD0;
+        } else {
+            // Set interrupt code into cause code segment
+            self.ecr = (self.ecr & 0xFFFF_0000) | code as u32;
+            // Backup PSW
+            self.eipsw = self.psw.get();
+            // Backup PC
+            self.eipc = self.pc;
+
+            self.pc = 0xFFFF_0000 | code as u32;
+        }
+
         self.psw.exception_pending = true;
         self.psw.interrupt_disable = true;
         self.psw.address_trap_enable = false;
-
-        self.pc = 0xFFFF_0000 | code as u32;
 
         self.processing_bitstring = false;
 
@@ -1505,7 +1500,7 @@ impl CpuV810 {
     }
 
     fn bit_string_process_upwards(&mut self, bus: &mut Bus, sub_opcode: usize) {
-        println!("Running bit string. May have errors?");
+        // println!("Running bit string. May have errors?");
         // Docs seem to be wrong about masking out 26 bits?
         let mut dest_offset = self.general_purpose_reg[26] & 0x1F;
         self.set_gen_purpose_reg(26, dest_offset);
