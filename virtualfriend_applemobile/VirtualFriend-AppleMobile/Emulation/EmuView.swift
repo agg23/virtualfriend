@@ -106,38 +106,38 @@ struct EmuView: View {
             }
             .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
         }
-        #if os(visionOS)
-        .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
-            VStack {
-                // Add spacing between main window and ornament content to allow for the window resizer
-                Color.clear.frame(height: 180.0)
-
-                VStack {
-                    HStack {
-                        Text("Separation")
-
-                        Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
-                            Text("Separation")
-                        }, minimumValueLabel: {
-                            Text("-5")
-                        }, maximumValueLabel: {
-                            Text("5")
-                        }) { editing in
-                            self.preventControlDismiss = editing
-                        }
-                    }
-                    Text("\(self.separation)")
-
-//                    Toggle("Enable sound", isOn: self.$sound)
-//                    Text("Note: Sound is extremely beta and likely broken")
-//                        .font(.footnote)
-                }
-                .padding(24)
-                .frame(width: 600)
-                .glassBackgroundEffect()
-            }
-        }
-        #endif
+//        #if os(visionOS)
+//        .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
+//            VStack {
+//                // Add spacing between main window and ornament content to allow for the window resizer
+//                Color.clear.frame(height: 180.0)
+//
+//                VStack {
+//                    HStack {
+//                        Text("Separation")
+//
+//                        Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
+//                            Text("Separation")
+//                        }, minimumValueLabel: {
+//                            Text("-5")
+//                        }, maximumValueLabel: {
+//                            Text("5")
+//                        }) { editing in
+//                            self.preventControlDismiss = editing
+//                        }
+//                    }
+//                    Text("\(self.separation)")
+//
+////                    Toggle("Enable sound", isOn: self.$sound)
+////                    Text("Note: Sound is extremely beta and likely broken")
+////                        .font(.footnote)
+//                }
+//                .padding(24)
+//                .frame(width: 600)
+//                .glassBackgroundEffect()
+//            }
+//        }
+//        #endif
         .onTapGesture {
             self.toggleVisibility()
         }

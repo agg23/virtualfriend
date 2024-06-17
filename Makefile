@@ -15,7 +15,6 @@ leaks:
 	cargo asm -p virtualfriend --rust --target armv6k-nintendo-3ds -Z build-std=std --lib virtualfriend::cpu_v810::CpuV810::step > output.asm
 
 vision:
-	cd virtualfriend_swift && xargo build --target aarch64-apple-visionos --release && xargo build --target aarch64-apple-visionos-sim --release
-
+	cd virtualfriend_swift && cargo build -Zbuild-std --target aarch64-apple-visionos --release && cargo build -Zbuild-std --target aarch64-apple-visionos-sim --release
 ios:
 	cd virtualfriend_swift && cargo build --target aarch64-apple-ios --release && cargo build --target aarch64-apple-ios-sim --release
