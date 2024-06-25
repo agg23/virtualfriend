@@ -1,0 +1,12 @@
+[package]
+name = "virtualfriend_runner"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "virtualfriend_runner"
+
+[dependencies]
+virtualfriend = { path = "../virtualfriend" }
+
+cpal = "0.15.2"

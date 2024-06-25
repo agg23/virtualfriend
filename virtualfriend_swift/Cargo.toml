@@ -12,5 +12,6 @@ crate-type = ["staticlib"]
 swift-bridge-build = "0.1"
 
 [dependencies]
-virtualfriend = { path = "../virtualfriend", default-features = false }
+virtualfriend = { path = "../virtualfriend" }
+virtualfriend_runner = { path = "../virtualfriend_runner" }
 swift-bridge = "0.1"

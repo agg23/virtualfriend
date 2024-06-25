@@ -11,4 +11,6 @@
 #include "SwiftBridgeCore.h"
 #include "virtualfriend_swift/virtualfriend_swift.h"
 
+void start_emulation(void* emulator);
+
 #endif /* Bridging_Header_h */

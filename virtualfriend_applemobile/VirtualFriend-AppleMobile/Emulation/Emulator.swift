@@ -117,15 +117,15 @@ class Emulator {
         audioConverter.reset()
 
         self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
-            self.executingTask = Task {
-                let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
-
-                if Task.isCancelled {
-                    return
-                }
-
-                self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
-            }
+//            self.executingTask = Task {
+//                let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
+//
+//                if Task.isCancelled {
+//                    return
+//                }
+//
+//                self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
+//            }
 
             let listBuffer = UnsafeMutableAudioBufferListPointer(outputBuffer)
 
@@ -150,10 +150,10 @@ class Emulator {
 
             return 0
         })
-        self.audioEngine.attach(self.audioNode)
-
-
-        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
+//        self.audioEngine.attach(self.audioNode)
+//
+//
+//        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
     }
 
     func start() {
@@ -173,18 +173,25 @@ class Emulator {
         // Initial silence buffer
         self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
 
-        self.executingTask = Task {
-            let frame = await self.runAudioGroupedFrame(UInt(487), interval: 0)
-            self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
-
-            do {
-                try self.audioEngine.start()
-
-    //            self.audioNode.play()
-            } catch {
-                print(error)
-            }
+        Task {
+//            self.actor.virtualFriend.start()
+//            start_emulation(self.actor.virtualFriend)
+            let pointer = await self.actor.virtualFriend.ptr
+            start_emulation(pointer)
         }
+
+//        self.executingTask = Task {
+//            let frame = await self.runAudioGroupedFrame(UInt(487), interval: 0)
+//            self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
+//
+//            do {
+//                try self.audioEngine.start()
+//
+//    //            self.audioNode.play()
+//            } catch {
+//                print(error)
+//            }
+//        }
 
 //        Task {
 //            // Run two sets of audio frames to speed up scheduling of buffers
@@ -238,39 +245,39 @@ class Emulator {
         self.backgroundColor = backgroundColor
     }
 
-    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
-        let frameTime = Date().timeIntervalSince1970
-
-        let shouldBe = 1.0/41667.0 * Double(bufferSize)
-        let actual = frameTime - (self.prevFrameTime ?? frameTime)
-
-        print(actual, bufferSize, "Should be \(shouldBe)")
-
-        if shouldBe <= actual {
-            print("Overran audio buffer")
-        }
-
-        self.prevFrameTime = frameTime
-
-        let inputs = self.pollInput()
-
-        let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
-
-        if let frame = frame.video {
-            let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-            let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-
-            // TODO: This should be moved by Metal, not the CPU
-            let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-            let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
-
-            await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
-        }
-
-        print("Diff \(Date().timeIntervalSince1970 - interval)")
-
-        return frame
-    }
+//    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
+//        let frameTime = Date().timeIntervalSince1970
+//
+//        let shouldBe = 1.0/41667.0 * Double(bufferSize)
+//        let actual = frameTime - (self.prevFrameTime ?? frameTime)
+//
+//        print(actual, bufferSize, "Should be \(shouldBe)")
+//
+//        if shouldBe <= actual {
+//            print("Overran audio buffer")
+//        }
+//
+//        self.prevFrameTime = frameTime
+//
+//        let inputs = self.pollInput()
+//
+//        let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
+//
+//        if let frame = frame.video {
+//            let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
+//            let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
+//
+//            // TODO: This should be moved by Metal, not the CPU
+//            let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+//            let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
+//
+//            await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+//        }
+//
+//        print("Diff \(Date().timeIntervalSince1970 - interval)")
+//
+//        return frame
+//    }
 
     private func renderAudioBuffer(_ frame: FFIFrame, buffer: AVAudioPCMBuffer) {
         guard self.enableSound else {
@@ -404,8 +411,12 @@ private actor EmulatorActor {
         self.virtualFriend = virtualFriend
     }
 
-    func runAudioFrame(with inputs: FFIGamepadInputs, bufferSize: UInt) -> FFIFrame {
-        return self.virtualFriend.run_audio_frame(inputs, bufferSize)
+//    func runAudioFrame(with inputs: FFIGamepadInputs, bufferSize: UInt) -> FFIFrame {
+//        return self.virtualFriend.run_audio_frame(inputs, bufferSize)
+//    }
+
+    func start() {
+//        self.virtualFriend.start()
     }
 }
 
