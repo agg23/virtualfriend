@@ -257,14 +257,16 @@ class Emulator {
         let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
 
         if let frame = frame.video {
-            let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-            let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-
-            // TODO: This should be moved by Metal, not the CPU
-            let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-            let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
-
-            await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+            Task {
+                let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
+                let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
+                
+                // TODO: This should be moved by Metal, not the CPU
+                let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+                let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
+                
+                await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+            }
         }
 
         print("Diff \(Date().timeIntervalSince1970 - interval)")
