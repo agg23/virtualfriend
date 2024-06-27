@@ -12,7 +12,6 @@ import AVFAudio
 
 class Emulator {
     private let fileName: String
-    private let actor: EmulatorActor
     private let audioEngine: AVAudioEngine
 //    private let audioNode: AVAudioPlayerNode
     private var audioNode: AVAudioSourceNode!
@@ -24,11 +23,12 @@ class Emulator {
 
     private var inputBufferLength: Int = 0
 
+    private let virtualFriend: VirtualFriend
+    private var emulatorQueue: DispatchQueue
+
     private var color: VBColor
 
     var stereoImageChannel = AsyncImageChannel()
-
-    var executingTask: Task<(), Error>?
 
     var prevFrameTime: TimeInterval?
 
@@ -38,6 +38,8 @@ class Emulator {
 
     init(fileUrl: URL) throws {
         self.color = VBColor(foregroundColor: .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), backgroundColor: .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0))
+
+        self.emulatorQueue = DispatchQueue(label: "emulator", qos: .userInteractive)
 
         let didAccessScope = fileUrl.startAccessingSecurityScopedResource()
 
@@ -78,7 +80,7 @@ class Emulator {
             print("Save load error \(error)")
         }
 
-        self.actor = EmulatorActor(virtualFriend: virtualFriend)
+        self.virtualFriend = virtualFriend
 
         fileUrl.stopAccessingSecurityScopedResource()
 
@@ -118,13 +120,9 @@ class Emulator {
         audioConverter.reset()
 
         self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
-            self.executingTask = Task {
-                let frame = await self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
-
-                if Task.isCancelled {
-                    return
-                }
-
+            self.emulatorQueue.async {
+                // Schedule frame to run while we copy the last frame's data into the audio buffer
+                let frame = self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
                 self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
             }
 
@@ -174,8 +172,9 @@ class Emulator {
         // Initial silence buffer
         self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
 
-        self.executingTask = Task {
-            let frame = await self.runAudioGroupedFrame(UInt(487), interval: 0)
+        self.emulatorQueue.async {
+            // Schedule frame to run while we copy the last frame's data into the audio buffer
+            let frame = self.runAudioGroupedFrame(UInt(487), interval: 0)
             self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
 
             do {
@@ -197,16 +196,13 @@ class Emulator {
     }
 
     func stop() {
-        self.executingTask?.cancel()
-        self.executingTask = nil
-
         self.audioEngine.stop()
     }
 
     func shutdown() {
         self.stop()
 
-        let saveData = Data(self.actor.virtualFriend.save_ram())
+        let saveData = Data(self.virtualFriend.save_ram())
         print("Saving size \(saveData.count)")
         do {
             try saveData.write(to: saveUrl(for: self.fileName))
@@ -238,7 +234,7 @@ class Emulator {
         self.color = color
     }
 
-    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
+    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) -> FFIFrame {
         let frameTime = Date().timeIntervalSince1970
 
         let shouldBe = 1.0/41667.0 * Double(bufferSize)
@@ -254,7 +250,7 @@ class Emulator {
 
         let inputs = self.pollInput()
 
-        let frame = await self.actor.runAudioFrame(with: inputs, bufferSize: bufferSize)
+        let frame = self.virtualFriend.run_audio_frame(inputs, bufferSize)
 
         if let frame = frame.video {
             Task {
@@ -396,19 +392,6 @@ private func saveUrl(for name: String) -> URL {
     saveUrl.append(component: "\(name).sav")
 
     return saveUrl
-}
-
-/// Used to prevent concurrent access to Rust code
-private actor EmulatorActor {
-    let virtualFriend: VirtualFriend
-
-    init(virtualFriend: VirtualFriend) {
-        self.virtualFriend = virtualFriend
-    }
-
-    func runAudioFrame(with inputs: FFIGamepadInputs, bufferSize: UInt) -> FFIFrame {
-        return self.virtualFriend.run_audio_frame(inputs, bufferSize)
-    }
 }
 
 enum EmulatorError: Error {
