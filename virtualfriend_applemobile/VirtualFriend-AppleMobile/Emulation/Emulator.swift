@@ -24,8 +24,7 @@ class Emulator {
 
     private var inputBufferLength: Int = 0
 
-    private var backgroundColor: CGColor = .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0)
-    private var foregroundColor: CGColor = .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+    private var color: VBColor
 
     var stereoImageChannel = AsyncImageChannel()
 
@@ -38,6 +37,8 @@ class Emulator {
     var enableSound: Bool = true
 
     init(fileUrl: URL) throws {
+        self.color = VBColor(foregroundColor: .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), backgroundColor: .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0))
+
         let didAccessScope = fileUrl.startAccessingSecurityScopedResource()
 
         let data: Data
@@ -233,9 +234,8 @@ class Emulator {
         }
     }
 
-    func set(foregroundColor: CGColor, backgroundColor: CGColor) {
-        self.foregroundColor = foregroundColor
-        self.backgroundColor = backgroundColor
+    func set(color: VBColor) {
+        self.color = color
     }
 
     private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) async -> FFIFrame {
@@ -258,14 +258,14 @@ class Emulator {
 
         if let frame = frame.video {
             Task {
-                let leftImage = frame.left.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-                let rightImage = frame.right.ciImage(foregroundColor: self.foregroundColor, backgroundColor: self.backgroundColor)
-                
+                let leftImage = frame.left.ciImage(color: self.color)
+                let rightImage = frame.right.ciImage(color: self.color)
+
                 // TODO: This should be moved by Metal, not the CPU
-                let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-                let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
+               let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
+               let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
                 
-                await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
+               await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
             }
         }
 

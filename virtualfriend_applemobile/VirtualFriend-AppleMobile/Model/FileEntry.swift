@@ -63,9 +63,9 @@ struct FileEntry {
         return manifest
     }
 
-    static func image(from manifest: FFIManifest, foregroundColor: CGColor, backgroundColor: CGColor) -> StereoImage {
-        let left = manifest.left_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
-        let right = manifest.right_frame.ciImage(foregroundColor: foregroundColor, backgroundColor: backgroundColor)
+    static func image(from manifest: FFIManifest, color: VBColor) -> StereoImage {
+        let left = manifest.left_frame.ciImage(color: color)
+        let right = manifest.right_frame.ciImage(color: color)
 
         return StereoImage(left: left, right: right)
     }

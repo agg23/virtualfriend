@@ -90,7 +90,8 @@ struct SettingsView: View {
 
     func generateImage(foregroundColor: Color, backgroundColor: Color) -> UIImage {
         let manifest = FileEntry.getUnknownManifest()
-        return manifest.left_frame.uiImage(foregroundColor: foregroundColor.resolve(in: .init()).cgColor, backgroundColor: backgroundColor.resolve(in: .init()).cgColor)
+        let color = VBColor(foregroundColor: foregroundColor.resolve(in: .init()).cgColor, backgroundColor: backgroundColor.resolve(in: .init()).cgColor)
+        return manifest.left_frame.uiImage(color: color)
     }
 }
 

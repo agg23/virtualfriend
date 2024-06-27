@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StereoManifestImageView: View {
     @LEDBackgroundColor var ledBackgroundColor;
-    @LEDForegroundColor var ledForegroundColor;
+    @LEDColor var ledColor
 
     @State var stereoStreamChannel = AsyncImageChannel()
     @State var task: Task<(), Error>?
@@ -32,10 +32,7 @@ struct StereoManifestImageView: View {
             .onChange(of: self.entry, initial: true) { _, _ in
                 self.generateImage()
             }
-            .onChange(of: self.ledBackgroundColor) { _, _ in
-                self.generateImage()
-            }
-            .onChange(of: self.ledForegroundColor) { _, _ in
+            .onChange(of: self.ledColor) { _, _ in
                 self.generateImage()
             }
     }
@@ -44,7 +41,7 @@ struct StereoManifestImageView: View {
         self.task?.cancel()
 
         self.task = Task {
-            let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+            let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), color: self.ledColor)
 
             await self.stereoStreamChannel.channel.send(stereoImage)
         }

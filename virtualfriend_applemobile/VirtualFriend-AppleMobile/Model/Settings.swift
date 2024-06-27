@@ -54,3 +54,24 @@ struct LEDForegroundColor: DynamicProperty {
         self._wrappedValue.projectedValue
     }
 }
+
+class LEDColorWrapper: ObservableObject {
+    @AppStorage(Settings.ledForegroundColorKey) var foreground: Color = .init(red: 1.0, green: 0.0, blue: 0.0)
+    @AppStorage(Settings.ledBackgroundColorKey) var background: Color = .init(red: 0.0, green: 0.0, blue: 0.0)
+
+    var cache: VBColor = VBColor(foregroundColor: .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), backgroundColor: .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0))
+}
+
+@propertyWrapper
+struct LEDColor: DynamicProperty {
+    @StateObject var colorWrapper: LEDColorWrapper = LEDColorWrapper()
+
+    var wrappedValue: VBColor {
+        self.colorWrapper.cache
+    }
+
+    func update() {
+        self.colorWrapper.cache = VBColor(foregroundColor: self.colorWrapper.foreground.rawCGColor, backgroundColor: self.colorWrapper.background.rawCGColor)
+    }
+}
+

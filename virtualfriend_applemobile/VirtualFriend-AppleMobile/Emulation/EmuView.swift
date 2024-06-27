@@ -201,8 +201,7 @@ private struct EmuContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openWindow) var openWindow
 
-    @LEDBackgroundColor var ledBackgroundColor;
-    @LEDForegroundColor var ledForegroundColor;
+    @LEDColor var ledColor
 
     let emulator: Emulator
     @Binding var controlVisibility: Visibility
@@ -224,14 +223,11 @@ private struct EmuContentView: View {
                     self.emulator.shutdown()
                 }
             }
-            .onChange(of: self.ledBackgroundColor) { _, _ in
-                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
-            }
-            .onChange(of: self.ledForegroundColor) { _, _ in
-                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+            .onChange(of: self.ledColor) { _, _ in
+                self.emulator.set(color: self.ledColor)
             }
             .onAppear {
-                self.emulator.set(foregroundColor: self.ledForegroundColor.rawCGColor, backgroundColor: self.ledBackgroundColor.rawCGColor)
+                self.emulator.set(color: self.ledColor)
 
                 self.emulator.separation = self.$separation
                 self.emulator.start()
