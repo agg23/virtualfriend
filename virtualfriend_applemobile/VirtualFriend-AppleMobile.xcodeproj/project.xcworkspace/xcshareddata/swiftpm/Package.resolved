@@ -1,5 +1,5 @@
 {
-  "originHash" : "13678df8bf756b5a26255707c7a7a2f70f4fa09e8466f4b4d0ca97436222d7d0",
+  "originHash" : "da33c4d4273f918d973fb56de1f63b0184456da0642cf78282cfdfcb5bccba7e",
   "pins" : [
     {
       "identity" : "swift-async-algorithms",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "94cf62b3ba8d4bed62680a282d4c25f9c63c2efb",
         "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "tpcircularbuffer",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/michaeltyson/TPCircularBuffer",
+      "state" : {
+        "revision" : "8833b3a73fab6530cc51e2063a85cced01714cfb",
+        "version" : "1.6.2"
       }
     }
   ],

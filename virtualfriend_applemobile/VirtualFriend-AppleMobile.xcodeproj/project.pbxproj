@@ -43,7 +43,6 @@
 		66A061372BE7D5680043D170 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061362BE7D5680043D170 /* FileImporter.swift */; };
 		66A061392BE7EC8B0043D170 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A061382BE7EC8B0043D170 /* URL.swift */; };
 		66C4BC2C2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */; };
-		66C4BC2E2BCC271D00AA8732 /* Emulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2D2BCC271D00AA8732 /* Emulator.swift */; };
 		66C4BC302BCCC05500AA8732 /* Icon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4BC2F2BCCC05500AA8732 /* Icon.swift */; };
 		66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */; };
 		66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */; };
@@ -53,6 +52,11 @@
 		66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B12BC755F500BE5C0F /* StereoImageView.swift */; };
 		66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */; };
 		66CB32B62BC758F600BE5C0F /* StereoImageMaterial.usda in Resources */ = {isa = PBXBuildFile; fileRef = 66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */; };
+		66E43B0F2C3058D100B8C04E /* TPCircularBuffer in Frameworks */ = {isa = PBXBuildFile; productRef = 66E43B0E2C3058D100B8C04E /* TPCircularBuffer */; };
+		66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B122C305A2800B8C04E /* OERingBuffer.m */; };
+		66E43B152C305B9900B8C04E /* Emulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B142C305B9500B8C04E /* Emulator.swift */; };
+		66E43B192C305D8200B8C04E /* OETimingUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B182C305D8200B8C04E /* OETimingUtils.m */; };
+		66E43B1C2C3099C800B8C04E /* EmulatorAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B1B2C3099C800B8C04E /* EmulatorAudio.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -101,7 +105,6 @@
 		66A061362BE7D5680043D170 /* FileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporter.swift; sourceTree = "<group>"; };
 		66A061382BE7EC8B0043D170 /* URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL.swift; sourceTree = "<group>"; };
 		66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+WindowGeometryPreferences.swift"; sourceTree = "<group>"; };
-		66C4BC2D2BCC271D00AA8732 /* Emulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emulator.swift; sourceTree = "<group>"; };
 		66C4BC2F2BCCC05500AA8732 /* Icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icon.swift; sourceTree = "<group>"; };
 		66C60F052B63546B00C1FDF4 /* FFIGamepadInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIGamepadInputs.swift; sourceTree = "<group>"; };
 		66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerView.swift; sourceTree = "<group>"; };
@@ -111,6 +114,12 @@
 		66CB32B12BC755F500BE5C0F /* StereoImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageView.swift; sourceTree = "<group>"; };
 		66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageMaterial.swift; sourceTree = "<group>"; };
 		66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = StereoImageMaterial.usda; sourceTree = "<group>"; };
+		66E43B112C305A2800B8C04E /* OERingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OERingBuffer.h; sourceTree = "<group>"; };
+		66E43B122C305A2800B8C04E /* OERingBuffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OERingBuffer.m; sourceTree = "<group>"; };
+		66E43B142C305B9500B8C04E /* Emulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emulator.swift; sourceTree = "<group>"; };
+		66E43B172C305D8200B8C04E /* OETimingUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OETimingUtils.h; sourceTree = "<group>"; };
+		66E43B182C305D8200B8C04E /* OETimingUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OETimingUtils.m; sourceTree = "<group>"; };
+		66E43B1B2C3099C800B8C04E /* EmulatorAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmulatorAudio.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +127,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				66E43B0F2C3058D100B8C04E /* TPCircularBuffer in Frameworks */,
 				6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */,
 				661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */,
 				66A061352BE7D2AE0043D170 /* UniformTypeIdentifiers.framework in Frameworks */,
@@ -325,9 +335,11 @@
 		66C60F0C2B6595B600C1FDF4 /* Emulation */ = {
 			isa = PBXGroup;
 			children = (
+				66E43B102C305A1300B8C04E /* Audio */,
+				66E43B162C305D7500B8C04E /* Util */,
+				66E43B142C305B9500B8C04E /* Emulator.swift */,
 				6688DED62B5DF876004B2123 /* EmuView.swift */,
 				66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */,
-				66C4BC2D2BCC271D00AA8732 /* Emulator.swift */,
 			);
 			path = Emulation;
 			sourceTree = "<group>";
@@ -340,6 +352,25 @@
 				66C4BC2F2BCCC05500AA8732 /* Icon.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		66E43B102C305A1300B8C04E /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				66E43B1B2C3099C800B8C04E /* EmulatorAudio.swift */,
+				66E43B112C305A2800B8C04E /* OERingBuffer.h */,
+				66E43B122C305A2800B8C04E /* OERingBuffer.m */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		66E43B162C305D7500B8C04E /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				66E43B172C305D8200B8C04E /* OETimingUtils.h */,
+				66E43B182C305D8200B8C04E /* OETimingUtils.m */,
+			);
+			path = Util;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -361,6 +392,7 @@
 			name = "VirtualFriend-AppleMobile";
 			packageProductDependencies = (
 				665022C12C0CDF470012E9D4 /* AsyncAlgorithms */,
+				66E43B0E2C3058D100B8C04E /* TPCircularBuffer */,
 			);
 			productName = "VirtualFriend-Vision";
 			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */;
@@ -392,6 +424,7 @@
 			mainGroup = 6629A1C42B4E538200FE2AB3;
 			packageReferences = (
 				665022C02C0CDF470012E9D4 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
+				66E43B0D2C3058D100B8C04E /* XCRemoteSwiftPackageReference "TPCircularBuffer" */,
 			);
 			productRefGroup = 6629A1CE2B4E538200FE2AB3 /* Products */;
 			projectDirPath = "";
@@ -453,6 +486,7 @@
 				669729972BDD94E70013BCE2 /* AsyncImageChannel.swift in Sources */,
 				6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */,
 				6688DED72B5DF876004B2123 /* EmuView.swift in Sources */,
+				66E43B1C2C3099C800B8C04E /* EmulatorAudio.swift in Sources */,
 				660955622B62202700A47B1B /* StereoImage.swift in Sources */,
 				66A061312BE67F5F0043D170 /* Color.swift in Sources */,
 				66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */,
@@ -467,6 +501,7 @@
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
 				66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */,
 				66A061332BE7D2530043D170 /* FileType.swift in Sources */,
+				66E43B192C305D8200B8C04E /* OETimingUtils.m in Sources */,
 				665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */,
 				665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */,
 				66A061392BE7EC8B0043D170 /* URL.swift in Sources */,
@@ -475,8 +510,9 @@
 				669729892BDD54B50013BCE2 /* FilePickerGrid.swift in Sources */,
 				6697298D2BDD56770013BCE2 /* FileEntry.swift in Sources */,
 				6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */,
+				66E43B152C305B9900B8C04E /* Emulator.swift in Sources */,
 				664337EF2C112884004DAA99 /* ButtonStyle.swift in Sources */,
-				66C4BC2E2BCC271D00AA8732 /* Emulator.swift in Sources */,
+				66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerGridItemView.swift in Sources */,
 				66A0612F2BE679BF0043D170 /* Settings.swift in Sources */,
 				66C4BC302BCCC05500AA8732 /* Icon.swift in Sources */,
@@ -710,6 +746,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		66E43B0D2C3058D100B8C04E /* XCRemoteSwiftPackageReference "TPCircularBuffer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/michaeltyson/TPCircularBuffer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -717,6 +761,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 665022C02C0CDF470012E9D4 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;
+		};
+		66E43B0E2C3058D100B8C04E /* TPCircularBuffer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 66E43B0D2C3058D100B8C04E /* XCRemoteSwiftPackageReference "TPCircularBuffer" */;
+			productName = TPCircularBuffer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

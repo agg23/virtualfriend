@@ -1,30 +1,24 @@
 //
 //  Emulator.swift
-//  VirtualFriend-Vision
+//  VirtualFriend-AppleMobile
 //
-//  Created by Adam Gastineau on 4/14/24.
+//  Created by Adam Gastineau on 6/29/24.
 //
 
 import SwiftUI
-import AsyncAlgorithms
 import GameController
-import AVFAudio
+
+private let SAMPLE_RATE = 41667
+private let FRAME_RATE = 50.0
+private let AUDIO_FRAMES_PER_LOOP: UInt = 400
 
 class Emulator {
     private let fileName: String
-    private let audioEngine: AVAudioEngine
-//    private let audioNode: AVAudioPlayerNode
-    private var audioNode: AVAudioSourceNode!
-    private let audioConverter: AVAudioConverter
 
-    private let audioInputBuffer: AVAudioPCMBuffer
-    private let audioOutputBuffer0: AVAudioPCMBuffer
-    private let audioOutputBuffer1: AVAudioPCMBuffer
-
-    private var inputBufferLength: Int = 0
+    private var emulatorQueue: DispatchQueue
 
     private let virtualFriend: VirtualFriend
-    private var emulatorQueue: DispatchQueue
+    private let audio: EmulatorAudio
 
     private var color: VBColor
 
@@ -34,10 +28,8 @@ class Emulator {
 
     var separation: Binding<Double>?
 
-    var enableSound: Bool = true
-
     init(fileUrl: URL) throws {
-        self.color = VBColor(foregroundColor: .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), backgroundColor: .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0))
+        self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
 
         self.emulatorQueue = DispatchQueue(label: "emulator", qos: .userInteractive)
 
@@ -61,8 +53,6 @@ class Emulator {
             return VirtualFriend(pointer)
         }
 
-        self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
-
         do {
             let saveData = try Data(contentsOf: saveUrl(for: self.fileName))
 
@@ -81,126 +71,26 @@ class Emulator {
         }
 
         self.virtualFriend = virtualFriend
+        self.audio = try EmulatorAudio()
+
+        self.color = VBColor(foregroundColor: .init(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0), backgroundColor: .init(red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0))
 
         fileUrl.stopAccessingSecurityScopedResource()
-
-        self.audioEngine = AVAudioEngine()
-
-        guard let outputFormat = AVAudioFormat(standardFormatWithSampleRate: AVAudioSession.sharedInstance().sampleRate, channels: 2),
-              let inputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 41667, channels: 2, interleaved: false),
-              let audioConverter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
-            throw EmulatorError.audioFormatInit
-        }
-
-        self.audioConverter = audioConverter
-
-        let outputBufferCapacity = AVAudioFrameCount(4096)
-
-        guard let audioInputBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(20000)),
-              let audioOutputBuffer0 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity),
-              let audioOutputBuffer1 = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputBufferCapacity) else {
-            throw EmulatorError.audioBufferInit
-        }
-
-        self.audioInputBuffer = audioInputBuffer
-        self.audioOutputBuffer0 = audioOutputBuffer0
-        self.audioOutputBuffer1 = audioOutputBuffer1
-
-        // Capture the number of frames we expect given the resampling
-//        audioConverter.convert(to: self.audioOutputBuffer0, error: nil) { packetCount, status in
-//            self.inputBufferLength = Int(packetCount)
-//
-//            status.pointee = .endOfStream
-//
-//            return nil
-//        }
-
-        print("Expecting \(self.inputBufferLength) frames at a time")
-
-        audioConverter.reset()
-
-        self.audioNode = AVAudioSourceNode(format: inputFormat, renderBlock: { _isSilence, _timestamp, frameCount, outputBuffer -> OSStatus in
-            self.emulatorQueue.async {
-                // Schedule frame to run while we copy the last frame's data into the audio buffer
-                let frame = self.runAudioGroupedFrame(UInt(frameCount), interval: 0)
-                self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
-            }
-
-            let listBuffer = UnsafeMutableAudioBufferListPointer(outputBuffer)
-
-//            guard let inputChannelData = self.audioOutputBuffer0.floatChannelData else {
-//                fatalError("Could not get int16 channel data")
-//            }
-
-            guard let inputChannelData = self.audioInputBuffer.int16ChannelData else {
-                fatalError("Could not get int16 channel data")
-            }
-
-            let leftInputChannel = inputChannelData[0]
-            let rightInputChannel = inputChannelData[1]
-
-            let leftOutputChannel = UnsafeMutableBufferPointer<Int16>(listBuffer[0])
-            let rightOutputChannel = UnsafeMutableBufferPointer<Int16>(listBuffer[1])
-
-            for i in 0..<Int(frameCount) {
-                leftOutputChannel[i] = leftInputChannel[i]
-                rightOutputChannel[i] = rightInputChannel[i]
-            }
-
-            return 0
-        })
-        self.audioEngine.attach(self.audioNode)
-
-
-        self.audioEngine.connect(self.audioNode, to: self.audioEngine.mainMixerNode, format: outputFormat)
     }
 
     func start() {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio, options: [])
-
-            try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(0.005)
-            try AVAudioSession.sharedInstance().setAllowHapticsAndSystemSoundsDuringRecording(true)
-
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print(error)
-        }
-
-        self.audioNode.reset()
-
-        // Initial silence buffer
-        self.audioInputBuffer.frameLength = AVAudioFrameCount(10000)
+        // Run advance frame
+        self.runAndWriteFrame()
 
         self.emulatorQueue.async {
-            // Schedule frame to run while we copy the last frame's data into the audio buffer
-            let frame = self.runAudioGroupedFrame(UInt(487), interval: 0)
-            self.renderAudioBuffer(frame, buffer: self.audioOutputBuffer0)
-
-            do {
-                try self.audioEngine.start()
-
-    //            self.audioNode.play()
-            } catch {
-                print(error)
-            }
+            self.startThread()
         }
 
-//        Task {
-//            // Run two sets of audio frames to speed up scheduling of buffers
-//            let frame0 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
-//            let frame1 = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: 0)
-//            self.renderAudioBuffer(frame0, buffer: self.audioOutputBuffer0)
-//            self.renderAudioBuffer(frame1, buffer: self.audioOutputBuffer1)
-//        }
-    }
-
-    func stop() {
-        self.audioEngine.stop()
+        self.audio.start()
     }
 
     func shutdown() {
-        self.stop()
+        self.audio.stop()
 
         let saveData = Data(self.virtualFriend.save_ram())
         print("Saving size \(saveData.count)")
@@ -211,46 +101,44 @@ class Emulator {
         }
     }
 
-    func enableSound(_ enable: Bool) {
-        self.enableSound = enable
-
-        if !enable {
-            // Turn off sound, clear buffer
-            guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
-                return
-            }
-
-            let channel0 = inputBuffer[0]
-            let channel1 = inputBuffer[1]
-
-            for i in 0..<20000 {
-                channel0[Int(i)] = 0
-                channel1[Int(i)] = 0
-            }
-        }
-    }
-
     func set(color: VBColor) {
         self.color = color
     }
 
-    private func runAudioGroupedFrame(_ bufferSize: UInt, interval: TimeInterval) -> FFIFrame {
-        let frameTime = Date().timeIntervalSince1970
+    private func startThread() {
+        let tickRate = Double(AUDIO_FRAMES_PER_LOOP) / Double(SAMPLE_RATE)
 
-        let shouldBe = 1.0/41667.0 * Double(bufferSize)
-        let actual = frameTime - (self.prevFrameTime ?? frameTime)
+        OESetThreadRealtime(tickRate, 0.007, 0.03) // Constants somehow come from bsnes
 
-        print(actual, bufferSize, "Should be \(shouldBe)")
+        var nextFrameTime = OEMonotonicTime()
 
-        if shouldBe <= actual {
-            print("Overran audio buffer")
+        while true {
+            autoreleasepool {
+                self.runAndWriteFrame()
+
+                nextFrameTime += tickRate
+
+                let currentTime = OEMonotonicTime()
+
+                let timeDifference = currentTime - nextFrameTime
+
+                if timeDifference >= 1.0 {
+                    print("Synchronizing time as we are off by \(timeDifference)s");
+                    nextFrameTime = currentTime
+                }
+
+                OEWaitUntil(nextFrameTime)
+
+                // Tick run loop once to handle events
+                CFRunLoopRunInMode(.defaultMode, 0, false)
+            }
         }
+    }
 
-        self.prevFrameTime = frameTime
-
+    private func runAndWriteFrame() {
         let inputs = self.pollInput()
 
-        let frame = self.virtualFriend.run_audio_frame(inputs, bufferSize)
+        let frame = self.virtualFriend.run_audio_frame(inputs, AUDIO_FRAMES_PER_LOOP)
 
         if let frame = frame.video {
             Task {
@@ -260,70 +148,13 @@ class Emulator {
                 // TODO: This should be moved by Metal, not the CPU
                let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
                let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
-                
+
                await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
             }
         }
 
-        print("Diff \(Date().timeIntervalSince1970 - interval)")
-
-        return frame
+        self.audio.write(frame: frame)
     }
-
-    private func renderAudioBuffer(_ frame: FFIFrame, buffer: AVAudioPCMBuffer) {
-        guard self.enableSound else {
-            return
-        }
-
-        guard let inputBuffer = self.audioInputBuffer.int16ChannelData else {
-            return
-        }
-
-        var conversionError: NSError?
-
-//        self.audioConverter.convert(to: buffer, error: &conversionError) { packetCount, status in
-//            let channel0 = inputBuffer[0]
-//            let channel1 = inputBuffer[1]
-//
-//            for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
-//                channel0[i] = left
-//                channel1[i] = right
-//            }
-//
-//            status.pointee = .hasData
-//
-//            self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
-//            return self.audioInputBuffer
-//        }
-
-        let channel0 = inputBuffer[0]
-        let channel1 = inputBuffer[1]
-
-        for (i, (left, right)) in zip(frame.audio_left, frame.audio_right).enumerated() {
-            channel0[i] = left
-            channel1[i] = right
-        }
-
-        self.audioInputBuffer.frameLength = AVAudioFrameCount(frame.audio_left.len())
-
-        if let error = conversionError {
-            print(error, error.userInfo)
-        }
-
-//        self.runAndScheduleFrame(buffer: buffer)
-    }
-
-//    private func runAndScheduleFrame(buffer: AVAudioPCMBuffer) {
-//        let start = Date().timeIntervalSince1970
-//
-//        Task {
-//            let frame = await self.runAudioGroupedFrame(UInt(self.inputBufferLength), interval: start)
-//
-////            await self.audioNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed)
-//
-//            self.renderAudioBuffer(frame, buffer: buffer)
-//        }
-//    }
 
     private func pollInput() -> FFIGamepadInputs {
         let keyboard = pollKeyboardInput()
@@ -386,15 +217,15 @@ class Emulator {
     }
 }
 
+enum EmulatorError: Error {
+    case audioFormatInit
+    case audioBufferInit
+}
+
 private func saveUrl(for name: String) -> URL {
     var saveUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     saveUrl.append(component: "Saves")
     saveUrl.append(component: "\(name).sav")
 
     return saveUrl
-}
-
-enum EmulatorError: Error {
-    case audioFormatInit
-    case audioBufferInit
 }
