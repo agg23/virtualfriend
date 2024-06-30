@@ -71,6 +71,10 @@ struct EmuView: View {
                     HStack {
                         Button {
                             self.router.currentRoute = .main
+
+                            if case .emulator(let emulator) = self.emulator {
+                                emulator.shutdown()
+                            }
                         } label: {
                             Label {
                                 Text("Back")

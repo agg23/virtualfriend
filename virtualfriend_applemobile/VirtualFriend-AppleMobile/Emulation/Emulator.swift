@@ -28,6 +28,10 @@ class Emulator {
 
     var separation: Binding<Double>?
 
+    var halt = true
+    /// Mark whether save has occurred, so we only save once
+    var hasShutdownSaved = false
+
     init(fileUrl: URL) throws {
         self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
 
@@ -79,6 +83,9 @@ class Emulator {
     }
 
     func start() {
+        self.halt = false
+        self.hasShutdownSaved = false
+
         // Run advance frame
         self.runAndWriteFrame()
 
@@ -90,12 +97,20 @@ class Emulator {
     }
 
     func shutdown() {
+        // Kill the emulation loop
+        self.halt = true
+
         self.audio.stop()
+
+        guard !self.hasShutdownSaved else {
+            return
+        }
 
         let saveData = Data(self.virtualFriend.save_ram())
         print("Saving size \(saveData.count)")
         do {
             try saveData.write(to: saveUrl(for: self.fileName))
+            self.hasShutdownSaved = true
         } catch {
             print("Could not write save \(error)")
         }
@@ -106,13 +121,15 @@ class Emulator {
     }
 
     private func startThread() {
+        print("Starting emulation")
+
         let tickRate = Double(AUDIO_FRAMES_PER_LOOP) / Double(SAMPLE_RATE)
 
         OESetThreadRealtime(tickRate, 0.007, 0.03) // Constants somehow come from bsnes
 
         var nextFrameTime = OEMonotonicTime()
 
-        while true {
+        while !self.halt {
             autoreleasepool {
                 self.runAndWriteFrame()
 
@@ -133,6 +150,8 @@ class Emulator {
                 CFRunLoopRunInMode(.defaultMode, 0, false)
             }
         }
+
+        print("Stopping emulation")
     }
 
     private func runAndWriteFrame() {

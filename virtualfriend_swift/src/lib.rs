@@ -93,15 +93,15 @@ impl VirtualFriend {
     }
 
     fn load_ram(&mut self, ram: &[u8]) {
-        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").load_ram(ram.to_vec());
+        self.core.try_lock().expect("Could not acquire mutex lock for load_ram. Emulator host is misconfigured; is it running on multiple threads?").load_ram(ram.to_vec());
     }
 
     fn save_ram(&self) -> Vec<u8> {
-        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").dump_ram()
+        self.core.try_lock().expect("Could not acquire mutex lock for save_ram. Emulator host is misconfigured; is it running on multiple threads?").dump_ram()
     }
 
     fn run_audio_frame(&mut self, inputs: FFIGamepadInputs, buffer_size: usize) -> FFIFrame {
-        self.core.try_lock().expect("Could not acquire mutex lock. Emulator host is misconfigured; is it running on multiple threads?").run_audio_frame(inputs.into(), buffer_size).into()
+        self.core.try_lock().expect("Could not acquire mutex lock for run_audio_frame. Emulator host is misconfigured; is it running on multiple threads?").run_audio_frame(inputs.into(), buffer_size).into()
     }
 }
 
