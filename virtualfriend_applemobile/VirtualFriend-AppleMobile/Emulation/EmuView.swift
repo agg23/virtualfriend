@@ -48,26 +48,26 @@ struct EmuView: View {
             // Background color to surround the view and pad out the window AR
             self.ledBackgroundColor
                 .ignoresSafeArea()
-                // Default system corner radius
-                #if os(visionOS)
-                // Make window appear to be rounded
-                .clipShape(.rect(cornerRadius: 56))
-                #endif
 
+            Group {
+                switch self.emulator {
+                case .emulator(let emulator):
+                    EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
+                        .padding(.vertical, 16)
+                case .error(let message):
+                    VStack(alignment: .center) {
+                        Text("Could not start emulator")
 
-            switch self.emulator {
-            case .emulator(let emulator):
-                EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
-                    .padding(.vertical, 16)
-            case .error(let message):
-                VStack(alignment: .center) {
-                    Text("Could not start emulator")
-
-                    Text(message)
+                        Text(message)
+                    }
+                case .none:
+                    EmptyView()
                 }
-            case .none:
-                EmptyView()
             }
+            #if os(visionOS)
+            // Add additional spacing around render frame to prevent corner from clipping off of rounded corner
+            .padding(8)
+            #endif
         }
         .overlay {
             #if os(visionOS)
@@ -99,7 +99,7 @@ struct EmuView: View {
                         }
                         .help("Back to Library")
                         #if os(visionOS)
-                        .padding([.trailing, .top], buttonPadding)
+                        .padding([.leading, .top], buttonPadding)
                         #else
                         .padding(.leading, buttonPadding)
                         #endif
@@ -125,16 +125,15 @@ struct EmuView: View {
                         #endif
 
                     }
-                    .tint(.white)
-                    .symbolVariant(.circle.fill)
                     .symbolRenderingMode(.hierarchical)
                     .labelStyle(.iconOnly)
-                    .font(.largeTitle)
                     .buttonBorderShape(.circle)
-                    #if os(visionOS)
-                    .controlSize(.extraLarge)
-                    #else
                     .controlSize(.large)
+                    #if os(visionOS)
+                    #else
+                    .tint(.white)
+                    .symbolVariant(.circle.fill)
+                    .font(.largeTitle)
                     #endif
                 }
             }

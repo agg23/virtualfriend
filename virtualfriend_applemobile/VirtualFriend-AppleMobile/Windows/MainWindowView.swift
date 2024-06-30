@@ -42,7 +42,10 @@ struct MainWindowView: View {
             }
         }
         .environment(self.router)
+        #if os(visionOS)
+        #else
         .tint(.red)
+        #endif
     }
 }
 
