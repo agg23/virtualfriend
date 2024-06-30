@@ -14,6 +14,7 @@ struct Metal2DView: UIViewRepresentable {
     let stereoImageChannel: AsyncImageChannel
     let size: CGSize
     let integerScaling: Bool
+    let backgroundColor: CGColor
 
     func makeCoordinator() -> MetalCoordinator {
         MetalCoordinator()
@@ -26,6 +27,7 @@ struct Metal2DView: UIViewRepresentable {
     func updateUIView(_ uiView: Metal2DUIView, context: Context) {
         uiView.expectedSize = self.size
         uiView.integerScaling = self.integerScaling
+        uiView.metalBackgroundColor = self.backgroundColor
         context.coordinator.task?.cancel()
         context.coordinator.task = Task {
             for await image in self.stereoImageChannel.channel.buffer(policy: .bounded(1)) {

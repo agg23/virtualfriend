@@ -103,6 +103,8 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
 
     var integerScaling: Bool = true
 
+    var metalBackgroundColor = CGColor(gray: 0.0, alpha: 1.0)
+
     // MARK: - MTKViewDelegate
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize)
@@ -142,6 +144,7 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
 
         do
         {
+            let _ = try self.context.startTask(toRender: .init(color: CIColor(cgColor: self.metalBackgroundColor)), to: renderDestination)
             let _ = try self.context.startTask(toRender: transformedImage, to: renderDestination)
         }
         catch

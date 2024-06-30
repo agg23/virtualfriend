@@ -167,6 +167,10 @@ struct EmuView: View {
     }
 
     func restart() {
+        if case .emulator(let emulator) = self.emulator {
+            emulator.shutdown()
+        }
+
         self.emulator = .none
         // TODO: Make Emulator stereoImageChannel updates cause rerenders
         DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
@@ -220,7 +224,7 @@ private struct EmuContentView: View {
     }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel)
+        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel, backgroundColor: self._ledColor.colorWrapper.$background)
             .onChange(of: self.scenePhase) { _, newPhase in
                 if newPhase == .background {
                     // Stop emulation

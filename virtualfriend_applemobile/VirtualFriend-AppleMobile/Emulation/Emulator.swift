@@ -106,13 +106,15 @@ class Emulator {
             return
         }
 
-        let saveData = Data(self.virtualFriend.save_ram())
-        print("Saving size \(saveData.count)")
-        do {
-            try saveData.write(to: saveUrl(for: self.fileName))
-            self.hasShutdownSaved = true
-        } catch {
-            print("Could not write save \(error)")
+        self.emulatorQueue.async {
+            let saveData = Data(self.virtualFriend.save_ram())
+            print("Saving size \(saveData.count)")
+            do {
+                try saveData.write(to: saveUrl(for: self.fileName))
+                self.hasShutdownSaved = true
+            } catch {
+                print("Could not write save \(error)")
+            }
         }
     }
 
