@@ -5,7 +5,6 @@
 //  Created by Adam Gastineau on 6/29/24.
 //
 
-import SwiftUI
 import GameController
 
 private let SAMPLE_RATE = 41667
@@ -26,7 +25,7 @@ class Emulator {
 
     var prevFrameTime: TimeInterval?
 
-    var separation: Binding<Double>?
+    var separation: Double = 0.0
 
     var halt = true
     /// Mark whether save has occurred, so we only save once
@@ -167,8 +166,8 @@ class Emulator {
                 let rightImage = frame.right.ciImage(color: self.color)
 
                 // TODO: This should be moved by Metal, not the CPU
-               let leftTransformedImage = leftImage.transformed(by: .init(translationX: -(self.separation?.wrappedValue ?? 0.0), y: 0))
-               let rightTransformedImage = rightImage.transformed(by: .init(translationX: (self.separation?.wrappedValue ?? 0.0), y: 0))
+               let leftTransformedImage = leftImage.transformed(by: .init(translationX: -self.separation, y: 0))
+               let rightTransformedImage = rightImage.transformed(by: .init(translationX: self.separation, y: 0))
 
                await self.stereoImageChannel.channel.send(StereoImage(left: leftTransformedImage, right: rightTransformedImage))
             }

@@ -19,7 +19,8 @@ struct EmuView: View {
     @Environment(MainRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    @LEDBackgroundColor var ledBackgroundColor;
+    @LEDBackgroundColor var ledBackgroundColor
+    @EyeSeparation var separation
 
     @State private var emulator: EmulatorStatus = .none
 
@@ -139,38 +140,29 @@ struct EmuView: View {
             }
             .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
         }
-//        #if os(visionOS)
-//        .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
-//            VStack {
-//                // Add spacing between main window and ornament content to allow for the window resizer
-//                Color.clear.frame(height: 180.0)
-//
-//                VStack {
-//                    HStack {
-//                        Text("Separation")
-//
-//                        Slider(value: self.$separation, in: -5...5, step: 0.01, label: {
-//                            Text("Separation")
-//                        }, minimumValueLabel: {
-//                            Text("-5")
-//                        }, maximumValueLabel: {
-//                            Text("5")
-//                        }) { editing in
-//                            self.preventControlDismiss = editing
-//                        }
-//                    }
-//                    Text("\(self.separation)")
-//
-////                    Toggle("Enable sound", isOn: self.$sound)
-////                    Text("Note: Sound is extremely beta and likely broken")
-////                        .font(.footnote)
-//                }
-//                .padding(24)
-//                .frame(width: 600)
-//                .glassBackgroundEffect()
-//            }
-//        }
-//        #endif
+        #if os(visionOS)
+        .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
+            VStack {
+                Text(String(format: "Eye Separation: %.1f", self.separation))
+                    .font(.title3)
+
+                Slider(value: self.$separation, in: -4...4, step: 0.5, label: {
+                    Text("Separation")
+                }, minimumValueLabel: {
+                    // Less 3D
+                    Text("-4")
+                }, maximumValueLabel: {
+                    // More 3D
+                    Text("4")
+                }) { editing in
+                    self.preventControlDismiss = editing
+                }
+            }
+            .padding(24)
+            .frame(width: 600)
+            .glassBackgroundEffect()
+        }
+        #endif
         .onTapGesture {
             self.toggleVisibility()
         }
@@ -182,6 +174,12 @@ struct EmuView: View {
                 self.clearTimer()
             } else {
                 self.resetTimer()
+            }
+        }
+        .onChange(of: self.separation) { _, newValue in
+            if case .emulator(let emulator) = self.emulator {
+                // Invert separation range so more 3D is on the right
+                emulator.separation = newValue * -1
             }
         }
     }
@@ -244,8 +242,6 @@ private struct EmuContentView: View {
     @Binding var controlVisibility: Visibility
     @Binding var preventControlDismiss: Bool
 
-    @State private var separation: Double = 0.0
-
     init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>) {
         self.emulator = emulator
         self._controlVisibility = controlVisibility
@@ -266,7 +262,6 @@ private struct EmuContentView: View {
             .onAppear {
                 self.emulator.set(color: self.ledColor)
 
-                self.emulator.separation = self.$separation
                 self.emulator.start()
             }
             .onDisappear {

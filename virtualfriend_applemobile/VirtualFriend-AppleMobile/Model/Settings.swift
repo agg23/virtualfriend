@@ -11,6 +11,8 @@ struct Settings {
     static let ledBackgroundColorKey = "ledBackgroundColor"
     static let ledForegroundColorKey = "ledForegroundColor"
 
+    static let eyeSeparationKey = "eyeSeparation"
+
     static func parseStoredColor(for key: String) -> Color? {
         guard let string = UserDefaults.standard.string(forKey: key) else {
             return nil
@@ -75,3 +77,11 @@ struct LEDColor: DynamicProperty {
     }
 }
 
+@propertyWrapper
+struct EyeSeparation: DynamicProperty {
+    @AppStorage(Settings.eyeSeparationKey) var wrappedValue: Double = 0.0
+
+    var projectedValue: Binding<Double> {
+        self._wrappedValue.projectedValue
+    }
+}
