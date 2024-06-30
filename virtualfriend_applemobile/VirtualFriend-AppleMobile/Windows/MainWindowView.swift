@@ -42,6 +42,7 @@ struct MainWindowView: View {
             }
         }
         .environment(self.router)
+        .tint(.red)
     }
 }
 

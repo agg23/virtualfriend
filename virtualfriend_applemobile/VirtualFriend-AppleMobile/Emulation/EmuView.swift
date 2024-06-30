@@ -73,7 +73,7 @@ struct EmuView: View {
             #if os(visionOS)
             let buttonPadding = 40.0
             #else
-            let buttonPadding = 10.0
+            let buttonPadding = 8.0
             #endif
 
             ZStack(alignment: .top) {
@@ -98,7 +98,11 @@ struct EmuView: View {
                             }
                         }
                         .help("Back to Library")
-                        .padding([.leading, .top], buttonPadding)
+                        #if os(visionOS)
+                        .padding([.trailing, .top], buttonPadding)
+                        #else
+                        .padding(.leading, buttonPadding)
+                        #endif
 
                         Spacer()
 
@@ -114,9 +118,14 @@ struct EmuView: View {
                             }
                         }
                         .help("Restart")
+                        #if os(visionOS)
                         .padding([.trailing, .top], buttonPadding)
+                        #else
+                        .padding(.trailing, buttonPadding)
+                        #endif
 
                     }
+                    .tint(.white)
                     .symbolVariant(.circle.fill)
                     .symbolRenderingMode(.hierarchical)
                     .labelStyle(.iconOnly)
