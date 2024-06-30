@@ -17,6 +17,7 @@ struct EmuView: View {
     }
 
     @Environment(MainRouter.self) private var router
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @LEDBackgroundColor var ledBackgroundColor;
 
@@ -31,7 +32,19 @@ struct EmuView: View {
     let fileUrl: URL
 
     var body: some View {
-        ZStack {
+        #if os(visionOS)
+        let alignment = Alignment.center
+        #else
+        let alignment = if case .compact = self.horizontalSizeClass {
+            // Portrait, put emulator at top
+            Alignment.top
+        } else {
+            // Otherwise center
+            Alignment.center
+        }
+        #endif
+
+        ZStack(alignment: alignment) {
             // Background color to surround the view and pad out the window AR
             self.ledBackgroundColor
                 .ignoresSafeArea()
