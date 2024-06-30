@@ -111,7 +111,8 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
     {
         let exactScale: CGFloat = size.width / self.expectedSize.width
         self.currentScale = self.integerScaling ? floor(exactScale) : exactScale
-        self.viewportOffset = self.integerScaling ? CGPoint(x: (size.width - (self.expectedSize.width * self.currentScale)) * 0.5, y: (size.height - (self.expectedSize.height * self.currentScale)) * 0.5) : CGPoint.zero
+        // We offset the view by up to half a pixel if it's a non-integer offset
+        self.viewportOffset = self.integerScaling ? CGPoint(x: floor((size.width - (self.expectedSize.width * self.currentScale)) * 0.5), y: floor((size.height - (self.expectedSize.height * self.currentScale)) * 0.5)) : CGPoint.zero
 
         let t1: CGAffineTransform = CGAffineTransform(scaleX: self.currentScale, y: self.currentScale)
         let t2: CGAffineTransform = self.integerScaling ? CGAffineTransform(translationX: self.viewportOffset.x, y: self.viewportOffset.y) : CGAffineTransform.identity
