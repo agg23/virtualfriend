@@ -60,7 +60,7 @@ struct EmuView: View {
             #if os(visionOS)
             let buttonPadding = 40.0
             #else
-            let buttonPadding = 8.0
+            let buttonPadding = 10.0
             #endif
 
             ZStack(alignment: .top) {
@@ -70,6 +70,8 @@ struct EmuView: View {
                 if self.controlVisibility == .visible {
                     HStack {
                         Button {
+                            self.resetTimer()
+
                             self.router.currentRoute = .main
 
                             if case .emulator(let emulator) = self.emulator {
@@ -77,20 +79,19 @@ struct EmuView: View {
                             }
                         } label: {
                             Label {
-                                Text("Back")
+                                Text("Back to Library")
                             } icon: {
                                 Image(systemName: Icon.back)
                             }
                         }
-                        .help("Back")
-                        .labelStyle(.iconOnly)
-                        .buttonBorderShape(.circle)
-                        .controlSize(.large)
+                        .help("Back to Library")
                         .padding([.leading, .top], buttonPadding)
 
                         Spacer()
 
                         Button {
+                            self.resetTimer()
+
                             self.restart()
                         } label: {
                             Label {
@@ -100,12 +101,19 @@ struct EmuView: View {
                             }
                         }
                         .help("Restart")
-                        .labelStyle(.iconOnly)
-                        .buttonBorderShape(.circle)
-                        .controlSize(.large)
                         .padding([.trailing, .top], buttonPadding)
 
                     }
+                    .symbolVariant(.circle.fill)
+                    .symbolRenderingMode(.hierarchical)
+                    .labelStyle(.iconOnly)
+                    .font(.largeTitle)
+                    .buttonBorderShape(.circle)
+                    #if os(visionOS)
+                    .controlSize(.extraLarge)
+                    #else
+                    .controlSize(.large)
+                    #endif
                 }
             }
             .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
