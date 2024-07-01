@@ -34,7 +34,7 @@ pub struct RenderState {
     pub object_palette_control2: PaletteRegister,
     pub object_palette_control3: PaletteRegister,
 
-    /// High if drawing from framebuffer 1. Otherwise drawing from framebuffer 0.
+    /// High if drawing into framebuffer 1 (and rendering from 0). Otherwise drawing into framebuffer 0 (and rendering from 1).
     pub drawing_framebuffer_1: bool,
 }
 

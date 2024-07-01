@@ -160,23 +160,23 @@ impl VIP {
                 // Displaying left framebuffer 0
                 value.set(
                     2,
-                    !self.render_state.drawing_framebuffer_1
+                    self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     3,
-                    !self.render_state.drawing_framebuffer_1
+                    self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Right,
                 );
                 // Displaying left framebuffer 1
                 value.set(
                     4,
-                    self.render_state.drawing_framebuffer_1
+                    !self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Left,
                 );
                 value.set(
                     5,
-                    self.render_state.drawing_framebuffer_1
+                    !self.render_state.drawing_framebuffer_1
                         && self.current_displaying == DisplayState::Right,
                 );
 
@@ -276,7 +276,7 @@ impl VIP {
             }
             0x5_F802..=0x5_F803 => {
                 // INTENB Interrupt enable
-                self.interrupt_enabled.0 = value & 0xE014;
+                self.interrupt_enabled.0 = value;
             }
             0x5_F804..=0x5F805 => {
                 // INTCLEAR Interrupt clear
