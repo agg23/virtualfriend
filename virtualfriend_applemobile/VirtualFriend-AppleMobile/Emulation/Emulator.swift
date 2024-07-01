@@ -28,8 +28,6 @@ class Emulator {
     var separation: Double = 0.0
 
     var halt = true
-    /// Mark whether save has occurred, so we only save once
-    var hasShutdownSaved = false
 
     init(fileUrl: URL) throws {
         self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
@@ -82,8 +80,12 @@ class Emulator {
     }
 
     func start() {
+        guard self.halt else {
+            // We are already running
+            return
+        }
+
         self.halt = false
-        self.hasShutdownSaved = false
 
         // Run advance frame
         self.runAndWriteFrame()
@@ -97,20 +99,20 @@ class Emulator {
 
     func shutdown() {
         // Kill the emulation loop
+        guard !self.halt else {
+            // We are already halted
+            return
+        }
+
         self.halt = true
 
         self.audio.stop()
-
-        guard !self.hasShutdownSaved else {
-            return
-        }
 
         self.emulatorQueue.async {
             let saveData = Data(self.virtualFriend.save_ram())
             print("Saving size \(saveData.count)")
             do {
                 try saveData.write(to: saveUrl(for: self.fileName))
-                self.hasShutdownSaved = true
             } catch {
                 print("Could not write save \(error)")
             }

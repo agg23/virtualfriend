@@ -18,6 +18,7 @@ struct EmuView: View {
 
     @Environment(MainRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
 
     @LEDBackgroundColor var ledBackgroundColor
     @EyeSeparation var separation
@@ -71,96 +72,11 @@ struct EmuView: View {
             #endif
         }
         .overlay {
-            #if os(visionOS)
-            let buttonPadding = 40.0
-            #else
-            let buttonPadding = 8.0
-            #endif
-
-            ZStack(alignment: .top) {
-                // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
-                Color.white.opacity(0.0001)
-
-                if self.controlVisibility == .visible {
-                    HStack {
-                        Button {
-                            self.resetTimer()
-
-                            self.router.currentRoute = .main
-
-                            if case .emulator(let emulator) = self.emulator {
-                                emulator.shutdown()
-                            }
-                        } label: {
-                            Label {
-                                Text("Back to Library")
-                            } icon: {
-                                Image(systemName: Icon.back)
-                            }
-                        }
-                        .help("Back to Library")
-                        #if os(visionOS)
-                        .padding([.leading, .top], buttonPadding)
-                        #else
-                        .padding(.leading, buttonPadding)
-                        #endif
-
-                        Spacer()
-
-                        Button {
-                            self.resetTimer()
-
-                            self.restart()
-                        } label: {
-                            Label {
-                                Text("Restart")
-                            } icon: {
-                                Image(systemName: Icon.restart)
-                            }
-                        }
-                        .help("Restart")
-                        #if os(visionOS)
-                        .padding([.trailing, .top], buttonPadding)
-                        #else
-                        .padding(.trailing, buttonPadding)
-                        #endif
-
-                    }
-                    .symbolRenderingMode(.hierarchical)
-                    .labelStyle(.iconOnly)
-                    .buttonBorderShape(.circle)
-                    .controlSize(.large)
-                    #if os(visionOS)
-                    #else
-                    .tint(.white)
-                    .symbolVariant(.circle.fill)
-                    .font(.largeTitle)
-                    #endif
-                }
-            }
-            .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: .infinity)
+            self.controlsOverlay
         }
         #if os(visionOS)
         .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
-            VStack {
-                Text(String(format: "Eye Separation: %.1f", self.separation))
-                    .font(.title3)
-
-                Slider(value: self.$separation, in: -4...4, step: 0.5, label: {
-                    Text("Separation")
-                }, minimumValueLabel: {
-                    // Less 3D
-                    Text("-4")
-                }, maximumValueLabel: {
-                    // More 3D
-                    Text("4")
-                }) { editing in
-                    self.preventControlDismiss = editing
-                }
-            }
-            .padding(24)
-            .frame(width: 600)
-            .glassBackgroundEffect()
+            self.eyeSeparationOverlay
         }
         #endif
         .onTapGesture {
@@ -182,7 +98,123 @@ struct EmuView: View {
                 emulator.separation = newValue * -1
             }
         }
+        .onChange(of: self.scenePhase) { prevValue, newValue in
+            guard case .emulator(let emulator) = self.emulator else {
+                return
+            }
+
+            switch newValue {
+            case .active:
+                if prevValue != .active {
+                    // We resumed activity. Start emulation
+                    emulator.start()
+                }
+            case .inactive:
+                fallthrough
+            case .background:
+                emulator.shutdown()
+            @unknown default:
+                print("Unknown scene \(newValue)")
+            }
+        }
     }
+
+    @ViewBuilder
+    var controlsOverlay: some View {
+        #if os(visionOS)
+        let buttonPadding = 40.0
+        #else
+        let buttonPadding = 8.0
+        #endif
+
+        ZStack(alignment: .top) {
+            // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
+            Color.white.opacity(0.0001)
+
+            if self.controlVisibility == .visible {
+                HStack {
+                    Button {
+                        self.resetTimer()
+
+                        self.router.currentRoute = .main
+
+                        if case .emulator(let emulator) = self.emulator {
+                            emulator.shutdown()
+                        }
+                    } label: {
+                        Label {
+                            Text("Back to Library")
+                        } icon: {
+                            Image(systemName: Icon.back)
+                        }
+                    }
+                    .help("Back to Library")
+                    #if os(visionOS)
+                    .padding([.leading, .top], buttonPadding)
+                    #else
+                    .padding(.leading, buttonPadding)
+                    #endif
+
+                    Spacer()
+
+                    Button {
+                        self.resetTimer()
+
+                        self.restart()
+                    } label: {
+                        Label {
+                            Text("Restart")
+                        } icon: {
+                            Image(systemName: Icon.restart)
+                        }
+                    }
+                    .help("Restart")
+                    #if os(visionOS)
+                    .padding([.trailing, .top], buttonPadding)
+                    #else
+                    .padding(.trailing, buttonPadding)
+                    #endif
+
+                }
+                .symbolRenderingMode(.hierarchical)
+                .labelStyle(.iconOnly)
+                .buttonBorderShape(.circle)
+                .controlSize(.large)
+                #if os(visionOS)
+                #else
+                .tint(.white)
+                .symbolVariant(.circle.fill)
+                .font(.largeTitle)
+                #endif
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    #if os(visionOS)
+    @ViewBuilder
+    var eyeSeparationOverlay: some View {
+        VStack {
+            Text(String(format: "Eye Separation: %.1f", self.separation))
+                .font(.title3)
+
+            Slider(value: self.$separation, in: -4...4, step: 0.5, label: {
+                Text("Separation")
+            }, minimumValueLabel: {
+                // Less 3D
+                Text("-4")
+            }, maximumValueLabel: {
+                // More 3D
+                Text("4")
+            }) { editing in
+                self.preventControlDismiss = editing
+            }
+        }
+        .padding(24)
+        .frame(width: 600)
+        .glassBackgroundEffect()
+    }
+    #endif
 
     func createEmulator(_ url: URL) {
         do {
