@@ -41,11 +41,10 @@ struct MainWindowView: View {
                 EmuView(fileUrl: url)
             }
         }
-        .environment(self.router)
-        #if os(visionOS)
-        #else
+        #if !os(visionOS)
         .tint(.red)
         #endif
+        .environment(self.router)
     }
 }
 

@@ -180,8 +180,7 @@ struct EmuView: View {
                 .labelStyle(.iconOnly)
                 .buttonBorderShape(.circle)
                 .controlSize(.large)
-                #if os(visionOS)
-                #else
+                #if !os(visionOS)
                 .tint(.white)
                 .symbolVariant(.circle.fill)
                 .font(.largeTitle)
