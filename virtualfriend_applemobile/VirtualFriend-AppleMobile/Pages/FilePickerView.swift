@@ -14,6 +14,8 @@ let IMAGE_HEIGHT = 224.0
 let GRID_SPACING = 40.0
 
 struct FilePickerView: View {
+    @Environment(\.scenePhase) private var scenePhase
+
     @State var fileImporter = FileImporter()
 
     /// Binding to open fileImporter
@@ -51,6 +53,14 @@ struct FilePickerView: View {
 
             self.buildEntries()
         }
+        .onChange(of: self.scenePhase, { prevValue, nextValue in
+            if nextValue == .active && prevValue != .active {
+                // We're becoming active after not previously being. Rebuild directories
+                self.fileImporter.rescanTitles()
+
+                self.buildEntries()
+            }
+        })
         .customFileImporter(self.$selectFolder, onOpen: { url, _ in
             Task {
                 self.fileImporter.importFiles(from: url)
