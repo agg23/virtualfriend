@@ -13,7 +13,6 @@
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
-		664337EF2C112884004DAA99 /* ButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664337EE2C112884004DAA99 /* ButtonStyle.swift */; };
 		665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 665022C12C0CDF470012E9D4 /* AsyncAlgorithms */; };
 		665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489142BDDC9F000C2BD96 /* MainWindowView.swift */; };
 		665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489172BDDCA3B00C2BD96 /* SettingsView.swift */; };
@@ -71,7 +70,6 @@
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		6629A1E12B4E538300FE2AB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		664337EE2C112884004DAA99 /* ButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonStyle.swift; sourceTree = "<group>"; };
 		665489142BDDC9F000C2BD96 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		665489172BDDCA3B00C2BD96 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileImporter.swift; sourceTree = "<group>"; };
@@ -190,7 +188,6 @@
 			children = (
 				66635BA02B66D002004FD096 /* manifests */,
 				66C60F042B63545C00C1FDF4 /* ffi */,
-				664337ED2C11286D004DAA99 /* Customization */,
 				66C60F0C2B6595B600C1FDF4 /* Emulation */,
 				66C4BC2A2BCC22FB00AA8732 /* Extensions */,
 				6697298E2BDD56B20013BCE2 /* Model */,
@@ -221,14 +218,6 @@
 				6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		664337ED2C11286D004DAA99 /* Customization */ = {
-			isa = PBXGroup;
-			children = (
-				664337EE2C112884004DAA99 /* ButtonStyle.swift */,
-			);
-			path = Customization;
 			sourceTree = "<group>";
 		};
 		665489132BDDC9D400C2BD96 /* Windows */ = {
@@ -511,7 +500,6 @@
 				6697298D2BDD56770013BCE2 /* FileEntry.swift in Sources */,
 				6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */,
 				66E43B152C305B9900B8C04E /* Emulator.swift in Sources */,
-				664337EF2C112884004DAA99 /* ButtonStyle.swift in Sources */,
 				66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerGridItemView.swift in Sources */,
 				66A0612F2BE679BF0043D170 /* Settings.swift in Sources */,

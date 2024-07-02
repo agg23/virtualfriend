@@ -38,7 +38,7 @@ struct FilePickerListiOSView: View {
                     }
                 }
             }
-            .buttonStyle(BlackTextButtonStyle())
+            .tint(.black)
         }
     }
 
