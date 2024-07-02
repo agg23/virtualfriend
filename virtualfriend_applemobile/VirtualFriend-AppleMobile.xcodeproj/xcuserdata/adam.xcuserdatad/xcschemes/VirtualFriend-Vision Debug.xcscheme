@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-               BuildableName = "VirtualFriend-AppleMobile.app"
-               BlueprintName = "VirtualFriend-AppleMobile"
+               BuildableName = "VirtualFriend.app"
+               BlueprintName = "VirtualFriend"
                ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,8 +44,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-            BuildableName = "VirtualFriend-AppleMobile.app"
-            BlueprintName = "VirtualFriend-AppleMobile"
+            BuildableName = "VirtualFriend.app"
+            BlueprintName = "VirtualFriend"
             ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -61,8 +61,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6629A1CC2B4E538200FE2AB3"
-            BuildableName = "VirtualFriend-AppleMobile.app"
-            BlueprintName = "VirtualFriend-AppleMobile"
+            BuildableName = "VirtualFriend.app"
+            BlueprintName = "VirtualFriend"
             ReferencedContainer = "container:VirtualFriend-AppleMobile.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -65,7 +65,7 @@
 		661265CB2B54533800D1B343 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		66136E242B5B419600D580BF /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros-sim/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66136E262B5D948300D580BF /* libvirtualfriend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend.a; path = "../virtualfriend/target/aarch64-apple-xros-sim/debug/libvirtualfriend.a"; sourceTree = "<group>"; };
-		6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VirtualFriend-AppleMobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6629A1CD2B4E538200FE2AB3 /* VirtualFriend.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualFriend.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualFriend_AppleMobile.swift; sourceTree = "<group>"; };
 		6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */ = {isa = PBXFileReference; lastKnownFileType = file.skybox; path = ImageBasedLighting.skybox; sourceTree = "<group>"; };
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -180,7 +180,7 @@
 		6629A1CE2B4E538200FE2AB3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */,
+				6629A1CD2B4E538200FE2AB3 /* VirtualFriend.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -376,9 +376,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6629A1CC2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */ = {
+		6629A1CC2B4E538200FE2AB3 /* VirtualFriend */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-AppleMobile" */;
+			buildConfigurationList = 6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend" */;
 			buildPhases = (
 				6688DED22B5DB65E004B2123 /* ShellScript */,
 				6629A1C92B4E538200FE2AB3 /* Sources */,
@@ -389,13 +389,13 @@
 			);
 			dependencies = (
 			);
-			name = "VirtualFriend-AppleMobile";
+			name = VirtualFriend;
 			packageProductDependencies = (
 				665022C12C0CDF470012E9D4 /* AsyncAlgorithms */,
 				66E43B0E2C3058D100B8C04E /* TPCircularBuffer */,
 			);
 			productName = "VirtualFriend-Vision";
-			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend-AppleMobile.app */;
+			productReference = 6629A1CD2B4E538200FE2AB3 /* VirtualFriend.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -430,7 +430,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6629A1CC2B4E538200FE2AB3 /* VirtualFriend-AppleMobile */,
+				6629A1CC2B4E538200FE2AB3 /* VirtualFriend */,
 			);
 		};
 /* End PBXProject section */
@@ -656,7 +656,7 @@
 				"EXCLUDED_ARCHS[sdk=*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
-				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_FILE = "VirtualFriend-AppleMobile/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -691,7 +691,7 @@
 				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../virtualfriend_swift/generated/**";
-				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_FILE = "VirtualFriend-AppleMobile/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -726,7 +726,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend-AppleMobile" */ = {
+		6629A1E42B4E538300FE2AB3 /* Build configuration list for PBXNativeTarget "VirtualFriend" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6629A1E52B4E538300FE2AB3 /* Debug */,
