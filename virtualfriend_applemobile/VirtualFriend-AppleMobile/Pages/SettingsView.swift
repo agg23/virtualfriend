@@ -29,6 +29,8 @@ struct SettingsView: View {
                             Group {
                                 if let colorImage = self.colorImage {
                                     Image(uiImage: colorImage)
+                                        // Allow there to be padding around the image
+                                        .resizable()
                                         .background {
                                             Color(cgColor: self.ledBackgroundColor.resolve(in: .init()).cgColor)
                                         }
@@ -36,7 +38,7 @@ struct SettingsView: View {
                                     self.ledBackgroundColor
                                 }
                             }
-                            .aspectRatio(384.0/224.0, contentMode: .fill)
+                            .aspectRatio(384.0/224.0, contentMode: .fit)
 
                             Spacer()
                         }
