@@ -21,7 +21,7 @@ pub struct SweepModulate {
     /// CLK
     ///
     /// If true, base clock is 130.2Hz. Otherwise, 1041.6Hz
-    should_use_fast_clock: bool,
+    should_use_slow_clock: bool,
 
     ///
     /// INTERVAL
@@ -70,7 +70,7 @@ bitfield! {
         [0..=2] sweep_shift: u8,
         [3] sweep_direction,
         [4..=6] modification_interval: u8,
-        [7] should_use_fast_clock
+        [7] should_use_slow_clock
     }
 }
 
@@ -80,7 +80,7 @@ impl SweepModulate {
             enable: false,
             loop_modulation: false,
             should_modulate: false,
-            should_use_fast_clock: false,
+            should_use_slow_clock: false,
             modification_interval: 0,
             sweep_direction: false,
             sweep_shift: 0,
@@ -136,14 +136,14 @@ impl SweepModulate {
                 self.sweep_shift = register.sweep_shift();
                 self.sweep_direction = register.sweep_direction();
                 self.modification_interval = register.modification_interval();
-                self.should_use_fast_clock = register.should_use_fast_clock();
+                self.should_use_slow_clock = register.should_use_slow_clock();
             }
             _ => {}
         }
     }
 
     pub fn step(&mut self, channel: &mut Channel, modulation_data: &[i8]) {
-        let period = if self.should_use_fast_clock {
+        let period = if self.should_use_slow_clock {
             SWEEP_FAST_CYCLE_COUNT
         } else {
             SWEEP_SLOW_CYCLE_COUNT
@@ -192,7 +192,7 @@ impl SweepModulate {
             // Use last register frequency to add to modulation data
             let new_frequency = self.last_written_frequency.wrapping_add(mod_data as u16) & 0x7FF;
 
-            if self.modulation_index < 32 || self.loop_modulation {
+            if self.modulation_index < 31 || self.loop_modulation {
                 // If loop modulation and 31, add 1 and wrap to 0
                 self.modulation_index = (self.modulation_index + 1) & 0x1F;
             }

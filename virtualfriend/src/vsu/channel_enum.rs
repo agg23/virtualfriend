@@ -165,23 +165,25 @@ impl ChannelType {
     ///
     pub fn step_auto_deactivate(&mut self) {
         // When firing, turn off channel
-        if self.channel().auto_deactivate {
-            self.channel_mut().live_interval_tick_counter += 1;
+        if !self.channel().enable_playback || !self.channel().auto_deactivate {
+            return;
+        }
 
-            if self.channel().live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
-                // One tick of live interval
-                self.channel_mut().live_interval_counter += 1;
+        self.channel_mut().live_interval_tick_counter += 1;
 
-                if self.channel().live_interval_counter >= (self.channel().live_interval + 1) {
-                    // Stop the channel
-                    println!("Stopping channel {}", self.index());
+        if self.channel().live_interval_tick_counter >= SOUND_LIVE_INTERVAL_CYCLE_COUNT {
+            // One tick of live interval
+            self.channel_mut().live_interval_counter += 1;
 
-                    self.channel_mut().enable_playback = false;
-                    self.channel_mut().live_interval_counter = 0;
-                }
+            if self.channel().live_interval_counter >= (self.channel().live_interval + 1) {
+                // Stop the channel
+                println!("Stopping channel {}", self.index());
 
-                self.channel_mut().live_interval_tick_counter = 0;
+                self.channel_mut().enable_playback = false;
+                self.channel_mut().live_interval_counter = 0;
             }
+
+            self.channel_mut().live_interval_tick_counter = 0;
         }
     }
 
@@ -223,26 +225,28 @@ impl ChannelType {
         channel.envelope_tick_counter += 1;
         if channel.envelope_tick_counter >= ENVELOPE_CYCLE_COUNT {
             // One tick of envelope
-            if channel.enable_envelope_modification {
-                if channel.envelope_step_counter >= channel.envelope_interval + 1 {
-                    if channel.envelope_direction && channel.envelope_level < 15 {
-                        // Increment volume
-                        channel.envelope_level += 1;
-                    } else if !channel.envelope_direction && channel.envelope_level > 0 {
-                        // Decrement volume
-                        channel.envelope_level -= 1;
-                    } else if channel.loop_envelope {
-                        // We must be at 0 or 15. We're set to repeat
-                        channel.envelope_level = channel.envelope_reload_value;
-                    }
+            channel.envelope_tick_counter = 0;
 
-                    panic!("Envelope tick {}", channel.envelope_step_counter);
-
-                    channel.envelope_step_counter = 0;
-                }
+            if !channel.enable_envelope_modification {
+                return;
             }
 
-            channel.envelope_tick_counter = 0;
+            channel.envelope_step_counter += 1;
+
+            if channel.envelope_step_counter >= channel.envelope_interval + 1 {
+                if channel.envelope_direction && channel.envelope_level < 15 {
+                    // Increment volume
+                    channel.envelope_level += 1;
+                } else if !channel.envelope_direction && channel.envelope_level > 0 {
+                    // Decrement volume
+                    channel.envelope_level -= 1;
+                } else if channel.loop_envelope {
+                    // We must be at 0 or 15. We're set to repeat
+                    channel.envelope_level = channel.envelope_reload_value;
+                }
+
+                channel.envelope_step_counter = 0;
+            }
         }
     }
 
