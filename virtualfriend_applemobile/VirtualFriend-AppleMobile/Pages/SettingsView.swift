@@ -39,6 +39,7 @@ struct SettingsView: View {
                                 }
                             }
                             .aspectRatio(384.0/224.0, contentMode: .fit)
+                            .frame(maxHeight: 400)
 
                             Spacer()
                         }
