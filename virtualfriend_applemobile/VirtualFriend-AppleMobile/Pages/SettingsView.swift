@@ -53,12 +53,16 @@ struct SettingsView: View {
                         }
                     }
 
-                    Section("Presets") {
+                    Section("Color Presets") {
                         self.presetButton("Default", foregroundColor: Color(red: 1.0, green: 0.0, blue: 0.0), backgroundColor: Color(red: 0.0, green: 0.0, blue: 0.0))
 
                         self.presetButton("Greyscale", foregroundColor: Color(red: 1.0, green: 1.0, blue: 1.0), backgroundColor: Color(red: 0.0, green: 0.0, blue: 0.0))
 
                         self.presetButton("Inverted", foregroundColor: Color(red: 0.0, green: 0.0, blue: 0.0), backgroundColor: Color(red: 1.0, green: 0.0, blue: 0.0))
+
+                        self.presetButton("Greyscale Inverted", foregroundColor: Color(red: 0.0, green: 0.0, blue: 0.0), backgroundColor: Color(red: 1.0, green: 1.0, blue: 1.0))
+
+                        self.presetButton("Game Boy", foregroundColor: Color(red: 8/255.0, green: 24/255.0, blue: 32/255.0), backgroundColor: Color(red: 224/255.0, green: 248/255.0, blue: 208/255.0))
                     }
                 }
 
