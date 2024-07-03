@@ -13,6 +13,9 @@ struct Settings {
 
     static let eyeSeparationKey = "eyeSeparation"
 
+    static let enableSound = "enableSound"
+    static let enable3D = "enable3D"
+
     static func parseStoredColor(for key: String) -> Color? {
         guard let string = UserDefaults.standard.string(forKey: key) else {
             return nil
@@ -82,6 +85,24 @@ struct EyeSeparation: DynamicProperty {
     @AppStorage(Settings.eyeSeparationKey) var wrappedValue: Double = 0.0
 
     var projectedValue: Binding<Double> {
+        self._wrappedValue.projectedValue
+    }
+}
+
+@propertyWrapper
+struct EnableSound: DynamicProperty {
+    @AppStorage(Settings.enableSound) var wrappedValue: Bool = true
+
+    var projectedValue: Binding<Bool> {
+        self._wrappedValue.projectedValue
+    }
+}
+
+@propertyWrapper
+struct Enable3D: DynamicProperty {
+    @AppStorage(Settings.enable3D) var wrappedValue: Bool = true
+
+    var projectedValue: Binding<Bool> {
         self._wrappedValue.projectedValue
     }
 }

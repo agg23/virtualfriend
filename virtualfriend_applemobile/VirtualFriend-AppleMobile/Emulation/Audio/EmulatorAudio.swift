@@ -18,6 +18,12 @@ class EmulatorAudio {
     private let audioEngine: AVAudioEngine
     private var audioNode: AVAudioSourceNode!
 
+    var enableSound: Bool = true {
+        didSet {
+            self.audioNode.volume = self.enableSound ? 1.0 : 0.0
+        }
+    }
+
     init() throws {
         // Store at most 1/10th of a second
         let frameSampleCount = Int((Double(VB_SAMPLE_RATE) * 0.1).rounded())

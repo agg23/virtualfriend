@@ -28,12 +28,14 @@ struct StereoImageVisionView: View {
 
     let onTap: (() -> Void)?
 
+    let force2D: Bool
+
     let context: CIContext
 
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, geometry: GeometryProxy, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<CGColor>, onTap: (() -> Void)? = nil) {
+    init(width: Int, height: Int, scale: Float, geometry: GeometryProxy, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<CGColor>, onTap: (() -> Void)? = nil, force2D: Bool = false) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -44,6 +46,8 @@ struct StereoImageVisionView: View {
         self.stereoImageChannel = stereoImageChannel
 
         self.onTap = onTap
+
+        self.force2D = force2D
 
         self.context = CIContext()
 
@@ -186,7 +190,8 @@ struct StereoImageVisionView: View {
         let leftBounds = CGRect(x: -CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width, height: height)
         let rightBounds = CGRect(x: -width - CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width + right.extent.width + CGFloat(MARGIN) * 2, height: height)
         await self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: colorspace)
-        await self.context.render(right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: colorspace)
+        // If we force 2D, just reuse the left texture for the right eye
+        await self.context.render(self.force2D ? left : right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: colorspace)
 
         drawable.present()
     }

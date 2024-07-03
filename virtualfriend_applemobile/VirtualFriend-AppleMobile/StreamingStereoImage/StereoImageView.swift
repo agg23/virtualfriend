@@ -20,11 +20,12 @@ struct StereoImageView: View {
 
     let onTap: (() -> Void)?
     let integerScaling: Bool?
+    let force2D: Bool
 
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<Color>? = nil, onTap: (() -> Void)? = nil, integerScaling: Bool? = true) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<Color>? = nil, onTap: (() -> Void)? = nil, integerScaling: Bool? = true, force2D: Bool = false) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -40,6 +41,7 @@ struct StereoImageView: View {
 
         self.onTap = onTap
         self.integerScaling = integerScaling
+        self.force2D = force2D
     }
 
     var body: some View {
@@ -49,7 +51,7 @@ struct StereoImageView: View {
 
             GeometryReader { geometry in
                 #if os(visionOS)
-                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, geometry: geometry, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor)
+                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, geometry: geometry, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor, force2D: force2D)
                 #else
                 let contentView = Metal2DView(stereoImageChannel: self.stereoImageChannel, size: CGSize(width: self.width, height: self.height), integerScaling: self.integerScaling ?? true, backgroundColor: self.backgroundColor)
                 #endif

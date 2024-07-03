@@ -19,15 +19,24 @@ class Emulator {
     private let virtualFriend: VirtualFriend
     private let audio: EmulatorAudio
 
-    private var color: VBColor
+    private var prevFrameTime: TimeInterval?
+
+    private var halt = true
 
     var stereoImageChannel = AsyncImageChannel()
 
-    var prevFrameTime: TimeInterval?
+    // Settings
+    var enableSound: Bool {
+        get {
+            self.audio.enableSound
+        }
+        set {
+            self.audio.enableSound = newValue
+        }
+    }
 
+    var color: VBColor
     var separation: Double = 0.0
-
-    var halt = true
 
     init(fileUrl: URL) throws {
         self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
@@ -117,10 +126,6 @@ class Emulator {
                 print("Could not write save \(error)")
             }
         }
-    }
-
-    func set(color: VBColor) {
-        self.color = color
     }
 
     private func startThread() {

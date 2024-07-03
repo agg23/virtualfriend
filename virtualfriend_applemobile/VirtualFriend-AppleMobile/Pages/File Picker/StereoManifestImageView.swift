@@ -10,6 +10,7 @@ import SwiftUI
 struct StereoManifestImageView: View {
     @LEDBackgroundColor var ledBackgroundColor;
     @LEDColor var ledColor
+    @Enable3D var enable3D
 
     @State var stereoStreamChannel = AsyncImageChannel()
     @State var task: Task<(), Error>?
@@ -25,7 +26,7 @@ struct StereoManifestImageView: View {
     }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap, integerScaling: self.integerScaling)
+        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap, integerScaling: self.integerScaling, force2D: !self.enable3D)
             .onDisappear {
                 self.task?.cancel()
             }

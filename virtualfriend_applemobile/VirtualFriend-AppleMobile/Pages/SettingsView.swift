@@ -11,6 +11,9 @@ struct SettingsView: View {
     @LEDBackgroundColor var ledBackgroundColor;
     @LEDForegroundColor var ledForegroundColor;
 
+    @EnableSound var enableSound
+    @Enable3D var enable3D
+
     @State var colorImage: UIImage?
 
     @State var selectFolder = false
@@ -19,6 +22,14 @@ struct SettingsView: View {
         NavigationStack {
             VStack {
                 Form {
+                    Section("Gameplay") {
+                        Toggle("Enable Audio", isOn: self.$enableSound)
+                        Toggle(isOn: self.$enable3D) {
+                            Text("Enable 3D")
+                            Text("Enables the stereoscopic 3D effect")
+                        }
+                    }
+
                     Section("Color") {
                         ColorPicker("Foreground Color", selection: self.$ledForegroundColor, supportsOpacity: false)
                         ColorPicker("Background Color", selection: self.$ledBackgroundColor, supportsOpacity: false)

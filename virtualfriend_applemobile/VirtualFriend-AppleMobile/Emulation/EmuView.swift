@@ -23,6 +23,9 @@ struct EmuView: View {
     @LEDBackgroundColor var ledBackgroundColor
     @EyeSeparation var separation
 
+    @EnableSound var enableSound
+    @Enable3D var enable3D
+
     @State private var emulator: EmulatorStatus = .none
 
     @State private var controlVisibilityTimer: Timer?
@@ -76,7 +79,9 @@ struct EmuView: View {
         }
         #if os(visionOS)
         .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
-            self.eyeSeparationOverlay
+            if self.enable3D {
+                self.eyeSeparationOverlay
+            }
         }
         #endif
         .onTapGesture {
@@ -90,12 +95,6 @@ struct EmuView: View {
                 self.clearTimer()
             } else {
                 self.resetTimer()
-            }
-        }
-        .onChange(of: self.separation) { _, newValue in
-            if case .emulator(let emulator) = self.emulator {
-                // Invert separation range so more 3D is on the right
-                emulator.separation = newValue * -1
             }
         }
         .onChange(of: self.scenePhase) { prevValue, newValue in
@@ -115,6 +114,17 @@ struct EmuView: View {
                 emulator.shutdown()
             @unknown default:
                 print("Unknown scene \(newValue)")
+            }
+        }
+        .onChange(of: self.separation) { _, newValue in
+            if case .emulator(let emulator) = self.emulator {
+                // Invert separation range so more 3D is on the right
+                emulator.separation = newValue * -1
+            }
+        }
+        .onChange(of: self.enableSound) { _, newValue in
+            if case .emulator(let emulator) = self.emulator {
+                emulator.enableSound = newValue
             }
         }
     }
@@ -185,6 +195,8 @@ struct EmuView: View {
                 .symbolVariant(.circle.fill)
                 .font(.largeTitle)
                 #endif
+//                .padding(.bottom, 16)
+//                .background(.thickMaterial)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -218,6 +230,8 @@ struct EmuView: View {
     func createEmulator(_ url: URL) {
         do {
             let emulator = try Emulator(fileUrl: url)
+            emulator.separation = self.separation
+            emulator.enableSound = self.enableSound
             self.emulator = .emulator(emulator)
         } catch {
             self.emulator = .error(error.localizedDescription)
@@ -268,6 +282,7 @@ private struct EmuContentView: View {
     @Environment(\.openWindow) var openWindow
 
     @LEDColor var ledColor
+    @Enable3D var enable3D
 
     let emulator: Emulator
     @Binding var controlVisibility: Visibility
@@ -280,7 +295,7 @@ private struct EmuContentView: View {
     }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel, backgroundColor: self._ledColor.colorWrapper.$background)
+        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel, backgroundColor: self._ledColor.colorWrapper.$background, force2D: !self.enable3D)
             .onChange(of: self.scenePhase) { _, newPhase in
                 if newPhase == .background {
                     // Stop emulation
@@ -288,10 +303,10 @@ private struct EmuContentView: View {
                 }
             }
             .onChange(of: self.ledColor) { _, _ in
-                self.emulator.set(color: self.ledColor)
+                self.emulator.color = self.ledColor
             }
             .onAppear {
-                self.emulator.set(color: self.ledColor)
+                self.emulator.color = self.ledColor
 
                 self.emulator.start()
             }
