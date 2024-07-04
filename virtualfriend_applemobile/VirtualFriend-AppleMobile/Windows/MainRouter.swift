@@ -10,6 +10,9 @@ import Foundation
 @Observable class MainRouter {
     var currentRoute: Route = .main
 
+    /// The currently active, selected file, if any
+    var selectedFile: URL?
+
     enum Route {
         case main
         case emulator(url: URL)

@@ -49,10 +49,33 @@ struct FilePickerListView: View {
                 .tag(entry)
             }
         }
+        .onAppear {
+            guard let selectedUrl = self.router.selectedFile else {
+                return
+            }
+
+            // Try to find selected file in all files
+            let selectedFile = self.files.first { file in
+                file.entry.url == selectedUrl
+            }
+
+            guard let selectedFile = selectedFile else {
+                return
+            }
+
+            self.selectedFile = selectedFile
+        }
         .onChange(of: self.files, initial: true) { _, newValue in
             if self.selectedFile == nil {
                 self.selectedFile = newValue.first
             }
+        }
+        .onChange(of: self.selectedFile) { _, newValue in
+            guard let selectedFile = newValue else {
+                return
+            }
+
+            self.router.selectedFile = selectedFile.entry.url
         }
     }
 
