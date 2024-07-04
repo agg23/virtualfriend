@@ -34,7 +34,7 @@ struct EmuView: View {
 
     let controlsTimerDuration = 3.0
 
-    let fileUrl: URL
+    let fileEntry: FileEntryWithManifest
 
     var body: some View {
         #if os(visionOS)
@@ -87,8 +87,8 @@ struct EmuView: View {
         .onTapGesture {
             self.toggleVisibility()
         }
-        .onChange(of: self.fileUrl, initial: true) { _, newValue in
-            self.createEmulator(newValue)
+        .onChange(of: self.fileEntry, initial: true) { _, newValue in
+            self.createEmulator(newValue.entry.url)
         }
         .onChange(of: self.preventControlDismiss) { _, newValue in
             if newValue {
@@ -131,85 +131,28 @@ struct EmuView: View {
 
     @ViewBuilder
     var controlsOverlay: some View {
-        // Attempt to match NavigationBar padding
-        #if os(visionOS)
-        let buttonPadding = 20.0
-        let bottomPadding = 16.0
-        #else
-        let buttonPadding = 8.0
-        let bottomPadding = 8.0
-        #endif
-
         ZStack(alignment: .top) {
             // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
             Color.white.opacity(0.0001)
 
             if self.controlVisibility == .visible {
-                HStack {
-                    Button {
-                        self.resetTimer()
+                EmuHeaderOverlayView(title: self.fileEntry.title) {
+                    self.resetTimer()
+                } onBack: {
+                    self.router.currentRoute = .main
 
-                        self.router.currentRoute = .main
-
-                        if case .emulator(let emulator) = self.emulator {
-                            emulator.shutdown()
-                        }
-                    } label: {
-                        Label {
-                            Text("Back to Library")
-                        } icon: {
-                            Image(systemName: Icon.back)
-                        }
+                    if case .emulator(let emulator) = self.emulator {
+                        emulator.shutdown()
                     }
-                    .help("Back to Library")
-                    #if os(visionOS)
-                    .padding([.leading, .top], buttonPadding)
-                    #else
-                    .padding(.leading, buttonPadding)
-                    #endif
-
-                    Spacer()
-
-                    Button {
-                        self.resetTimer()
-
-                        self.restart()
-                    } label: {
-                        Label {
-                            Text("Restart")
-                        } icon: {
-                            Image(systemName: Icon.restart)
-                        }
-                    }
-                    .help("Restart")
-                    #if os(visionOS)
-                    .padding([.trailing, .top], buttonPadding)
-                    #else
-                    .padding(.trailing, buttonPadding)
-                    #endif
-
+                } onRestart: {
+                    self.restart()
                 }
-                .symbolRenderingMode(.hierarchical)
-                .labelStyle(.iconOnly)
-                .buttonBorderShape(.circle)
-                .controlSize(.large)
-                #if !os(visionOS)
-                .tint(.white)
-                .symbolVariant(.circle.fill)
-                .font(.largeTitle)
-                #endif
-                .padding(.bottom, bottomPadding)
-                #if os(visionOS)
-                // Vision looks bad with the (white) .secondary, so we use the same color as our details view
-                .background(Color.black.opacity(0.4))
-                #else
-                // We insert .secondary background so we can ensure the control buttons are visible over the user configuable background color
-                .background(.secondary)
-                #endif
             }
         }
+        #if os(visionOS)
         // Should be the exact window corner radius
         .clipShape(.rect(cornerRadius: 46.0))
+        #endif
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -257,7 +200,7 @@ struct EmuView: View {
         self.emulator = .none
         // TODO: Make Emulator stereoImageChannel updates cause rerenders
         DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
-            self.createEmulator(self.fileUrl)
+            self.createEmulator(self.fileEntry.entry.url)
         }))
     }
 

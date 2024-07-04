@@ -15,6 +15,6 @@ import Foundation
 
     enum Route {
         case main
-        case emulator(url: URL)
+        case emulator(entry: FileEntryWithManifest)
     }
 }

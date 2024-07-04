@@ -37,11 +37,11 @@ struct FilePickerGridItemView: View {
         #endif
 
         let videoView = StereoManifestImageView(entry: self.entry, onTap: {
-            self.router.currentRoute = .emulator(url: self.entry.entry.url)
+            self.router.currentRoute = .emulator(entry: self.entry)
         }, integerScaling: false)
 
         let button = Button {
-            self.router.currentRoute = .emulator(url: self.entry.entry.url)
+            self.router.currentRoute = .emulator(entry: self.entry)
         } label: {
             VStack {
                 #if os(visionOS)
@@ -52,7 +52,7 @@ struct FilePickerGridItemView: View {
                 videoView
                 #endif
 
-                Text(metadata?.title.toString() ?? self.entry.entry.url.deletingPathExtension().lastPathComponent)
+                Text(self.entry.title)
                     #if os(visionOS)
                     .font(.title)
                     #else

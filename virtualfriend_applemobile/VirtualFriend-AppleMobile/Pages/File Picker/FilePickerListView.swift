@@ -34,7 +34,7 @@ struct FilePickerListView: View {
         List(selection: self.$selectedFile) {
             ForEach(self.files, id: \.entry.id) { entry in
                 HStack {
-                    Text(self.title(from: entry))
+                    Text(entry.title)
                         .font(.title)
                         .lineLimit(1)
                     if let metadata = entry.manifest?.metadata {
@@ -89,7 +89,7 @@ struct FilePickerListView: View {
                 VStack {
                     StereoManifestImageView(entry: selectedFile)
 
-                    Text(self.title(from: selectedFile))
+                    Text(selectedFile.title)
                         .font(.largeTitle)
                         .lineLimit(1)
 
@@ -104,7 +104,7 @@ struct FilePickerListView: View {
                     }
 
                     Button("Play", systemImage: "play.fill") {
-                        self.router.currentRoute = .emulator(url: selectedFile.entry.url)
+                        self.router.currentRoute = .emulator(entry: selectedFile)
                     }
                     .padding()
 
@@ -118,10 +118,6 @@ struct FilePickerListView: View {
                 }
             }
         }
-    }
-
-    func title(from entry: FileEntryWithManifest) -> String {
-        entry.manifest?.metadata?.title.toString() ?? entry.entry.url.deletingPathExtension().lastPathComponent
     }
 }
 

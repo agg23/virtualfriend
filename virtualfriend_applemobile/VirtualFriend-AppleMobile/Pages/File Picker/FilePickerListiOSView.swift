@@ -15,14 +15,14 @@ struct FilePickerListiOSView: View {
     var body: some View {
         List(self.files, id: \.entry.id) { file in
             Button {
-                self.router.currentRoute = .emulator(url: file.entry.url)
+                self.router.currentRoute = .emulator(entry: file)
             } label: {
                 HStack {
                     StereoManifestImageView(entry: file, integerScaling: false)
                         .frame(height: 50)
 
                     VStack(alignment: .leading) {
-                        Text(self.title(from: file))
+                        Text(file.title)
                             .font(.title3)
                             .lineLimit(1)
 
@@ -40,10 +40,6 @@ struct FilePickerListiOSView: View {
             }
             .tint(.black)
         }
-    }
-
-    func title(from entry: FileEntryWithManifest) -> String {
-        entry.manifest?.metadata?.title.toString() ?? entry.entry.url.deletingPathExtension().lastPathComponent
     }
 }
 

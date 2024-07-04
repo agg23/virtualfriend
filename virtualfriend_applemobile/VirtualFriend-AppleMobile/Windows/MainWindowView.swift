@@ -37,8 +37,8 @@ struct MainWindowView: View {
                         dismissWindow()
                     }
                 }
-            case .emulator(let url):
-                EmuView(fileUrl: url)
+            case .emulator(let entry):
+                EmuView(fileEntry: entry)
             }
         }
         #if !os(visionOS)

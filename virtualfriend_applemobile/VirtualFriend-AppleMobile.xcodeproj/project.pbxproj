@@ -51,6 +51,7 @@
 		66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B12BC755F500BE5C0F /* StereoImageView.swift */; };
 		66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */; };
 		66CB32B62BC758F600BE5C0F /* StereoImageMaterial.usda in Resources */ = {isa = PBXBuildFile; fileRef = 66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */; };
+		66E147072C37081C00CB3BE7 /* EmuHeaderOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147062C37081C00CB3BE7 /* EmuHeaderOverlayView.swift */; };
 		66E43B0F2C3058D100B8C04E /* TPCircularBuffer in Frameworks */ = {isa = PBXBuildFile; productRef = 66E43B0E2C3058D100B8C04E /* TPCircularBuffer */; };
 		66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B122C305A2800B8C04E /* OERingBuffer.m */; };
 		66E43B152C305B9900B8C04E /* Emulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B142C305B9500B8C04E /* Emulator.swift */; };
@@ -112,6 +113,7 @@
 		66CB32B12BC755F500BE5C0F /* StereoImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageView.swift; sourceTree = "<group>"; };
 		66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageMaterial.swift; sourceTree = "<group>"; };
 		66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = StereoImageMaterial.usda; sourceTree = "<group>"; };
+		66E147062C37081C00CB3BE7 /* EmuHeaderOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuHeaderOverlayView.swift; sourceTree = "<group>"; };
 		66E43B112C305A2800B8C04E /* OERingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OERingBuffer.h; sourceTree = "<group>"; };
 		66E43B122C305A2800B8C04E /* OERingBuffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OERingBuffer.m; sourceTree = "<group>"; };
 		66E43B142C305B9500B8C04E /* Emulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emulator.swift; sourceTree = "<group>"; };
@@ -327,6 +329,7 @@
 				66E43B102C305A1300B8C04E /* Audio */,
 				66E43B162C305D7500B8C04E /* Util */,
 				66E43B142C305B9500B8C04E /* Emulator.swift */,
+				66E147062C37081C00CB3BE7 /* EmuHeaderOverlayView.swift */,
 				6688DED62B5DF876004B2123 /* EmuView.swift */,
 				66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */,
 			);
@@ -500,6 +503,7 @@
 				6697298D2BDD56770013BCE2 /* FileEntry.swift in Sources */,
 				6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */,
 				66E43B152C305B9900B8C04E /* Emulator.swift in Sources */,
+				66E147072C37081C00CB3BE7 /* EmuHeaderOverlayView.swift in Sources */,
 				66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */,
 				66C60F102B6596DE00C1FDF4 /* FilePickerGridItemView.swift in Sources */,
 				66A0612F2BE679BF0043D170 /* Settings.swift in Sources */,

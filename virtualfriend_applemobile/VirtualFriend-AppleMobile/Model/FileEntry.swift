@@ -82,6 +82,10 @@ extension FileEntry: Identifiable {
 struct FileEntryWithManifest {
     let entry: FileEntry
     let manifest: FFIManifest?
+
+    var title: String {
+        self.manifest?.metadata?.title.toString() ?? self.entry.url.deletingPathExtension().lastPathComponent
+    }
 }
 
 extension FileEntryWithManifest: Hashable {
