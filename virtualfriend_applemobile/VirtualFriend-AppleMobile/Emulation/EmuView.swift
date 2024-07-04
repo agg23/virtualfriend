@@ -131,10 +131,13 @@ struct EmuView: View {
 
     @ViewBuilder
     var controlsOverlay: some View {
+        // Attempt to match NavigationBar padding
         #if os(visionOS)
-        let buttonPadding = 40.0
+        let buttonPadding = 20.0
+        let bottomPadding = 16.0
         #else
         let buttonPadding = 8.0
+        let bottomPadding = 8.0
         #endif
 
         ZStack(alignment: .top) {
@@ -195,10 +198,18 @@ struct EmuView: View {
                 .symbolVariant(.circle.fill)
                 .font(.largeTitle)
                 #endif
-//                .padding(.bottom, 16)
-//                .background(.thickMaterial)
+                .padding(.bottom, bottomPadding)
+                #if os(visionOS)
+                // Vision looks bad with the (white) .secondary, so we use the same color as our details view
+                .background(Color.black.opacity(0.4))
+                #else
+                // We insert .secondary background so we can ensure the control buttons are visible over the user configuable background color
+                .background(.secondary)
+                #endif
             }
         }
+        // Should be the exact window corner radius
+        .clipShape(.rect(cornerRadius: 46.0))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
