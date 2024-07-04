@@ -177,11 +177,9 @@ struct StereoImageVisionView: View {
         let left = image.left.transformed(by: .init(scaleX: 1, y: -1))
         let right = image.right.transformed(by: .init(scaleX: 1, y: -1))
 
-        let colorspace = CGColorSpace(name: CGColorSpace.sRGB)!
-
         // Clear texture with background color. How expensive is this?
         // TODO: This doesn't seem to work correctly
-        await self.context.render(CIImage(color: CIColor(cgColor: self.backgroundColor)), to: drawable.texture, commandBuffer: nil, bounds: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)), colorSpace: colorspace)
+        await self.context.render(CIImage(color: CIColor(cgColor: self.backgroundColor)), to: drawable.texture, commandBuffer: nil, bounds: CGRect(origin: .zero, size: .init(width: self.width * 2 + MARGIN * 4, height: self.height + MARGIN * 2)), colorSpace: left.colorSpace!)
 
         // Time to draw
         let width = left.extent.width + CGFloat(MARGIN) * 2
@@ -189,9 +187,9 @@ struct StereoImageVisionView: View {
 
         let leftBounds = CGRect(x: -CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width, height: height)
         let rightBounds = CGRect(x: -width - CGFloat(MARGIN), y: left.extent.minY - CGFloat(MARGIN), width: width + right.extent.width + CGFloat(MARGIN) * 2, height: height)
-        await self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: colorspace)
+        await self.context.render(left, to: drawable.texture, commandBuffer: nil, bounds: leftBounds, colorSpace: left.colorSpace!)
         // If we force 2D, just reuse the left texture for the right eye
-        await self.context.render(self.force2D ? left : right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: colorspace)
+        await self.context.render(self.force2D ? left : right, to: drawable.texture, commandBuffer: nil, bounds: rightBounds, colorSpace: right.colorSpace!)
 
         drawable.present()
     }

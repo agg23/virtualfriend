@@ -11,17 +11,17 @@ def Xform "Root"
     def Material "StereoRenderMaterial"
     {
         asset inputs:Left_Image (
-            colorSpace = "srgb_texture"
+            colorSpace = "srgb_displayp3"
             customData = {
                 dictionary realitykit = {
                     float2 positionInSubgraph = (-940.77747, 46.325825)
                     float2 sizeInSubgraph = (138.5, 53)
-                    int stackingOrderInSubgraph = 1277
+                    int stackingOrderInSubgraph = 1279
                 }
             }
         )
         asset inputs:Right_Image (
-            colorSpace = "srgb_texture"
+            colorSpace = "srgb_displayp3"
             customData = {
                 dictionary realitykit = {
                     float2 positionInSubgraph = (-942.0648, 212.37627)
@@ -159,12 +159,12 @@ def Xform "Root"
     def Material "SideBySideStereoRenderMaterial"
     {
         asset inputs:Image (
-            colorSpace = "srgb_texture"
+            colorSpace = "srgb_displayp3"
             customData = {
                 dictionary realitykit = {
                     float2 positionInSubgraph = (-702.27747, -62.68199)
                     float2 sizeInSubgraph = (115.5, 53)
-                    int stackingOrderInSubgraph = 1527
+                    int stackingOrderInSubgraph = 1573
                 }
             }
         )
@@ -195,7 +195,7 @@ def Xform "Root"
             token outputs:out
             float2 ui:nodegraph:node:pos = (64.55078, 18.710938)
             float2 ui:nodegraph:node:size = (159.5, 307)
-            int ui:nodegraph:node:stackingOrder = 1539
+            int ui:nodegraph:node:stackingOrder = 1569
             string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["Advanced", "inputs:emissiveColor", "inputs:emissiveColor"]
         }
 
@@ -211,7 +211,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-195.98322, 60.016037)
             float2 ui:nodegraph:node:size = (237, 145)
-            int ui:nodegraph:node:stackingOrder = 1522
+            int ui:nodegraph:node:stackingOrder = 1566
             string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:mono"]
         }
 
@@ -222,7 +222,7 @@ def Xform "Root"
                 colorSpace = "srgb_displayp3"
             )
             asset inputs:file (
-                colorSpace = "srgb_texture"
+                colorSpace = "srgb_displayp3"
             )
             asset inputs:file.connect = </Root/SideBySideStereoRenderMaterial.inputs:Image>
             string inputs:filtertype = "closest"
@@ -231,7 +231,8 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-473.48532, -10.630167)
             float2 ui:nodegraph:node:size = (158.5, 235)
-            int ui:nodegraph:node:stackingOrder = 1526
+            int ui:nodegraph:node:stackingOrder = 1574
+            string[] ui:nodegraph:realitykit:node:attributesShowingChildren = ["inputs:uvtiling"]
         }
 
         def Shader "TiledImage_Right"
@@ -241,7 +242,7 @@ def Xform "Root"
                 colorSpace = "srgb_displayp3"
             )
             asset inputs:file (
-                colorSpace = "srgb_texture"
+                colorSpace = "srgb_displayp3"
             )
             asset inputs:file.connect = </Root/SideBySideStereoRenderMaterial.inputs:Image>
             string inputs:filtertype = "closest"
@@ -253,7 +254,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-473.57523, 246.361)
             float2 ui:nodegraph:node:size = (161, 235)
-            int ui:nodegraph:node:stackingOrder = 1520
+            int ui:nodegraph:node:stackingOrder = 1572
         }
 
         def Shader "UsdPreviewSurface" (
@@ -275,7 +276,7 @@ def Xform "Root"
             token outputs:out
             float2 ui:nodegraph:node:pos = (71.21951, 284.36124)
             float2 ui:nodegraph:node:size = (194.5, 181)
-            int ui:nodegraph:node:stackingOrder = 1546
+            int ui:nodegraph:node:stackingOrder = 1570
         }
 
         def Shader "Constant"
@@ -285,7 +286,7 @@ def Xform "Root"
             float outputs:out
             float2 ui:nodegraph:node:pos = (-259.35107, 306.39667)
             float2 ui:nodegraph:node:size = (141.5, 53)
-            int ui:nodegraph:node:stackingOrder = 1556
+            int ui:nodegraph:node:stackingOrder = 1568
         }
 
         def Shader "Power"
@@ -296,7 +297,7 @@ def Xform "Root"
             color3f outputs:out
             float2 ui:nodegraph:node:pos = (-122.54342, 242.87909)
             float2 ui:nodegraph:node:size = (123.5, 40)
-            int ui:nodegraph:node:stackingOrder = 1552
+            int ui:nodegraph:node:stackingOrder = 1567
         }
     }
 }
