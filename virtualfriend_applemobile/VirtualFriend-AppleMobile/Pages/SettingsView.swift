@@ -24,10 +24,13 @@ struct SettingsView: View {
                 Form {
                     Section("Gameplay") {
                         Toggle("Enable Audio", isOn: self.$enableSound)
+
+                        #if os(visionOS)
                         Toggle(isOn: self.$enable3D) {
                             Text("Enable 3D")
                             Text("Enables the stereoscopic 3D effect")
                         }
+                        #endif
                     }
 
                     Section("Color") {
