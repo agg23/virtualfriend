@@ -26,6 +26,8 @@ struct EmuView: View {
     @EnableSound var enableSound
     @Enable3D var enable3D
 
+    @State private var controller: EmuController = EmuController()
+
     @State private var emulator: EmulatorStatus = .none
 
     @State private var controlVisibilityTimer: Timer?
@@ -49,31 +51,41 @@ struct EmuView: View {
         }
         #endif
 
-        ZStack(alignment: alignment) {
-            // Background color to surround the view and pad out the window AR
-            self.ledBackgroundColor
-                .ignoresSafeArea()
-
-            Group {
-                switch self.emulator {
-                case .emulator(let emulator):
-                    EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
-                        .padding(.vertical, 16)
-                case .error(let message):
-                    VStack(alignment: .center) {
-                        Text("Could not start emulator")
-
-                        Text(message)
-                    }
-                case .none:
-                    EmptyView()
-                }
+        let toastText = Binding<ToastText> {
+            .content(text: self.controller.notification.text, icon: self.controller.notification.icon)
+        } set: { text in
+            if text == .none {
+                self.controller.notification = .none
             }
-            #if os(visionOS)
-            // Add additional spacing around render frame to prevent corner from clipping off of rounded corner
-            .padding(8)
-            #endif
         }
+
+//        ToastWrapper(text: toastText) {
+            ZStack(alignment: alignment) {
+                // Background color to surround the view and pad out the window AR
+                self.ledBackgroundColor
+                    .ignoresSafeArea()
+
+                Group {
+                    switch self.emulator {
+                    case .emulator(let emulator):
+                        EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
+                            .padding(.vertical, 16)
+                    case .error(let message):
+                        VStack(alignment: .center) {
+                            Text("Could not start emulator")
+
+                            Text(message)
+                        }
+                    case .none:
+                        EmptyView()
+                    }
+                }
+                #if os(visionOS)
+                // Add additional spacing around render frame to prevent corner from clipping off of rounded corner
+                .padding(8)
+                #endif
+            }
+//        }
         .overlay {
             self.controlsOverlay
         }
@@ -228,6 +240,10 @@ struct EmuView: View {
         withAnimation {
             self.controlVisibility = self.controlVisibility != .visible ? .visible : .hidden
         }
+    }
+
+    func rebuildControllers() {
+
     }
 }
 

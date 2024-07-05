@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GameController
 
 struct MainWindowView: View {
     @Environment(\.dismissWindow) private var dismissWindow
@@ -45,6 +46,10 @@ struct MainWindowView: View {
         .tint(.red)
         #endif
         .environment(self.router)
+        .onAppear {
+            // Prefetch controllers so we don't see a controller notification even though we didn't just connect a controller
+            print("Startup with \(GCController.controllers().count) controllers")
+        }
     }
 }
 
