@@ -13,6 +13,10 @@
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
+		66307AFF2C39A64A00F07826 /* TouchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307AFE2C39A64A00F07826 /* TouchController.swift */; };
+		66307B012C39EC2A00F07826 /* TouchGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */; };
+		66307B032C39EE8000F07826 /* ControllerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B022C39EE8000F07826 /* ControllerView.swift */; };
+		66307B052C39EECC00F07826 /* TouchGestureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B042C39EECC00F07826 /* TouchGestureView.swift */; };
 		665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 665022C12C0CDF470012E9D4 /* AsyncAlgorithms */; };
 		665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489142BDDC9F000C2BD96 /* MainWindowView.swift */; };
 		665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489172BDDCA3B00C2BD96 /* SettingsView.swift */; };
@@ -55,9 +59,8 @@
 		66E147132C37950A00CB3BE7 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147122C37950A00CB3BE7 /* Toast.swift */; };
 		66E147152C3833FE00CB3BE7 /* EmuNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147142C3833FE00CB3BE7 /* EmuNotification.swift */; };
 		66E147172C38381100CB3BE7 /* EmuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147162C38381100CB3BE7 /* EmuController.swift */; };
-		66E147202C385DCB00CB3BE7 /* FaceButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E1471F2C385DCB00CB3BE7 /* FaceButton.swift */; };
-		66E147222C3990D200CB3BE7 /* TouchGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147212C3990D200CB3BE7 /* TouchGesture.swift */; };
-		66E147242C39926C00CB3BE7 /* Dpad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147232C39926C00CB3BE7 /* Dpad.swift */; };
+		66E147202C385DCB00CB3BE7 /* FaceButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E1471F2C385DCB00CB3BE7 /* FaceButtonView.swift */; };
+		66E147242C39926C00CB3BE7 /* DpadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E147232C39926C00CB3BE7 /* DpadView.swift */; };
 		66E43B0F2C3058D100B8C04E /* TPCircularBuffer in Frameworks */ = {isa = PBXBuildFile; productRef = 66E43B0E2C3058D100B8C04E /* TPCircularBuffer */; };
 		66E43B132C305A2800B8C04E /* OERingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B122C305A2800B8C04E /* OERingBuffer.m */; };
 		66E43B152C305B9900B8C04E /* Emulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E43B142C305B9500B8C04E /* Emulator.swift */; };
@@ -77,6 +80,10 @@
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		6629A1E12B4E538300FE2AB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		66307AFE2C39A64A00F07826 /* TouchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchController.swift; sourceTree = "<group>"; };
+		66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGestureRecognizer.swift; sourceTree = "<group>"; };
+		66307B022C39EE8000F07826 /* ControllerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerView.swift; sourceTree = "<group>"; };
+		66307B042C39EECC00F07826 /* TouchGestureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGestureView.swift; sourceTree = "<group>"; };
 		665489142BDDC9F000C2BD96 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		665489172BDDCA3B00C2BD96 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileImporter.swift; sourceTree = "<group>"; };
@@ -123,9 +130,8 @@
 		66E147122C37950A00CB3BE7 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		66E147142C3833FE00CB3BE7 /* EmuNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuNotification.swift; sourceTree = "<group>"; };
 		66E147162C38381100CB3BE7 /* EmuController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuController.swift; sourceTree = "<group>"; };
-		66E1471F2C385DCB00CB3BE7 /* FaceButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceButton.swift; sourceTree = "<group>"; };
-		66E147212C3990D200CB3BE7 /* TouchGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGesture.swift; sourceTree = "<group>"; };
-		66E147232C39926C00CB3BE7 /* Dpad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dpad.swift; sourceTree = "<group>"; };
+		66E1471F2C385DCB00CB3BE7 /* FaceButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceButtonView.swift; sourceTree = "<group>"; };
+		66E147232C39926C00CB3BE7 /* DpadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DpadView.swift; sourceTree = "<group>"; };
 		66E43B112C305A2800B8C04E /* OERingBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OERingBuffer.h; sourceTree = "<group>"; };
 		66E43B122C305A2800B8C04E /* OERingBuffer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OERingBuffer.m; sourceTree = "<group>"; };
 		66E43B142C305B9500B8C04E /* Emulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emulator.swift; sourceTree = "<group>"; };
@@ -373,9 +379,12 @@
 		66E147182C385D1F00CB3BE7 /* OnscreenController */ = {
 			isa = PBXGroup;
 			children = (
-				66E147232C39926C00CB3BE7 /* Dpad.swift */,
-				66E1471F2C385DCB00CB3BE7 /* FaceButton.swift */,
-				66E147212C3990D200CB3BE7 /* TouchGesture.swift */,
+				66307B022C39EE8000F07826 /* ControllerView.swift */,
+				66E147232C39926C00CB3BE7 /* DpadView.swift */,
+				66E1471F2C385DCB00CB3BE7 /* FaceButtonView.swift */,
+				66307AFE2C39A64A00F07826 /* TouchController.swift */,
+				66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */,
+				66307B042C39EECC00F07826 /* TouchGestureView.swift */,
 			);
 			path = OnscreenController;
 			sourceTree = "<group>";
@@ -504,9 +513,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				6697298B2BDD56350013BCE2 /* FilePickerFilesView.swift in Sources */,
+				66307B012C39EC2A00F07826 /* TouchGestureRecognizer.swift in Sources */,
 				669729952BDD91AA0013BCE2 /* StereoManifestImageView.swift in Sources */,
 				6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */,
-				66E147222C3990D200CB3BE7 /* TouchGesture.swift in Sources */,
 				66C60F2D2B66BA7F00C1FDF4 /* Hash.swift in Sources */,
 				6697F38D2C0E788100229BDD /* Metal2DView.swift in Sources */,
 				669729912BDD56EF0013BCE2 /* MockFileEntry.swift in Sources */,
@@ -522,10 +531,12 @@
 				669920872C11197800A49C67 /* FilePickerListiOSView.swift in Sources */,
 				669729932BDD67AA0013BCE2 /* FilePickerListView.swift in Sources */,
 				66E147132C37950A00CB3BE7 /* Toast.swift in Sources */,
-				66E147242C39926C00CB3BE7 /* Dpad.swift in Sources */,
+				66E147242C39926C00CB3BE7 /* DpadView.swift in Sources */,
+				66307B032C39EE8000F07826 /* ControllerView.swift in Sources */,
 				669920852C0FF2B500A49C67 /* MainRouter.swift in Sources */,
+				66307AFF2C39A64A00F07826 /* TouchController.swift in Sources */,
 				66E147172C38381100CB3BE7 /* EmuController.swift in Sources */,
-				66E147202C385DCB00CB3BE7 /* FaceButton.swift in Sources */,
+				66E147202C385DCB00CB3BE7 /* FaceButtonView.swift in Sources */,
 				66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */,
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
 				6697F38B2C0E75B600229BDD /* Metal2DUIView.swift in Sources */,
@@ -536,6 +547,7 @@
 				665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */,
 				665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */,
 				66A061392BE7EC8B0043D170 /* URL.swift in Sources */,
+				66307B052C39EECC00F07826 /* TouchGestureView.swift in Sources */,
 				66635BA32B66D1F6004FD096 /* Files.swift in Sources */,
 				66C60F062B63546B00C1FDF4 /* FFIGamepadInputs.swift in Sources */,
 				669729892BDD54B50013BCE2 /* FilePickerGrid.swift in Sources */,
