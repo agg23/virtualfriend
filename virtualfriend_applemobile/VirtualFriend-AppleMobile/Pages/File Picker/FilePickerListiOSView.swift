@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct FilePickerListiOSView: View {
+    @Environment(\.colorScheme) var colorScheme: ColorScheme
     @Environment(MainRouter.self) private var router
 
     let files: [FileEntryWithManifest]
@@ -38,7 +39,7 @@ struct FilePickerListiOSView: View {
                     }
                 }
             }
-            .tint(.black)
+            .tint(self.colorScheme == .light ? .black : .white)
         }
     }
 }
