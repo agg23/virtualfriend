@@ -108,6 +108,15 @@ struct EmuView: View {
                         self.controller.leftDpadLeft = pressed
                     case .right:
                         self.controller.leftDpadRight = pressed
+
+                    case .upLeft:
+                        self.controller.leftDpadUpLeft = pressed
+                    case .upRight:
+                        self.controller.leftDpadUpRight = pressed
+                    case .downLeft:
+                        self.controller.leftDpadDownLeft = pressed
+                    case .downRight:
+                        self.controller.leftDpadDownRight = pressed
                     }
                 } rightDpad: { direction, pressed in
                     switch direction {
@@ -119,6 +128,15 @@ struct EmuView: View {
                         self.controller.rightDpadLeft = pressed
                     case .right:
                         self.controller.rightDpadRight = pressed
+
+                    case .upLeft:
+                        self.controller.rightDpadUpLeft = pressed
+                    case .upRight:
+                        self.controller.rightDpadUpRight = pressed
+                    case .downLeft:
+                        self.controller.rightDpadDownLeft = pressed
+                    case .downRight:
+                        self.controller.rightDpadDownRight = pressed
                     }
                 } aButton: { pressed in
                     self.controller.aButton = pressed

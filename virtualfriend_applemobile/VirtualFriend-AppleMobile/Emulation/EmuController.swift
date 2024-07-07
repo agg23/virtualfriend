@@ -29,10 +29,20 @@ import GameController
     var leftDpadUp: Bool = false
     var leftDpadDown: Bool = false
 
+    var leftDpadUpLeft: Bool = false
+    var leftDpadUpRight: Bool = false
+    var leftDpadDownLeft: Bool = false
+    var leftDpadDownRight: Bool = false
+
     var rightDpadLeft: Bool = false
     var rightDpadRight: Bool = false
     var rightDpadUp: Bool = false
     var rightDpadDown: Bool = false
+
+    var rightDpadUpLeft: Bool = false
+    var rightDpadUpRight: Bool = false
+    var rightDpadDownLeft: Bool = false
+    var rightDpadDownRight: Bool = false
 
     var startButton: Bool = false
     var selectButton: Bool = false
@@ -85,6 +95,16 @@ import GameController
     }
 
     func pollOnscreenController() -> FFIGamepadInputs {
-        return FFIGamepadInputs(a_button: self.aButton, b_button: self.bButton, right_trigger: self.rButton, left_trigger: self.lButton, right_dpad_up: self.rightDpadUp, right_dpad_right: self.rightDpadRight, right_dpad_left: self.rightDpadLeft, right_dpad_down: self.rightDpadDown, left_dpad_up: self.leftDpadUp, left_dpad_right: self.leftDpadRight, left_dpad_left: self.leftDpadLeft, left_dpad_down: self.leftDpadDown, start: self.startButton, select: self.selectButton)
+        let rightDpadUp = self.rightDpadUp || self.rightDpadUpLeft || self.rightDpadUpRight
+        let rightDpadRight = self.rightDpadRight || self.rightDpadUpRight || self.rightDpadDownRight
+        let rightDpadLeft = self.rightDpadLeft || self.rightDpadUpLeft || self.rightDpadDownLeft
+        let rightDpadDown = self.rightDpadDown || self.rightDpadDownLeft || self.rightDpadDownRight
+
+        let leftDpadUp = self.leftDpadUp || self.leftDpadUpLeft || self.leftDpadUpRight
+        let leftDpadRight = self.leftDpadRight || self.leftDpadUpRight || self.leftDpadDownRight
+        let leftDpadLeft = self.leftDpadLeft || self.leftDpadUpLeft || self.leftDpadDownLeft
+        let leftDpadDown = self.leftDpadDown || self.leftDpadDownLeft || self.leftDpadDownRight
+
+        return FFIGamepadInputs(a_button: self.aButton, b_button: self.bButton, right_trigger: self.rButton, left_trigger: self.lButton, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: self.startButton, select: self.selectButton)
     }
 }

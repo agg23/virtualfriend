@@ -28,15 +28,19 @@ struct DpadView: View {
 
         let prefix = self.prefix ?? ""
 
-        Grid {
+        Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             GridRow {
-                Spacer()
+                DpadCorner(controller: self.controller, name: "\(prefix)upleft", width: barLength, height: barLength) { pressed in
+                    self.onButtonChange(.upLeft, pressed)
+                }
 
                 DpadArm(controller: self.controller, name: "\(prefix)up", color: self.color, width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.up, pressed)
                 }
 
-                Spacer()
+                DpadCorner(controller: self.controller, name: "\(prefix)upright", width: barLength, height: barLength) { pressed in
+                    self.onButtonChange(.upRight, pressed)
+                }
             }
 
             GridRow {
@@ -56,13 +60,17 @@ struct DpadView: View {
             }
 
             GridRow {
-                Spacer()
+                DpadCorner(controller: self.controller, name: "\(prefix)downleft", width: barLength, height: barLength) { pressed in
+                    self.onButtonChange(.downLeft, pressed)
+                }
 
                 DpadArm(controller: self.controller, name: "\(prefix)down", color: self.color, width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.down, pressed)
                 }
 
-                Spacer()
+                DpadCorner(controller: self.controller, name: "\(prefix)downright", width: barLength, height: barLength) { pressed in
+                    self.onButtonChange(.downRight, pressed)
+                }
             }
         }
         .frame(width: self.width, height: self.height)
@@ -87,7 +95,7 @@ private struct DpadArm: View {
     let width: CGFloat
     let height: CGFloat
 
-    let onChange: (_ pressed: Bool) -> Void
+    let onButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
         Rectangle()
@@ -102,7 +110,34 @@ private struct DpadArm: View {
                             self.controller.deregister(named: self.name)
                         }
                         .onChange(of: frame, initial: true, { _, newValue in
-                            self.controller.register(named: self.name, frame: frame, callback: self.onChange)
+                            self.controller.register(named: self.name, frame: frame, callback: self.onButtonChange)
+                        })
+                }
+            }
+    }
+}
+
+private struct DpadCorner: View {
+    let controller: TouchController
+    let name: String
+    let width: CGFloat
+    let height: CGFloat
+
+    let onButtonChange: (_ pressed: Bool) -> Void
+
+    var body: some View {
+        Color.clear
+            .frame(width: self.width, height: self.height)
+            .background {
+                GeometryReader { geometry in
+                    let frame = geometry.frame(in: .named(self.controller.COORDINATE_SPACE_NAME))
+
+                    Color.clear
+                        .onDisappear {
+                            self.controller.deregister(named: self.name)
+                        }
+                        .onChange(of: frame, initial: true, { _, newValue in
+                            self.controller.register(named: self.name, frame: frame, callback: self.onButtonChange)
                         })
                 }
             }
@@ -110,10 +145,15 @@ private struct DpadArm: View {
 }
 
 enum DpadDirection {
-    case left
-    case right
     case up
     case down
+    case left
+    case right
+
+    case upLeft
+    case upRight
+    case downLeft
+    case downRight
 }
 
 #Preview {
