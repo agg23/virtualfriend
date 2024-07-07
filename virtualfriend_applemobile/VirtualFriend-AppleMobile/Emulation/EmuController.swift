@@ -24,6 +24,25 @@ import GameController
         }
     }
 
+    var leftDpadLeft: Bool = false
+    var leftDpadRight: Bool = false
+    var leftDpadUp: Bool = false
+    var leftDpadDown: Bool = false
+
+    var rightDpadLeft: Bool = false
+    var rightDpadRight: Bool = false
+    var rightDpadUp: Bool = false
+    var rightDpadDown: Bool = false
+
+    var startButton: Bool = false
+    var selectButton: Bool = false
+
+    var aButton: Bool = false
+    var bButton: Bool = false
+
+    var lButton: Bool = false
+    var rButton: Bool = false
+
     private var timer: Timer?
 
     private var connectObserver: (any NSObjectProtocol)?
@@ -63,5 +82,9 @@ import GameController
         if let disconnectObserver = self.disconnectObserver {
             NotificationCenter.default.removeObserver(disconnectObserver)
         }
+    }
+
+    func pollOnscreenController() -> FFIGamepadInputs {
+        return FFIGamepadInputs(a_button: self.aButton, b_button: self.bButton, right_trigger: self.rButton, left_trigger: self.lButton, right_dpad_up: self.rightDpadUp, right_dpad_right: self.rightDpadRight, right_dpad_left: self.rightDpadLeft, right_dpad_down: self.rightDpadDown, left_dpad_up: self.leftDpadUp, left_dpad_right: self.leftDpadRight, left_dpad_left: self.leftDpadLeft, left_dpad_down: self.leftDpadDown, start: self.startButton, select: self.selectButton)
     }
 }

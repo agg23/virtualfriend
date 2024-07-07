@@ -13,6 +13,7 @@ private let AUDIO_FRAMES_PER_LOOP: UInt = 400
 
 class Emulator {
     private let fileName: String
+    private let controller: EmuController
 
     private var emulatorQueue: DispatchQueue
 
@@ -38,8 +39,9 @@ class Emulator {
     var color: VBColor
     var separation: Double = 0.0
 
-    init(fileUrl: URL) throws {
+    init(fileUrl: URL, controller: EmuController) throws {
         self.fileName = String(fileUrl.lastPathComponent.split(separator: ".")[0])
+        self.controller = controller
 
         self.emulatorQueue = DispatchQueue(label: "emulator", qos: .userInteractive)
 
@@ -184,10 +186,11 @@ class Emulator {
     }
 
     private func pollInput() -> FFIGamepadInputs {
-        let keyboard = pollKeyboardInput()
-        let controller = pollControllerInput()
+        let keyboard = self.pollKeyboardInput()
+        let controller = self.pollControllerInput()
+        let onscreenController = self.controller.pollOnscreenController()
 
-        return keyboard.merge(controller)
+        return keyboard.merge(controller).merge(onscreenController)
     }
 
     private func pollKeyboardInput() -> FFIGamepadInputs {

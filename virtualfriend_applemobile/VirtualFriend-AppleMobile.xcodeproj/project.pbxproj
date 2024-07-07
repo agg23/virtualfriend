@@ -17,6 +17,7 @@
 		66307B012C39EC2A00F07826 /* TouchGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */; };
 		66307B032C39EE8000F07826 /* ControllerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B022C39EE8000F07826 /* ControllerView.swift */; };
 		66307B052C39EECC00F07826 /* TouchGestureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B042C39EECC00F07826 /* TouchGestureView.swift */; };
+		66307B072C3AE04100F07826 /* TriggerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B062C3AE04100F07826 /* TriggerView.swift */; };
 		665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 665022C12C0CDF470012E9D4 /* AsyncAlgorithms */; };
 		665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489142BDDC9F000C2BD96 /* MainWindowView.swift */; };
 		665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489172BDDCA3B00C2BD96 /* SettingsView.swift */; };
@@ -84,6 +85,7 @@
 		66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGestureRecognizer.swift; sourceTree = "<group>"; };
 		66307B022C39EE8000F07826 /* ControllerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerView.swift; sourceTree = "<group>"; };
 		66307B042C39EECC00F07826 /* TouchGestureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGestureView.swift; sourceTree = "<group>"; };
+		66307B062C3AE04100F07826 /* TriggerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerView.swift; sourceTree = "<group>"; };
 		665489142BDDC9F000C2BD96 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		665489172BDDCA3B00C2BD96 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileImporter.swift; sourceTree = "<group>"; };
@@ -385,6 +387,7 @@
 				66307AFE2C39A64A00F07826 /* TouchController.swift */,
 				66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */,
 				66307B042C39EECC00F07826 /* TouchGestureView.swift */,
+				66307B062C3AE04100F07826 /* TriggerView.swift */,
 			);
 			path = OnscreenController;
 			sourceTree = "<group>";
@@ -513,6 +516,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6697298B2BDD56350013BCE2 /* FilePickerFilesView.swift in Sources */,
+				66307B072C3AE04100F07826 /* TriggerView.swift in Sources */,
 				66307B012C39EC2A00F07826 /* TouchGestureRecognizer.swift in Sources */,
 				669729952BDD91AA0013BCE2 /* StereoManifestImageView.swift in Sources */,
 				6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */,

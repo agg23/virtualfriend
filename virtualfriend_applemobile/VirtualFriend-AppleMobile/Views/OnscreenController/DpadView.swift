@@ -16,6 +16,8 @@ struct DpadView: View {
     let width: CGFloat
     let height: CGFloat
 
+    let onButtonChange: (_ direction: DpadDirection, _ pressed: Bool) -> Void
+
     var body: some View {
         let barThickness = min(self.width * 0.25, self.height * 0.25)
 
@@ -30,17 +32,23 @@ struct DpadView: View {
             GridRow {
                 Spacer()
 
-                DpadArm(controller: self.controller, name: "\(prefix)up", color: self.color, width: barThickness, height: barLength)
+                DpadArm(controller: self.controller, name: "\(prefix)up", color: self.color, width: barThickness, height: barLength) { pressed in
+                    self.onButtonChange(.up, pressed)
+                }
 
                 Spacer()
             }
 
             GridRow {
-                DpadArm(controller: self.controller, name: "\(prefix)left", color: self.color, width: barLength, height: barThickness)
+                DpadArm(controller: self.controller, name: "\(prefix)left", color: self.color, width: barLength, height: barThickness) { pressed in
+                    self.onButtonChange(.left, pressed)
+                }
 
                 Spacer()
 
-                DpadArm(controller: self.controller, name: "\(prefix)right", color: self.color, width: barLength, height: barThickness)
+                DpadArm(controller: self.controller, name: "\(prefix)right", color: self.color, width: barLength, height: barThickness) { pressed in
+                    self.onButtonChange(.right, pressed)
+                }
             }
             .background {
                 // Xcode keeps throwing a fit if I replace the spacer above with the color, so we do this instead
@@ -50,7 +58,9 @@ struct DpadView: View {
             GridRow {
                 Spacer()
 
-                DpadArm(controller: self.controller, name: "\(prefix)down", color: self.color, width: barThickness, height: barLength)
+                DpadArm(controller: self.controller, name: "\(prefix)down", color: self.color, width: barThickness, height: barLength) { pressed in
+                    self.onButtonChange(.down, pressed)
+                }
 
                 Spacer()
             }
@@ -77,6 +87,8 @@ private struct DpadArm: View {
     let width: CGFloat
     let height: CGFloat
 
+    let onChange: (_ pressed: Bool) -> Void
+
     var body: some View {
         Rectangle()
             .fill(self.color)
@@ -90,13 +102,20 @@ private struct DpadArm: View {
                             self.controller.deregister(named: self.name)
                         }
                         .onChange(of: frame, initial: true, { _, newValue in
-                            self.controller.register(named: self.name, frame: frame)
+                            self.controller.register(named: self.name, frame: frame, callback: self.onChange)
                         })
                 }
             }
     }
 }
 
+enum DpadDirection {
+    case left
+    case right
+    case up
+    case down
+}
+
 #Preview {
-    DpadView(controller: TouchController(), prefix: nil, color: .red, width: 100, height: 100)
+    DpadView(controller: TouchController(), prefix: nil, color: .red, width: 100, height: 100) { _, _ in }
 }

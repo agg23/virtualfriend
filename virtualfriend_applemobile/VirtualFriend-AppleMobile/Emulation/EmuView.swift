@@ -89,6 +89,54 @@ struct EmuView: View {
         .overlay {
             self.controlsOverlay
         }
+        .onTapGesture {
+            self.toggleVisibility()
+        }
+        #if !os(visionOS)
+        .overlay {
+            ZStack(alignment: .bottom) {
+                // Fill screen
+                Color.clear
+
+                ControllerView() { direction, pressed in
+                    switch direction {
+                    case .up:
+                        self.controller.leftDpadUp = pressed
+                    case .down:
+                        self.controller.leftDpadDown = pressed
+                    case .left:
+                        self.controller.leftDpadLeft = pressed
+                    case .right:
+                        self.controller.leftDpadRight = pressed
+                    }
+                } rightDpad: { direction, pressed in
+                    switch direction {
+                    case .up:
+                        self.controller.rightDpadUp = pressed
+                    case .down:
+                        self.controller.rightDpadDown = pressed
+                    case .left:
+                        self.controller.rightDpadLeft = pressed
+                    case .right:
+                        self.controller.rightDpadRight = pressed
+                    }
+                } aButton: { pressed in
+                    self.controller.aButton = pressed
+                } bButton: { pressed in
+                    self.controller.bButton = pressed
+                } startButton: { pressed in
+                    self.controller.startButton = pressed
+                } selectButton: { pressed in
+                    self.controller.selectButton = pressed
+                } lButton: { pressed in
+                    self.controller.lButton = pressed
+                } rButton: { pressed in
+                    self.controller.rButton = pressed
+                }
+                .background(.blue)
+            }
+        }
+        #endif
         #if os(visionOS)
         .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
             if self.enable3D {
@@ -96,9 +144,6 @@ struct EmuView: View {
             }
         }
         #endif
-        .onTapGesture {
-            self.toggleVisibility()
-        }
         .onChange(of: self.fileEntry, initial: true) { _, newValue in
             self.createEmulator(newValue.entry.url)
         }
@@ -195,7 +240,7 @@ struct EmuView: View {
 
     func createEmulator(_ url: URL) {
         do {
-            let emulator = try Emulator(fileUrl: url)
+            let emulator = try Emulator(fileUrl: url, controller: self.controller)
             emulator.separation = self.separation
             emulator.enableSound = self.enableSound
             self.emulator = .emulator(emulator)

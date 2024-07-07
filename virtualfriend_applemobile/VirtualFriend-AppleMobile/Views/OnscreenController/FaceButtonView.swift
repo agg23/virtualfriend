@@ -17,6 +17,8 @@ struct FaceButtonView: View {
     let color: Color
     let touchColor: Color
 
+    let onButtonChange: (_ pressed: Bool) -> Void
+
     var body: some View {
         let isPressed = false
 
@@ -24,23 +26,19 @@ struct FaceButtonView: View {
             .stroke(.black)
             .background {
                 GeometryReader { geometry in
-                    Circle().fill(self.color)
-                        .onChange(of: geometry.size, initial: true) { _, newValue in
-                            self.size = newValue
-                        }
-                }
-            }
-            .background {
-                GeometryReader { geometry in
                     let frame = geometry.frame(in: .named(self.controller.COORDINATE_SPACE_NAME))
 
-                    Color.clear
+                    Circle().fill(self.color)
                         .onDisappear {
                             self.controller.deregister(named: self.name)
                         }
                         .onChange(of: frame, initial: true, { _, newValue in
-                            self.controller.register(named: self.name, frame: frame)
+                            print("Start \(self.onButtonChange)")
+                            self.controller.register(named: self.name, frame: frame, callback: self.onButtonChange)
                         })
+                        .onChange(of: geometry.size, initial: true) { _, newValue in
+                            self.size = newValue
+                        }
                 }
             }
             .overlay {
@@ -58,5 +56,5 @@ struct FaceButtonView: View {
 }
 
 #Preview {
-    FaceButtonView(controller: TouchController(), name: "start", title: "Start", color: .blue, touchColor: .init(red: 0, green: 0, blue: 0.9))
+    FaceButtonView(controller: TouchController(), name: "start", title: "Start", color: .blue, touchColor: .init(red: 0, green: 0, blue: 0.9)) { _ in }
 }
