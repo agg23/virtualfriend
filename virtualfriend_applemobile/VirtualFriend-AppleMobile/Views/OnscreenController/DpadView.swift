@@ -8,11 +8,12 @@
 import SwiftUI
 
 struct DpadView: View {
+    @Environment(\.buttonColor) private var color
+
     @State private var size: CGSize = .zero
 
     let controller: TouchController
     let prefix: String?
-    let color: Color
     let width: CGFloat
     let height: CGFloat
 
@@ -34,7 +35,7 @@ struct DpadView: View {
                     self.onButtonChange(.upLeft, pressed)
                 }
 
-                DpadArm(controller: self.controller, name: "\(prefix)up", color: self.color, width: barThickness, height: barLength) { pressed in
+                DpadArm(controller: self.controller, name: "\(prefix)up", width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.up, pressed)
                 }
 
@@ -44,19 +45,17 @@ struct DpadView: View {
             }
 
             GridRow {
-                DpadArm(controller: self.controller, name: "\(prefix)left", color: self.color, width: barLength, height: barThickness) { pressed in
+                DpadArm(controller: self.controller, name: "\(prefix)left", width: barLength, height: barThickness) { pressed in
                     self.onButtonChange(.left, pressed)
                 }
 
-                Spacer()
+//                Spacer()
+                Rectangle()
+                    .fill(self.color)
 
-                DpadArm(controller: self.controller, name: "\(prefix)right", color: self.color, width: barLength, height: barThickness) { pressed in
+                DpadArm(controller: self.controller, name: "\(prefix)right", width: barLength, height: barThickness) { pressed in
                     self.onButtonChange(.right, pressed)
                 }
-            }
-            .background {
-                // Xcode keeps throwing a fit if I replace the spacer above with the color, so we do this instead
-                self.color
             }
 
             GridRow {
@@ -64,7 +63,7 @@ struct DpadView: View {
                     self.onButtonChange(.downLeft, pressed)
                 }
 
-                DpadArm(controller: self.controller, name: "\(prefix)down", color: self.color, width: barThickness, height: barLength) { pressed in
+                DpadArm(controller: self.controller, name: "\(prefix)down", width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.down, pressed)
                 }
 
@@ -89,9 +88,11 @@ struct DpadView: View {
 }
 
 private struct DpadArm: View {
+    @Environment(\.buttonColor) private var color
+    @Environment(\.touchColor) private var touchColor
+
     let controller: TouchController
     let name: String
-    let color: Color
     let width: CGFloat
     let height: CGFloat
 
@@ -157,5 +158,5 @@ enum DpadDirection {
 }
 
 #Preview {
-    DpadView(controller: TouchController(), prefix: nil, color: .red, width: 100, height: 100) { _, _ in }
+    DpadView(controller: TouchController(), prefix: nil, width: 100, height: 100) { _, _ in }
 }

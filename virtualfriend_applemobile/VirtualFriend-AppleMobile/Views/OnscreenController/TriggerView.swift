@@ -8,23 +8,28 @@
 import SwiftUI
 
 struct TriggerView: View {
+    @Environment(\.buttonColor) private var color
+    @Environment(\.touchColor) private var touchColor
+
     let controller: TouchController
 
     let name: String
     let title: String
-    let color: Color
     let width: CGFloat
     let height: CGFloat
+
     let onButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
+        let _ = print(self.color)
+
         Capsule()
-            .stroke(.black)
+            .fill(self.color)
             .background {
                 GeometryReader { geometry in
                     let frame = geometry.frame(in: .named(self.controller.COORDINATE_SPACE_NAME))
 
-                    Capsule().fill(self.color)
+                    Color.clear
                         .onDisappear {
                             self.controller.deregister(named: self.name)
                         }
@@ -35,11 +40,14 @@ struct TriggerView: View {
             }
             .overlay {
                 Text(self.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
             }
             .frame(width: self.width, height: self.height)
     }
 }
 
 #Preview {
-    TriggerView(controller: TouchController(), name: "l", title: "L", color: .red, width: 100, height: 20) { _ in }
+    TriggerView(controller: TouchController(), name: "l", title: "L", width: 100, height: 20) { _ in }
+        .environment(\.buttonColor, .red)
 }
