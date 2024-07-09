@@ -86,9 +86,6 @@ struct EmuView: View {
                 #endif
             }
 //        }
-        .overlay {
-            self.controlsOverlay
-        }
         .onTapGesture {
             self.toggleVisibility()
         }
@@ -97,6 +94,9 @@ struct EmuView: View {
             EmuControllerView(controller: self.controller)
         }
         #endif
+        .overlay {
+            self.controlsOverlay
+        }
         #if os(visionOS)
         .ornament(visibility: self.controlVisibility, attachmentAnchor: .scene(.bottom)) {
             if self.enable3D {
@@ -151,6 +151,7 @@ struct EmuView: View {
         ZStack(alignment: .top) {
             // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
             Color.white.opacity(0.0001)
+                .allowsHitTesting(false)
 
             if self.controlVisibility == .visible {
                 EmuHeaderOverlayView(title: self.fileEntry.title) {

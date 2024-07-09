@@ -24,16 +24,22 @@ struct ControllerView: View {
     let rButton: (_ pressed: Bool) -> Void
 
     var body: some View {
-        let sideWidth = self.size.width * 0.4
+        let sideWidth = min(self.size.width * 0.4, self.size.height * 0.5)
 
         HStack {
             ControllerSideView(controller: self.controller, width: sideWidth, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Sel", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
                 .padding([.leading, .top, .bottom], 24)
+                .overlay {
+                    TouchGestureView(controller: self.controller)
+                }
 
             Spacer()
 
             ControllerSideView(controller: self.controller, width: sideWidth, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
                 .padding([.trailing, .top, .bottom], 24)
+                .overlay {
+                    TouchGestureView(controller: self.controller)
+                }
         }
         // Use full width as available touch area
         .frame(minWidth: 0, maxWidth: .infinity)
@@ -44,9 +50,6 @@ struct ControllerView: View {
                         self.size = newValue
                     }
             }
-        }
-        .overlay {
-            TouchGestureView(controller: self.controller)
         }
         .coordinateSpace(.named(self.controller.COORDINATE_SPACE_NAME))
         .environment(\.buttonColor, .init(white: 0.2, opacity: 0.5))

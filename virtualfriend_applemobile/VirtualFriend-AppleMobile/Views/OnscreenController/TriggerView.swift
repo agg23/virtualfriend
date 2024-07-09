@@ -21,8 +21,6 @@ struct TriggerView: View {
     let onButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
-        let _ = print(self.color)
-
         Capsule()
             .fill(self.color)
             .background {

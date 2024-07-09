@@ -68,7 +68,6 @@ struct EmuControllerView: View {
             } rButton: { pressed in
                 self.controller.rButton = pressed
             }
-            .background(.blue)
         }
     }
 }

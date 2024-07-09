@@ -10,8 +10,6 @@ import SwiftUI
 struct DpadView: View {
     @Environment(\.buttonColor) private var color
 
-    @State private var size: CGSize = .zero
-
     let controller: TouchController
     let prefix: String?
     let width: CGFloat
@@ -49,7 +47,6 @@ struct DpadView: View {
                     self.onButtonChange(.left, pressed)
                 }
 
-//                Spacer()
                 Rectangle()
                     .fill(self.color)
 
@@ -73,17 +70,6 @@ struct DpadView: View {
             }
         }
         .frame(width: self.width, height: self.height)
-//        .background {
-//            GeometryReader { geometry in
-//                let _ = print(geometry.size)
-//
-//                Color.clear
-//                    .onChange(of: geometry.size, initial: true) { _, newValue in
-//                        self.size = newValue
-//                    }
-//            }
-//            .frame(width: 100, height: 100)
-//        }
     }
 }
 
