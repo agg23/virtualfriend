@@ -21,8 +21,10 @@ struct TriggerView: View {
     let onButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
+        let isActive = self.controller.isActive(with: name)
+
         Capsule()
-            .fill(self.color)
+            .fill(isActive ? self.touchColor : self.color)
             .background {
                 GeometryReader { geometry in
                     let frame = geometry.frame(in: .named(self.controller.COORDINATE_SPACE_NAME))

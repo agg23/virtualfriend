@@ -10,6 +10,8 @@ import UIKit
 @Observable class TouchController {
     @ObservationIgnored private var registeredButtons: [String: ButtonRegistration] = [:]
 
+    var activeButtons: Set<String> = Set()
+
     var view: UIView?
 
     let COORDINATE_SPACE_NAME = "onscreenController"
@@ -48,9 +50,19 @@ import UIKit
 
                 self.registeredButtons[name] = ButtonRegistration(isPressed: isPressed, frame: registration.frame, callback: registration.callback)
 
+                if isPressed {
+                    self.activeButtons.insert(name)
+                } else {
+                    self.activeButtons.remove(name)
+                }
+
                 registration.callback(isPressed)
             }
         }
+    }
+
+    func isActive(with name: String) -> Bool {
+        self.activeButtons.contains(name)
     }
 }
 

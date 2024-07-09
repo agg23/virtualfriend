@@ -27,44 +27,55 @@ struct DpadView: View {
 
         let prefix = self.prefix ?? ""
 
+        let upleft = "\(prefix)upleft"
+        let up = "\(prefix)up"
+        let upright = "\(prefix)upright"
+
+        let left = "\(prefix)left"
+        let right = "\(prefix)right"
+
+        let downleft = "\(prefix)downleft"
+        let down = "\(prefix)down"
+        let downright = "\(prefix)downright"
+
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
             GridRow {
-                DpadCorner(controller: self.controller, name: "\(prefix)upleft", width: barLength, height: barLength) { pressed in
+                DpadCorner(controller: self.controller, name: upleft, width: barLength, height: barLength) { pressed in
                     self.onButtonChange(.upLeft, pressed)
                 }
 
-                DpadArm(controller: self.controller, name: "\(prefix)up", width: barThickness, height: barLength) { pressed in
+                DpadArm(controller: self.controller, name: up, cornerMatches: [upleft, upright], width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.up, pressed)
                 }
 
-                DpadCorner(controller: self.controller, name: "\(prefix)upright", width: barLength, height: barLength) { pressed in
+                DpadCorner(controller: self.controller, name: upright, width: barLength, height: barLength) { pressed in
                     self.onButtonChange(.upRight, pressed)
                 }
             }
 
             GridRow {
-                DpadArm(controller: self.controller, name: "\(prefix)left", width: barLength, height: barThickness) { pressed in
+                DpadArm(controller: self.controller, name: left, cornerMatches: [upleft, downleft], width: barLength, height: barThickness) { pressed in
                     self.onButtonChange(.left, pressed)
                 }
 
                 Rectangle()
                     .fill(self.color)
 
-                DpadArm(controller: self.controller, name: "\(prefix)right", width: barLength, height: barThickness) { pressed in
+                DpadArm(controller: self.controller, name: right, cornerMatches: [upright, downright], width: barLength, height: barThickness) { pressed in
                     self.onButtonChange(.right, pressed)
                 }
             }
 
             GridRow {
-                DpadCorner(controller: self.controller, name: "\(prefix)downleft", width: barLength, height: barLength) { pressed in
+                DpadCorner(controller: self.controller, name: downleft, width: barLength, height: barLength) { pressed in
                     self.onButtonChange(.downLeft, pressed)
                 }
 
-                DpadArm(controller: self.controller, name: "\(prefix)down", width: barThickness, height: barLength) { pressed in
+                DpadArm(controller: self.controller, name: down, cornerMatches: [downleft, downright], width: barThickness, height: barLength) { pressed in
                     self.onButtonChange(.down, pressed)
                 }
 
-                DpadCorner(controller: self.controller, name: "\(prefix)downright", width: barLength, height: barLength) { pressed in
+                DpadCorner(controller: self.controller, name: downright, width: barLength, height: barLength) { pressed in
                     self.onButtonChange(.downRight, pressed)
                 }
             }
@@ -79,14 +90,17 @@ private struct DpadArm: View {
 
     let controller: TouchController
     let name: String
+    let cornerMatches: [String]
     let width: CGFloat
     let height: CGFloat
 
     let onButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
+        let isActive = self.controller.isActive(with: name) || self.cornerMatches.contains(where: { self.controller.isActive(with: $0) })
+
         Rectangle()
-            .fill(self.color)
+            .fill(isActive ? self.touchColor : self.color)
             .frame(width: self.width, height: self.height)
             .background {
                 GeometryReader { geometry in
