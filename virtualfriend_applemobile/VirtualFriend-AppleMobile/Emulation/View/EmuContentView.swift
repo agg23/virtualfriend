@@ -1,34 +1,18 @@
 //
-//  EmuView.swift
-//  VirtualFriend-Vision
+//  EmuContentView.swift
+//  VirtualFriend
 //
-//  Created by Adam Gastineau on 1/21/24.
+//  Created by Adam Gastineau on 7/9/24.
 //
 
 import SwiftUI
-import RealityKit
-import AsyncAlgorithms
 
-struct EmuView: View {
-    private enum EmulatorStatus {
-        case emulator(_ emulator: Emulator)
-        case error(_ message: String)
-        case none
-    }
-
+struct EmuContentView: View {
     @Environment(MainRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(\.scenePhase) private var scenePhase
 
-    @LEDBackgroundColor var ledBackgroundColor
-    @EyeSeparation var separation
-
-    @EnableSound var enableSound
-    @Enable3D var enable3D
-
-    @State private var controller: EmuController = EmuController()
-
-    @State private var emulator: EmulatorStatus = .none
+    @LEDBackgroundColor private var ledBackgroundColor
+    @EyeSeparation private var separation
 
     @State private var controlVisibilityTimer: Timer?
     @State private var preventControlDismiss: Bool = false
@@ -36,7 +20,11 @@ struct EmuView: View {
 
     let controlsTimerDuration = 3.0
 
-    let fileEntry: FileEntryWithManifest
+    let emulator: EmulatorStatus
+    let controller: EmuController
+    let title: String
+
+    let onRestart: () -> Void
 
     var body: some View {
         #if os(visionOS)
@@ -51,15 +39,15 @@ struct EmuView: View {
         }
         #endif
 
-        let toastText = Binding<ToastText> {
-            .content(text: self.controller.notification.text, icon: self.controller.notification.icon)
-        } set: { text in
-            if text == .none {
-                self.controller.notification = .none
-            }
-        }
+//        let toastText = Binding<ToastText> {
+//            .content(text: self.controller.notification.text, icon: self.controller.notification.icon)
+//        } set: { text in
+//            if text == .none {
+//                self.controller.notification = .none
+//            }
+//        }
 
-//        ToastWrapper(text: toastText) {
+        //        ToastWrapper(text: toastText) {
             ZStack(alignment: alignment) {
                 // Background color to surround the view and pad out the window AR
                 self.ledBackgroundColor
@@ -68,7 +56,7 @@ struct EmuView: View {
                 Group {
                     switch self.emulator {
                     case .emulator(let emulator):
-                        EmuContentView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
+                        EmuImageView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
                             .padding(.vertical, 16)
                     case .error(let message):
                         VStack(alignment: .center) {
@@ -85,7 +73,7 @@ struct EmuView: View {
                 .padding(8)
                 #endif
             }
-//        }
+        //        }
         .onTapGesture {
             self.toggleVisibility()
         }
@@ -104,44 +92,11 @@ struct EmuView: View {
             }
         }
         #endif
-        .onChange(of: self.fileEntry, initial: true) { _, newValue in
-            self.createEmulator(newValue.entry.url)
-        }
         .onChange(of: self.preventControlDismiss) { _, newValue in
             if newValue {
                 self.clearTimer()
             } else {
                 self.resetTimer()
-            }
-        }
-        .onChange(of: self.scenePhase) { prevValue, newValue in
-            guard case .emulator(let emulator) = self.emulator else {
-                return
-            }
-
-            switch newValue {
-            case .active:
-                if prevValue != .active {
-                    // We resumed activity. Start emulation
-                    emulator.start()
-                }
-            case .inactive:
-                fallthrough
-            case .background:
-                emulator.shutdown()
-            @unknown default:
-                print("Unknown scene \(newValue)")
-            }
-        }
-        .onChange(of: self.separation) { _, newValue in
-            if case .emulator(let emulator) = self.emulator {
-                // Invert separation range so more 3D is on the right
-                emulator.separation = newValue * -1
-            }
-        }
-        .onChange(of: self.enableSound) { _, newValue in
-            if case .emulator(let emulator) = self.emulator {
-                emulator.enableSound = newValue
             }
         }
     }
@@ -154,7 +109,7 @@ struct EmuView: View {
                 .allowsHitTesting(false)
 
             if self.controlVisibility == .visible {
-                EmuHeaderOverlayView(title: self.fileEntry.title) {
+                EmuHeaderOverlayView(title: self.title) {
                     self.resetTimer()
                 } onBack: {
                     self.router.currentRoute = .main
@@ -163,7 +118,7 @@ struct EmuView: View {
                         emulator.shutdown()
                     }
                 } onRestart: {
-                    self.restart()
+                    self.onRestart()
                 }
             }
         }
@@ -199,29 +154,6 @@ struct EmuView: View {
     }
     #endif
 
-    func createEmulator(_ url: URL) {
-        do {
-            let emulator = try Emulator(fileUrl: url, controller: self.controller)
-            emulator.separation = self.separation
-            emulator.enableSound = self.enableSound
-            self.emulator = .emulator(emulator)
-        } catch {
-            self.emulator = .error(error.localizedDescription)
-        }
-    }
-
-    func restart() {
-        if case .emulator(let emulator) = self.emulator {
-            emulator.shutdown()
-        }
-
-        self.emulator = .none
-        // TODO: Make Emulator stereoImageChannel updates cause rerenders
-        DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
-            self.createEmulator(self.fileEntry.entry.url)
-        }))
-    }
-
     func resetTimer() {
         self.controlVisibilityTimer?.invalidate()
         self.controlVisibilityTimer = Timer.scheduledTimer(withTimeInterval: self.controlsTimerDuration, repeats: false, block: { _ in
@@ -247,47 +179,11 @@ struct EmuView: View {
             self.controlVisibility = self.controlVisibility != .visible ? .visible : .hidden
         }
     }
-
-    func rebuildControllers() {
-
-    }
 }
 
-private struct EmuContentView: View {
-    @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.openWindow) var openWindow
+#Preview {
+    EmuContentView(emulator: .none, controller: EmuController(), title: "Test Title", onRestart: {
 
-    @LEDColor var ledColor
-    @Enable3D var enable3D
-
-    let emulator: Emulator
-    @Binding var controlVisibility: Visibility
-    @Binding var preventControlDismiss: Bool
-
-    init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>) {
-        self.emulator = emulator
-        self._controlVisibility = controlVisibility
-        self._preventControlDismiss = preventControlDismiss
-    }
-
-    var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 1.0, stereoImageChannel: self.emulator.stereoImageChannel, backgroundColor: self._ledColor.colorWrapper.$background, force2D: !self.enable3D)
-            .onChange(of: self.scenePhase) { _, newPhase in
-                if newPhase == .background {
-                    // Stop emulation
-                    self.emulator.shutdown()
-                }
-            }
-            .onChange(of: self.ledColor) { _, _ in
-                self.emulator.color = self.ledColor
-            }
-            .onAppear {
-                self.emulator.color = self.ledColor
-
-                self.emulator.start()
-            }
-            .onDisappear {
-                self.emulator.shutdown()
-            }
-    }
+    })
+    .environment(MainRouter())
 }
