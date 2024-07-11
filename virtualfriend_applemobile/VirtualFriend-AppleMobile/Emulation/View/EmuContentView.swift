@@ -79,7 +79,9 @@ struct EmuContentView: View {
         }
         #if !os(visionOS)
         .overlay {
-            EmuControllerView(controller: self.controller)
+            if self.controller.notification == .noController {
+                EmuControllerView(controller: self.controller)
+            }
         }
         #endif
         .overlay {
