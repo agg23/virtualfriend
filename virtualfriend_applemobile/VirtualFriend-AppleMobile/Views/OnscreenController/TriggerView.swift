@@ -15,8 +15,6 @@ struct TriggerView: View {
 
     let name: String
     let title: String
-    let width: CGFloat
-    let height: CGFloat
 
     let onButtonChange: (_ pressed: Bool) -> Void
 
@@ -43,11 +41,11 @@ struct TriggerView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
             }
-            .frame(width: self.width, height: self.height)
     }
 }
 
 #Preview {
-    TriggerView(controller: TouchController(), name: "l", title: "L", width: 100, height: 20) { _ in }
+    TriggerView(controller: TouchController(), name: "l", title: "L") { _ in }
+        .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: 20)
         .environment(\.buttonColor, .red)
 }

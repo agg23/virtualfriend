@@ -24,6 +24,7 @@
 		6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */; };
 		6662F8072C3E336300D80CC1 /* EmuImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6662F8062C3E336300D80CC1 /* EmuImageView.swift */; };
 		6662F8092C3E338800D80CC1 /* EmuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6662F8082C3E338800D80CC1 /* EmuContentView.swift */; };
+		6662F80B2C3F538B00D80CC1 /* CGPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6662F80A2C3F538B00D80CC1 /* CGPoint.swift */; };
 		66635BA12B66D002004FD096 /* manifests in Resources */ = {isa = PBXBuildFile; fileRef = 66635BA02B66D002004FD096 /* manifests */; };
 		66635BA32B66D1F6004FD096 /* Files.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66635BA22B66D1F6004FD096 /* Files.swift */; };
 		6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */; };
@@ -95,6 +96,7 @@
 		665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileImporter.swift; sourceTree = "<group>"; };
 		6662F8062C3E336300D80CC1 /* EmuImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuImageView.swift; sourceTree = "<group>"; };
 		6662F8082C3E338800D80CC1 /* EmuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmuContentView.swift; sourceTree = "<group>"; };
+		6662F80A2C3F538B00D80CC1 /* CGPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGPoint.swift; sourceTree = "<group>"; };
 		66635BA02B66D002004FD096 /* manifests */ = {isa = PBXFileReference; lastKnownFileType = folder; name = manifests; path = ../../manifests; sourceTree = "<group>"; };
 		66635BA22B66D1F6004FD096 /* Files.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Files.swift; sourceTree = "<group>"; };
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
@@ -333,6 +335,7 @@
 		66C4BC2A2BCC22FB00AA8732 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				6662F80A2C3F538B00D80CC1 /* CGPoint.swift */,
 				66A061302BE67F5F0043D170 /* Color.swift */,
 				66CDBF3A2C3B86D600A97097 /* Environment.swift */,
 				66A061382BE7EC8B0043D170 /* URL.swift */,
@@ -568,6 +571,7 @@
 				6697F38B2C0E75B600229BDD /* Metal2DUIView.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
 				66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */,
+				6662F80B2C3F538B00D80CC1 /* CGPoint.swift in Sources */,
 				66A061332BE7D2530043D170 /* FileType.swift in Sources */,
 				66E43B192C305D8200B8C04E /* OETimingUtils.m in Sources */,
 				665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */,

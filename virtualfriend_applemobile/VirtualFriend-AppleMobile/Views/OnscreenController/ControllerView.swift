@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ControllerView: View {
     @State private var controller: TouchController = TouchController()
-    @State private var size: CGSize = .zero
 
     let leftDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
     let rightDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
@@ -24,10 +23,8 @@ struct ControllerView: View {
     let rButton: (_ pressed: Bool) -> Void
 
     var body: some View {
-        let sideWidth = min(self.size.width * 0.4, self.size.height * 0.5)
-
         HStack {
-            ControllerSideView(controller: self.controller, width: sideWidth, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Sel", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
+            ControllerSideView(controller: self.controller, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Sel", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
                 .padding([.leading, .top, .bottom], 24)
                 .overlay {
                     TouchGestureView(controller: self.controller)
@@ -35,22 +32,13 @@ struct ControllerView: View {
 
             Spacer()
 
-            ControllerSideView(controller: self.controller, width: sideWidth, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
+            ControllerSideView(controller: self.controller, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
                 .padding([.trailing, .top, .bottom], 24)
                 .overlay {
                     TouchGestureView(controller: self.controller)
                 }
         }
-        // Use full width as available touch area
-        .frame(minWidth: 0, maxWidth: .infinity)
-        .background {
-            GeometryReader { geometry in
-                Color.clear
-                    .onChange(of: geometry.size, initial: true) { _, newValue in
-                        self.size = newValue
-                    }
-            }
-        }
+        // Declare area shared by TouchGestureViews
         .coordinateSpace(.named(self.controller.COORDINATE_SPACE_NAME))
         .environment(\.buttonColor, .init(white: 0.2, opacity: 0.5))
         .environment(\.touchColor, .init(white: 0.4, opacity: 0.5))
@@ -58,9 +46,9 @@ struct ControllerView: View {
 }
 
 private struct ControllerSideView: View {
-    let controller: TouchController
+    @State private var size: CGSize = .zero
 
-    let width: CGFloat
+    let controller: TouchController
 
     let triggerName: String
     let triggleTitle: String
@@ -78,21 +66,86 @@ private struct ControllerSideView: View {
     let rightButtonOnButtonChange: (_ pressed: Bool) -> Void
 
     var body: some View {
-        VStack {
-            TriggerView(controller: self.controller, name: self.triggerName, title: self.triggleTitle, width: self.width, height: 30, onButtonChange: self.triggerOnButtonChange)
+        ControllerLayout {
+            TriggerView(controller: self.controller, name: self.triggerName, title: self.triggleTitle, onButtonChange: self.triggerOnButtonChange)
 
-            DpadView(controller: self.controller, prefix: self.dpadPrefix, width: self.width, height: self.width, onButtonChange: self.dpadOnButtonChange)
-                .padding(.vertical, 16)
+                DpadView(controller: self.controller, prefix: self.dpadPrefix, onButtonChange: self.dpadOnButtonChange)
+                    .padding(.vertical, 16)
 
-            HStack {
-                FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, onButtonChange: self.leftButtonOnButtonChange)
+                HStack {
+                    FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, onButtonChange: self.leftButtonOnButtonChange)
 
-                Spacer(minLength: self.width * 0.2)
+                    Spacer()
 
-                FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, onButtonChange: self.rightButtonOnButtonChange)
-            }
-            .frame(width: self.width)
+                    FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, onButtonChange: self.rightButtonOnButtonChange)
+                }
         }
+        .background {
+            GeometryReader { geometry in
+                Color.clear
+                    .onChange(of: geometry.size, initial: true) { _, newValue in
+                        self.size = newValue
+                    }
+            }
+        }
+        .frame(maxWidth: 200)
+    }
+}
+
+private struct ControllerLayout: Layout {
+    private let DPAD_PERCENTAGE = 0.6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 100
+        let height = proposal.height ?? 100
+
+        let calculatedHeight = self.calcuateViewHeight(proposedHeight: height, width: width)
+
+        return CGSize(width: width, height: calculatedHeight)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let width = proposal.width ?? 100
+        let height = proposal.height ?? 100
+
+        var offsetY = 0.0
+
+        for index in subviews.indices {
+            let view = subviews[index]
+
+            switch index {
+            case 0:
+                view.place(at: bounds.origin, proposal: ProposedViewSize(width: width, height: height * 0.1))
+
+                offsetY += height * 0.1
+            case 1:
+                let actualHeight = self.dpadHeight(systemHeight: height, width: width)
+
+                let proposedSize = ProposedViewSize(width: width, height: actualHeight)
+
+                let dimensions = view.dimensions(in: proposedSize)
+
+                let offsetX = (width - dimensions.width) / 2
+
+                view.place(at: bounds.origin + CGPoint(x: offsetX, y: offsetY), proposal: proposedSize)
+
+                offsetY += actualHeight
+            default:
+                view.place(at: bounds.origin + CGPoint(x: 0, y: offsetY), proposal: ProposedViewSize(width: width, height: height * 0.3))
+            }
+        }
+    }
+
+    private func dpadHeight(systemHeight: CGFloat, width: CGFloat) -> CGFloat {
+        let expectedHeight = systemHeight * DPAD_PERCENTAGE
+        return min(width, expectedHeight)
+    }
+
+    private func calcuateViewHeight(proposedHeight: CGFloat, width: CGFloat) -> CGFloat {
+        // Use knowledge of dpad size calculation to determine the proposed height of the entire view
+        let proposedDpadHeight = self.dpadHeight(systemHeight: proposedHeight, width: width)
+
+        return proposedDpadHeight / DPAD_PERCENTAGE
     }
 }
 
