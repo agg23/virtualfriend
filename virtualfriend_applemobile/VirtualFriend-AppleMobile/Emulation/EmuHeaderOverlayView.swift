@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct EmuHeaderOverlayView: View {
+    @LEDBackgroundColor private var ledBackgroundColor
+
     let title: String
 
     let resetTimer: () -> Void
@@ -85,7 +87,7 @@ struct EmuHeaderOverlayView: View {
         .background(Color.black.opacity(0.4))
         #else
         // We insert .secondary background so we can ensure the control buttons are visible over the user configuable background color
-        .background(.secondary)
+        .background(self.ledBackgroundColor.isDark ? .secondary : Color.black.opacity(0.4))
         #endif
     }
 }

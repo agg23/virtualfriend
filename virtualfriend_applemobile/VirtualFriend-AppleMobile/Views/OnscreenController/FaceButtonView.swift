@@ -41,14 +41,6 @@ struct FaceButtonView: View {
                         }
                 }
             }
-//            .overlay {
-//                let pressedSize = self.size.width * 0.9
-//
-//                Circle()
-//                    .fill(self.touchColor)
-//                    .frame(width: isPressed ? pressedSize : nil, height: isPressed ? pressedSize : nil)
-//                    .animation(.linear(duration: 0.10), value: isPressed)
-//            }
             .overlay {
                 Text(self.title)
                     .fontWeight(.bold)

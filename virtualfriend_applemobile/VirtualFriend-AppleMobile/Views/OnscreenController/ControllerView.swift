@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ControllerView: View {
+    @LEDBackgroundColor private var ledBackgroundColor
+
     @State private var controller: TouchController = TouchController()
 
     let leftDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
@@ -24,7 +26,7 @@ struct ControllerView: View {
 
     var body: some View {
         HStack {
-            ControllerSideView(controller: self.controller, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Sel", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
+            ControllerSideView(controller: self.controller, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Select", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
                 .padding([.leading, .top, .bottom], 24)
                 .overlay {
                     TouchGestureView(controller: self.controller)
@@ -40,8 +42,8 @@ struct ControllerView: View {
         }
         // Declare area shared by TouchGestureViews
         .coordinateSpace(.named(self.controller.COORDINATE_SPACE_NAME))
-        .environment(\.buttonColor, .init(white: 0.2, opacity: 0.5))
-        .environment(\.touchColor, .init(white: 0.4, opacity: 0.5))
+        .environment(\.buttonColor, self.ledBackgroundColor.isDark ? .init(white: 0.4, opacity: 0.5) : .init(white: 0.6, opacity: 0.5))
+        .environment(\.touchColor, self.ledBackgroundColor.isDark ? .init(white: 0.6, opacity: 0.5) : .init(white: 0.8, opacity: 0.5))
     }
 }
 

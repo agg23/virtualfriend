@@ -44,3 +44,16 @@ extension Color: RawRepresentable {
         return data?.base64EncodedString() ?? ""
     }
 }
+
+extension Color {
+    // Taken from https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+    var isDark: Bool {
+        var r, g, b, a: CGFloat
+        r = 0.0
+        g = 0.0
+        b = 0.0
+        a = 0.0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return  (0.2126 * r + 0.7152 * g + 0.0722 * b) < 0.50
+    }
+}
