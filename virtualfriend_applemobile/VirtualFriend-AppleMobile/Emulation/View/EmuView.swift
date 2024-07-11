@@ -30,6 +30,7 @@ struct EmuView: View {
 
     var body: some View {
         EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, onRestart: self.restart)
+            .persistentSystemOverlays(.hidden)
             .onChange(of: self.fileEntry, initial: true) { _, newValue in
                 self.createEmulator(newValue.entry.url)
             }
