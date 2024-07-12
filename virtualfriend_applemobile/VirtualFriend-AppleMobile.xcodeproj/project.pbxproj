@@ -28,6 +28,7 @@
 		66635BA12B66D002004FD096 /* manifests in Resources */ = {isa = PBXBuildFile; fileRef = 66635BA02B66D002004FD096 /* manifests */; };
 		66635BA32B66D1F6004FD096 /* Files.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66635BA22B66D1F6004FD096 /* Files.swift */; };
 		6666F35D2BAF4DF2009D5A29 /* libvirtualfriend_swift.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */; };
+		6677081F2C40CAB700CD4E21 /* KeyboardSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6677081E2C40CAB700CD4E21 /* KeyboardSettingsView.swift */; };
 		6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */; };
 		6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DECF2B5DAC33004B2123 /* SwiftBridgeCore.swift */; };
 		6688DED72B5DF876004B2123 /* EmuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6688DED62B5DF876004B2123 /* EmuView.swift */; };
@@ -102,6 +103,7 @@
 		66654C052B5AF3E0008E283D /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66654C072B5B3F97008E283D /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		6666F35C2BAF4DDE009D5A29 /* libvirtualfriend_swift.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend_swift.a; path = "../target/aarch64-apple-visionos-sim/release/libvirtualfriend_swift.a"; sourceTree = "<group>"; };
+		6677081E2C40CAB700CD4E21 /* KeyboardSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSettingsView.swift; sourceTree = "<group>"; };
 		6688DECC2B5DAC33004B2123 /* virtualfriend_swift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = virtualfriend_swift.swift; sourceTree = "<group>"; };
 		6688DECD2B5DAC33004B2123 /* virtualfriend_swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virtualfriend_swift.h; sourceTree = "<group>"; };
 		6688DECE2B5DAC33004B2123 /* SwiftBridgeCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftBridgeCore.h; sourceTree = "<group>"; };
@@ -266,6 +268,7 @@
 			isa = PBXGroup;
 			children = (
 				66C60F092B643A3500C1FDF4 /* File Picker */,
+				6677081D2C40CAA700CD4E21 /* Settings */,
 				66C60F0A2B643A5500C1FDF4 /* FilePickerView.swift */,
 				665489172BDDCA3B00C2BD96 /* SettingsView.swift */,
 			);
@@ -280,6 +283,14 @@
 				6688DED62B5DF876004B2123 /* EmuView.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		6677081D2C40CAA700CD4E21 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				6677081E2C40CAB700CD4E21 /* KeyboardSettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		6688DECA2B5DAC33004B2123 /* generated */ = {
@@ -564,6 +575,7 @@
 				66307B032C39EE8000F07826 /* ControllerView.swift in Sources */,
 				669920852C0FF2B500A49C67 /* MainRouter.swift in Sources */,
 				66307AFF2C39A64A00F07826 /* TouchController.swift in Sources */,
+				6677081F2C40CAB700CD4E21 /* KeyboardSettingsView.swift in Sources */,
 				66E147172C38381100CB3BE7 /* EmuController.swift in Sources */,
 				66E147202C385DCB00CB3BE7 /* FaceButtonView.swift in Sources */,
 				66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */,

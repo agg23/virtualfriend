@@ -33,6 +33,12 @@ struct SettingsView: View {
                         #endif
                     }
 
+                    Section("Controls") {
+                        NavigationLink("Keyboard") {
+                            KeyboardSettingsView()
+                        }
+                    }
+
                     Section("Color") {
                         ColorPicker("Foreground Color", selection: self.$ledForegroundColor, supportsOpacity: false)
                         ColorPicker("Background Color", selection: self.$ledBackgroundColor, supportsOpacity: false)

@@ -197,10 +197,10 @@ class Emulator {
         let keyboard = GCKeyboard.coalesced?.keyboardInput
 
         let a = keyboard?.button(forKeyCode: .spacebar)?.isPressed ?? false
-        let b = keyboard?.button(forKeyCode: .keyC)?.isPressed ?? false
+        let b = keyboard?.button(forKeyCode: .keyM)?.isPressed ?? false
 
-        let leftTrigger = keyboard?.button(forKeyCode: .one)?.isPressed ?? false
-        let rightTrigger = keyboard?.button(forKeyCode: .three)?.isPressed ?? false
+        let leftTrigger = keyboard?.button(forKeyCode: .keyQ)?.isPressed ?? false
+        let rightTrigger = keyboard?.button(forKeyCode: .keyO)?.isPressed ?? false
 
         let rightDpadDown = keyboard?.button(forKeyCode: .keyK)?.isPressed ?? false
         let rightDpadUp = keyboard?.button(forKeyCode: .keyI)?.isPressed ?? false
@@ -212,8 +212,8 @@ class Emulator {
         let leftDpadLeft = keyboard?.button(forKeyCode: .keyA)?.isPressed ?? false
         let leftDpadRight = keyboard?.button(forKeyCode: .keyD)?.isPressed ?? false
 
-        let start = keyboard?.button(forKeyCode: .keyQ)?.isPressed ?? false
-        let select = keyboard?.button(forKeyCode: .keyE)?.isPressed ?? false
+        let start = keyboard?.button(forKeyCode: .keyX)?.isPressed ?? false
+        let select = keyboard?.button(forKeyCode: .keyZ)?.isPressed ?? false
 
         return FFIGamepadInputs(a_button: a, b_button: b, right_trigger: rightTrigger, left_trigger: leftTrigger, right_dpad_up: rightDpadUp, right_dpad_right: rightDpadRight, right_dpad_left: rightDpadLeft, right_dpad_down: rightDpadDown, left_dpad_up: leftDpadUp, left_dpad_right: leftDpadRight, left_dpad_left: leftDpadLeft, left_dpad_down: leftDpadDown, start: start, select: select)
     }
