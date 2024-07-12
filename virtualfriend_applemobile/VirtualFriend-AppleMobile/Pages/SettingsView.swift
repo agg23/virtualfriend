@@ -79,6 +79,32 @@ struct SettingsView: View {
 
                         self.presetButton("Game Boy", foregroundColor: Color(red: 8/255.0, green: 24/255.0, blue: 32/255.0), backgroundColor: Color(red: 224/255.0, green: 248/255.0, blue: 208/255.0))
                     }
+
+                    Section("About") {
+                        Text("VirtualFriend is open source software provided under the MIT license. Contributions are greatly appreciated.")
+
+                        Link("View on GitHub", destination: URL(string: "https://github.com/agg23/virtualfriend")!)
+                    }
+
+                    Section {
+                        Text("If you like my work, please consider leaving me a tip.")
+                    }
+
+                    Section("Licenses") {
+                        Text("VirtualFriend for Apple platforms relies on the following OSS libraries:")
+
+                        Link("swift-async-algorithms", destination: URL(string: "https://github.com/apple/swift-async-algorithms")!)
+
+                        Link("swift-collections", destination: URL(string: "https://github.com/apple/swift-collections")!)
+
+                        Link("TPCircularBuffer", destination: URL(string: "https://github.com/michaeltyson/TPCircularBuffer")!)
+
+                        Text("Additional libraries used as reference, which may have code present in the repository:")
+
+                        Link("rustual-boy", destination: URL(string: "https://github.com/emu-rs/rustual-boy")!)
+
+                        Link("OpenEmu-SDK", destination: URL(string: "https://github.com/OpenEmu/OpenEmu-SDK")!)
+                    }
                 }
 
             }

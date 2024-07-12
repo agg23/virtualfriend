@@ -88,7 +88,6 @@ final class Metal2DUIView: MTKView, MTKViewDelegate
     {
         didSet
         {
-
             self.queue.async { [weak self] in
                 self?.draw()
             }
