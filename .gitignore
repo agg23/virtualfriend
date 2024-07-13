@@ -7,6 +7,6 @@
 
 *.log
 *.dump
-*.png
-*.svg
+assets/*.png
+assets/*.svg
 .DS_Store
