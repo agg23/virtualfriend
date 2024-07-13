@@ -33,7 +33,7 @@ struct FilePickerFilesView: View {
                 FilePickerGrid(files: self.files)
             }
         }
-        .navigationTitle("VirtualFriend")
+        .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack {
