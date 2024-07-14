@@ -1,9 +1,9 @@
 {
-  "title": "SD Gundam - Dimension War",
-
+  "title": "SD Gundam Dimension War",
   "developer": "Locomotive",
   "publisher": "Bandai",
   "year": "1995",
-
-  "region": ["JP"]
+  "region": [
+    "JP"
+  ]
 }

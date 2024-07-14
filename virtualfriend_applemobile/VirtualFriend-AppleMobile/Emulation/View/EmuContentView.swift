@@ -13,6 +13,7 @@ struct EmuContentView: View {
 
     @LEDBackgroundColor private var ledBackgroundColor
     @EyeSeparation private var separation
+    @Enable3D private var enable3D
 
     @State private var controlVisibilityTimer: Timer?
     @State private var preventControlDismiss: Bool = false

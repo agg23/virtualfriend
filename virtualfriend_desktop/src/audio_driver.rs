@@ -191,4 +191,8 @@ impl AudioDriver {
 
         Self { stream }
     }
+
+    pub fn shutdown(&mut self) {
+        self.stream.pause().unwrap();
+    }
 }

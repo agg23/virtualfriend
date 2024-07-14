@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub struct Manifest {
     pub left_frame: Vec<u8>,
@@ -13,7 +13,7 @@ pub struct Manifest {
     pub metadata: Option<Metadata>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Metadata {
     pub title: String,
 
