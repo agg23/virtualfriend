@@ -279,6 +279,8 @@
 			isa = PBXGroup;
 			children = (
 				6662F8082C3E338800D80CC1 /* EmuContentView.swift */,
+				66CDBF382C3B05F600A97097 /* EmuControllerView.swift */,
+				66E147062C37081C00CB3BE7 /* EmuHeaderOverlayView.swift */,
 				6662F8062C3E336300D80CC1 /* EmuImageView.swift */,
 				6688DED62B5DF876004B2123 /* EmuView.swift */,
 			);
@@ -385,8 +387,6 @@
 				66E43B162C305D7500B8C04E /* Util */,
 				66E43B142C305B9500B8C04E /* Emulator.swift */,
 				66E147162C38381100CB3BE7 /* EmuController.swift */,
-				66CDBF382C3B05F600A97097 /* EmuControllerView.swift */,
-				66E147062C37081C00CB3BE7 /* EmuHeaderOverlayView.swift */,
 				66E147142C3833FE00CB3BE7 /* EmuNotification.swift */,
 				66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */,
 			);

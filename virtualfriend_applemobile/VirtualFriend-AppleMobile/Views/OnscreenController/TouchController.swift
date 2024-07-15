@@ -12,7 +12,7 @@ import UIKit
 
     var activeButtons: Set<String> = Set()
 
-    var view: UIView?
+    var referenceView: UIView?
 
     let COORDINATE_SPACE_NAME = "onscreenController"
 
@@ -31,7 +31,7 @@ import UIKit
     }
 
     func update(touches: Set<UITouch>) {
-        guard let view = self.view else {
+        guard let view = self.referenceView else {
             return
         }
 
@@ -46,8 +46,7 @@ import UIKit
 
             if registration.isPressed != isPressed {
                 // Pressed changed
-                print("\(name) is \(isPressed)")
-
+//                print("\(name) is \(isPressed)")
                 self.registeredButtons[name] = ButtonRegistration(isPressed: isPressed, frame: registration.frame, callback: registration.callback)
 
                 if isPressed {

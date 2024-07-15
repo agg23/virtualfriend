@@ -10,7 +10,8 @@ import SwiftUI
 struct ControllerView: View {
     @LEDBackgroundColor private var ledBackgroundColor
 
-    @State private var controller: TouchController = TouchController()
+    @State private var leftController: TouchController = TouchController()
+    @State private var rightController: TouchController = TouchController()
 
     let leftDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
     let rightDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
@@ -26,24 +27,49 @@ struct ControllerView: View {
 
     var body: some View {
         HStack {
-            ControllerSideView(controller: self.controller, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Select", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
+            ControllerSideView(controller: self.leftController, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Select", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
                 .padding([.leading, .top, .bottom], 24)
                 .overlay {
-                    TouchGestureView(controller: self.controller)
+                    TouchGestureView(controller: self.leftController)
                 }
 
             Spacer()
 
-            ControllerSideView(controller: self.controller, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
+            ControllerSideView(controller: self.rightController, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
                 .padding([.trailing, .top, .bottom], 24)
                 .overlay {
-                    TouchGestureView(controller: self.controller)
+                    TouchGestureView(controller: self.rightController)
                 }
         }
+        .overlay {
+            DummyCoordinateView(leftController: self.leftController, rightController: self.rightController)
+                .allowsHitTesting(false)
+        }
         // Declare area shared by TouchGestureViews
-        .coordinateSpace(.named(self.controller.COORDINATE_SPACE_NAME))
+        .coordinateSpace(.named(self.leftController.COORDINATE_SPACE_NAME))
         .environment(\.buttonColor, self.ledBackgroundColor.isDark ? .init(white: 0.4, opacity: 0.5) : .init(white: 0.6, opacity: 0.5))
         .environment(\.touchColor, self.ledBackgroundColor.isDark ? .init(white: 0.6, opacity: 0.5) : .init(white: 0.8, opacity: 0.5))
+    }
+}
+
+/// Used solely for establishing the view reference from for shared touch coordinate checking
+struct DummyCoordinateView: UIViewRepresentable {
+    typealias UIViewType = UIView
+
+    let leftController: TouchController
+    let rightController: TouchController
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+
+        self.leftController.referenceView = view
+        self.rightController.referenceView = view
+
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+
     }
 }
 

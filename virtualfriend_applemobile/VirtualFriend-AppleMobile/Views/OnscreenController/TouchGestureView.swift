@@ -16,8 +16,6 @@ struct TouchGestureView: UIViewRepresentable {
         let view = UIView(frame: .zero)
         view.addGestureRecognizer(recognizer)
 
-        self.controller.view = view
-
         return view
     }
 
