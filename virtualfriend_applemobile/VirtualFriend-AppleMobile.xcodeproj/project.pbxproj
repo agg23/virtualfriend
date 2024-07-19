@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		660955622B62202700A47B1B /* StereoImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660955612B62202700A47B1B /* StereoImage.swift */; };
 		661265CC2B54533F00D1B343 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 661265CB2B54533800D1B343 /* libresolv.tbd */; };
+		662247DF2C4A0B36004E6BF1 /* TipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662247DE2C4A0B36004E6BF1 /* TipsView.swift */; };
 		6629A1D52B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */; };
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
@@ -81,6 +82,7 @@
 		661265CB2B54533800D1B343 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		66136E242B5B419600D580BF /* libxrostest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxrostest.a; path = "../xrostest/target/aarch64-apple-xros-sim/debug/libxrostest.a"; sourceTree = "<group>"; };
 		66136E262B5D948300D580BF /* libvirtualfriend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvirtualfriend.a; path = "../virtualfriend/target/aarch64-apple-xros-sim/debug/libvirtualfriend.a"; sourceTree = "<group>"; };
+		662247DE2C4A0B36004E6BF1 /* TipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsView.swift; sourceTree = "<group>"; };
 		6629A1CD2B4E538200FE2AB3 /* VirtualFriend.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualFriend.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6629A1D42B4E538200FE2AB3 /* VirtualFriend_AppleMobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualFriend_AppleMobile.swift; sourceTree = "<group>"; };
 		6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */ = {isa = PBXFileReference; lastKnownFileType = file.skybox; path = ImageBasedLighting.skybox; sourceTree = "<group>"; };
@@ -407,6 +409,7 @@
 			isa = PBXGroup;
 			children = (
 				66E147182C385D1F00CB3BE7 /* OnscreenController */,
+				662247DE2C4A0B36004E6BF1 /* TipsView.swift */,
 				66E147122C37950A00CB3BE7 /* Toast.swift */,
 			);
 			path = Views;
@@ -555,6 +558,7 @@
 				669729952BDD91AA0013BCE2 /* StereoManifestImageView.swift in Sources */,
 				6654891A2BDDCAE000C2BD96 /* CustomFileImporter.swift in Sources */,
 				66C60F2D2B66BA7F00C1FDF4 /* Hash.swift in Sources */,
+				662247DF2C4A0B36004E6BF1 /* TipsView.swift in Sources */,
 				6697F38D2C0E788100229BDD /* Metal2DView.swift in Sources */,
 				669729912BDD56EF0013BCE2 /* MockFileEntry.swift in Sources */,
 				669729972BDD94E70013BCE2 /* AsyncImageChannel.swift in Sources */,

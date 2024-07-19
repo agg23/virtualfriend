@@ -92,8 +92,10 @@ struct SettingsView: View {
                         Link("View on GitHub", destination: URL(string: "https://github.com/agg23/virtualfriend")!)
                     }
 
-                    Section {
+                    Section("Tips") {
                         Text("If you like my work, please consider leaving me a tip.")
+
+                        TipsView()
                     }
 
                     Section("Licenses") {
