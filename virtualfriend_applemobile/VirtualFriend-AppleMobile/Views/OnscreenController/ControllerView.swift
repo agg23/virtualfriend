@@ -121,7 +121,9 @@ private struct ControllerSideView: View {
 }
 
 private struct ControllerLayout: Layout {
+    private let TRIGGER_PERCENTAGE = 0.13
     private let DPAD_PERCENTAGE = 0.6
+    private let BUTTON_PERCENTAGE = 0.27
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 100
@@ -143,9 +145,9 @@ private struct ControllerLayout: Layout {
 
             switch index {
             case 0:
-                view.place(at: bounds.origin, proposal: ProposedViewSize(width: width, height: height * 0.1))
+                view.place(at: bounds.origin, proposal: ProposedViewSize(width: width, height: height * self.TRIGGER_PERCENTAGE))
 
-                offsetY += height * 0.1
+                offsetY += height * self.TRIGGER_PERCENTAGE
             case 1:
                 let actualHeight = self.dpadHeight(systemHeight: height, width: width)
 
@@ -159,7 +161,7 @@ private struct ControllerLayout: Layout {
 
                 offsetY += actualHeight
             default:
-                view.place(at: bounds.origin + CGPoint(x: 0, y: offsetY), proposal: ProposedViewSize(width: width, height: height * 0.3))
+                view.place(at: bounds.origin + CGPoint(x: 0, y: offsetY), proposal: ProposedViewSize(width: width, height: height * self.BUTTON_PERCENTAGE))
             }
         }
     }
