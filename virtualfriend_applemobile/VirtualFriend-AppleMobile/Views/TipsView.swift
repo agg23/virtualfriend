@@ -12,6 +12,7 @@ private let tipsToImages = ["virtualfriend.smalltip": "hand.thumbsup.circle.fill
 
 struct TipsView: View {
     @State private var state: TipsLoadingState = .loading
+    @State private var showThankYou = false
 
     var body: some View {
         Group {
@@ -25,9 +26,30 @@ struct TipsView: View {
                     let image = tipsToImages[product.id]!
                     Image(systemName: image)
                         .font(.system(size: 40))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundColor(.red)
                 }
                 .productViewStyle(.compact)
+                .onInAppPurchaseCompletion { _, error in
+                    do {
+                        let success = try error.get()
+
+                        if case .userCancelled = success {
+                            return
+                        }
+
+                        self.showThankYou = true
+                    } catch {
+                        // Do nothing
+                    }
+                }
             }
+        }
+        .alert("Thank you!", isPresented: self.$showThankYou) {
+            // Alert will automatically be closed by this button
+            Button("You're welcome") {}
+        } message: {
+            Text("Thank you so much for your generous tip. It is greatly appreciated.")
         }
         .task {
             do {
