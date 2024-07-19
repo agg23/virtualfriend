@@ -43,9 +43,10 @@ struct VirtualFriend_VisionApp: App {
             // TODO: This doesn't work for some reason
             return "main" as String?
         }
+        #if os(visionOS)
+        // Macs crash with contentSize
         .windowResizability(.contentSize)
         // Default window size
-        #if os(visionOS)
         .defaultSize(width: 1280, height: 720)
         #endif
     }
