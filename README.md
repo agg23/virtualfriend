@@ -16,4 +16,4 @@ You can download it from the App Store at https://apps.apple.com/app/virtualfrie
 ## Screenshots
 
 ![Vision Title Screen](https://github.com/agg23/virtualfriend/blob/assets/images/screenshots/vision-title.png) ![Vision Gallery](https://github.com/agg23/virtualfriend/blob/assets/images/screenshots/vision-gallery.png)
-![iOS Landscape Gameplay](https://github.com/agg23/virtualfriend/blob/assets/images/screenshots/ios-landscape.png) ![iOS Gallery](https://github.com/agg23/virtualfriend/blob/assets/images/screenshots/ios-gallery.png)
+![iOS Landscape Gameplay](https://github.com/agg23/virtualfriend/blob/assets/images/screenshots/ios-landscape.png)
