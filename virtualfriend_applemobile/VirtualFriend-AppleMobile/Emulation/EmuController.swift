@@ -77,6 +77,11 @@ import GameController
             self.notification = .noController
         }
 
+        #if targetEnvironment(simulator)
+        // Always set no controller on sim
+        self.notification = .noController
+        #endif
+
         GCKeyboard.coalesced?.keyboardInput?.keyChangedHandler = { input, button, keycode, pressed in
             if self.notification == .noController && pressed {
                 self.notification = .none

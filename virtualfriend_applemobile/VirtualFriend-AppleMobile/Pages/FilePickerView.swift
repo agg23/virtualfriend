@@ -16,35 +16,40 @@ let GRID_SPACING = 40.0
 struct FilePickerView: View {
     @Environment(\.scenePhase) private var scenePhase
 
-    @State var fileImporter = FileImporter()
+    @State private var fileImporter = FileImporter()
 
     /// Binding to open fileImporter
-    @State var selectFolder = false
-    @State var directoryContents: [FileEntry] = []
+    @State private var selectFolder = false
+    @State private var directoryContents: DirectoryContentsState = .loading
 
     var body: some View {
         NavigationStack {
-            if (directoryContents.isEmpty) {
-                VStack {
-                    Text("No titles found. Please select folders or files to import.")
-                        .font(.system(size: 24))
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        #if os(visionOS)
-                        .frame(width: 500)
-                        #endif
+            switch self.directoryContents {
+            case .loading:
+                ProgressView()
+            case .data(let directoryContents):
+                if (directoryContents.isEmpty) {
+                    VStack {
+                        Text("No titles found. Please select folders or files to import.")
+                            .font(.system(size: 24))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                            #if os(visionOS)
+                            .frame(width: 500)
+                            #endif
 
-                    Button {
-                        self.selectFolder.toggle()
-                    } label: {
-                        Text("Import Titles")
+                        Button {
+                            self.selectFolder.toggle()
+                        } label: {
+                            Text("Import Titles")
+                        }
+                        .padding(.top, 16)
                     }
-                    .padding(.top, 16)
-                }
-                .padding(40.0)
-            } else {
-                FilePickerFilesView(directoryContents: self.directoryContents) {
-                    self.selectFolder.toggle()
+                    .padding(40.0)
+                } else {
+                    FilePickerFilesView(directoryContents: directoryContents) {
+                        self.selectFolder.toggle()
+                    }
                 }
             }
         }
@@ -71,13 +76,18 @@ struct FilePickerView: View {
     }
 
     func buildEntries() {
-        self.directoryContents = self.fileImporter.knownTitles.filter { (_, url) in
+        self.directoryContents = .data(self.fileImporter.knownTitles.filter { (_, url) in
             url.pathExtension == "vb"
         }.sorted { a, b in
             a.value.lastPathComponent < b.value.lastPathComponent
         }.map { (hash, url) in
             FileEntry(url: url, hash: hash)
-        }
+        })
+    }
+
+    enum DirectoryContentsState {
+        case loading
+        case data([FileEntry])
     }
 }
 

@@ -29,7 +29,11 @@ struct TipsView: View {
                         .symbolRenderingMode(.hierarchical)
                         .foregroundColor(.red)
                 }
+                #if os(visionOS)
+                .productViewStyle(.regular)
+                #else
                 .productViewStyle(.compact)
+                #endif
                 .onInAppPurchaseCompletion { _, error in
                     do {
                         let success = try error.get()
