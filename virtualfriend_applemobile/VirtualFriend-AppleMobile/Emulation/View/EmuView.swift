@@ -16,6 +16,7 @@ enum EmulatorStatus {
 }
 
 struct EmuView: View {
+    @Environment(ImmersiveModel.self) private var immersiveModel
     @Environment(\.scenePhase) private var scenePhase
 
     @EyeSeparation private var separation
@@ -29,41 +30,56 @@ struct EmuView: View {
     let fileEntry: FileEntryWithManifest
 
     var body: some View {
-        EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, onRestart: self.restart)
-            .persistentSystemOverlays(.hidden)
-            .onChange(of: self.fileEntry, initial: true) { _, newValue in
-                self.createEmulator(newValue.entry.url)
-            }
-            .onChange(of: self.scenePhase) { prevValue, newValue in
-                guard case .emulator(let emulator) = self.emulator else {
-                    return
-                }
+        let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, onRestart: self.restart)
 
-                switch newValue {
-                case .active:
-                    if prevValue != .active {
-                        // We resumed activity. Start emulation
-                        emulator.start()
-                    }
-                case .inactive:
-                    fallthrough
-                case .background:
-                    emulator.shutdown()
-                @unknown default:
-                    print("Unknown scene \(newValue)")
-                }
+        Group {
+            #if os(visionOS)
+            if self.immersiveModel.isImmersed {
+                content
+            } else {
+                // Only pretend we're a normal window when not immersed
+                content
+                    .glassBackgroundEffect()
             }
-            .onChange(of: self.separation) { _, newValue in
-                if case .emulator(let emulator) = self.emulator {
-                    // Invert separation range so more 3D is on the right
-                    emulator.separation = newValue * -1
-                }
+            #else
+            content
+            #endif
+        }
+        .persistentSystemOverlays(.hidden)
+        .onChange(of: self.fileEntry, initial: true) { prevValue, newValue in
+            print(prevValue, newValue)
+            self.createEmulator(newValue.entry.url)
+        }
+        .onChange(of: self.scenePhase) { prevValue, newValue in
+            guard case .emulator(let emulator) = self.emulator else {
+                return
             }
-            .onChange(of: self.enableSound) { _, newValue in
-                if case .emulator(let emulator) = self.emulator {
-                    emulator.enableSound = newValue
+
+            switch newValue {
+            case .active:
+                if prevValue != .active {
+                    // We resumed activity. Start emulation
+                    emulator.start()
                 }
+            case .inactive:
+                fallthrough
+            case .background:
+                emulator.shutdown()
+            @unknown default:
+                print("Unknown scene \(newValue)")
             }
+        }
+        .onChange(of: self.separation) { _, newValue in
+            if case .emulator(let emulator) = self.emulator {
+                // Invert separation range so more 3D is on the right
+                emulator.separation = newValue * -1
+            }
+        }
+        .onChange(of: self.enableSound) { _, newValue in
+            if case .emulator(let emulator) = self.emulator {
+                emulator.enableSound = newValue
+            }
+        }
     }
 
     func createEmulator(_ url: URL) {

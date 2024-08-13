@@ -12,8 +12,11 @@ struct EmuHeaderOverlayView: View {
 
     let title: String
 
+    let isImmersed: Bool
+
     let resetTimer: () -> Void
     let onBack: () -> Void
+    let onImmersive: () -> Void
     let onRestart: () -> Void
 
     var body: some View {
@@ -26,7 +29,17 @@ struct EmuHeaderOverlayView: View {
         let bottomPadding = 8.0
         #endif
 
-        HStack {
+        ZStack {
+            Text(self.title)
+                #if os(visionOS)
+                .font(.title)
+                #else
+                .font(.title3)
+                #endif
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .foregroundColor(.white)
+
             HStack {
                 Button {
                     self.resetTimer()
@@ -42,17 +55,21 @@ struct EmuHeaderOverlayView: View {
                 .help("Back to Library")
                 .padding(.leading, buttonPadding)
 
-                Spacer()
+                #if os(visionOS)
+                Button {
+                    self.resetTimer()
 
-                Text(self.title)
-                    #if os(visionOS)
-                    .font(.title)
-                    #else
-                    .font(.title3)
-                    #endif
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .foregroundColor(.white)
+                    self.onImmersive()
+                } label: {
+                    Label {
+                        Text(self.isImmersed ? "Leave immersive space" : "Enter immersive space")
+                    } icon: {
+                        Image(systemName: Icon.immersive)
+                    }
+                }
+                .help(self.isImmersed ? "Leave immersive space" : "Enter immersive space")
+                .padding(.leading, buttonPadding)
+                #endif
 
                 Spacer()
 

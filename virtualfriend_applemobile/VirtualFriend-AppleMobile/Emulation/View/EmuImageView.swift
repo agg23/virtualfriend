@@ -32,12 +32,12 @@ struct EmuImageView: View {
                     self.emulator.shutdown()
                 }
             }
-            .onChange(of: self.ledColor) { _, _ in
+            .onChange(of: self.ledColor, initial: true) { _, _ in
                 self.emulator.color = self.ledColor
             }
-            .onAppear {
-                self.emulator.color = self.ledColor
-
+            .task {
+                // For some reason when transitioning between immersive mode, the destruction and recreation of EmuImageView will
+                // cause onAppear/onDisappear to run out of order. Use .task to ensure order
                 self.emulator.start()
             }
             .onDisappear {

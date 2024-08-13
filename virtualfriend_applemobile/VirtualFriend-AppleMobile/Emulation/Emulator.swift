@@ -91,6 +91,7 @@ class Emulator {
     }
 
     func start() {
+        print("Start")
         guard self.halt else {
             // We are already running
             return
@@ -109,6 +110,7 @@ class Emulator {
     }
 
     func shutdown() {
+        print("Shutdown")
         // Kill the emulation loop
         guard !self.halt else {
             // We are already halted

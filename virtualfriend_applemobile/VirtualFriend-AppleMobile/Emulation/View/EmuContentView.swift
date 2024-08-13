@@ -9,6 +9,7 @@ import SwiftUI
 
 struct EmuContentView: View {
     @Environment(MainRouter.self) private var router
+    @Environment(ImmersiveModel.self) private var immersiveModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @LEDBackgroundColor private var ledBackgroundColor
@@ -20,6 +21,8 @@ struct EmuContentView: View {
     @State private var controlVisibility: Visibility = .hidden
 
     let controlsTimerDuration = 3.0
+    let verticalBaseImagePadding = 16.0
+    let visionOSImagePadding = 8.0
 
     let emulator: EmulatorStatus
     let controller: EmuController
@@ -51,14 +54,17 @@ struct EmuContentView: View {
         //        ToastWrapper(text: toastText) {
             ZStack(alignment: alignment) {
                 // Background color to surround the view and pad out the window AR
-                self.ledBackgroundColor
-                    .ignoresSafeArea()
+                if !self.immersiveModel.isImmersed {
+                    // Only display background color if not over the immersed black background
+                    self.ledBackgroundColor
+                        .ignoresSafeArea()
+                }
 
                 Group {
                     switch self.emulator {
                     case .emulator(let emulator):
                         EmuImageView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, self.verticalBaseImagePadding)
                     case .error(let message):
                         VStack(alignment: .center) {
                             Text("Could not start emulator")
@@ -71,7 +77,7 @@ struct EmuContentView: View {
                 }
                 #if os(visionOS)
                 // Add additional spacing around render frame to prevent corner from clipping off of rounded corner
-                .padding(8)
+                .padding(self.visionOSImagePadding)
                 #endif
             }
         //        }
@@ -112,7 +118,7 @@ struct EmuContentView: View {
                 .allowsHitTesting(false)
 
             if self.controlVisibility == .visible {
-                EmuHeaderOverlayView(title: self.title) {
+                let overlay = EmuHeaderOverlayView(title: self.title, isImmersed: self.immersiveModel.isImmersed) {
                     self.resetTimer()
                 } onBack: {
                     self.router.currentRoute = .main
@@ -120,8 +126,25 @@ struct EmuContentView: View {
                     if case .emulator(let emulator) = self.emulator {
                         emulator.shutdown()
                     }
+                } onImmersive: {
+                    Task {
+                        if self.immersiveModel.isImmersed {
+                            await self.immersiveModel.dismiss()
+                        } else {
+                            await self.immersiveModel.open()
+                        }
+                    }
                 } onRestart: {
                     self.onRestart()
+                }
+
+                if self.immersiveModel.isImmersed {
+                    // Add wrapping overlay padding as if other padding wasn't removed above
+                    overlay
+                        .padding(.vertical, self.verticalBaseImagePadding)
+                        .padding(self.visionOSImagePadding)
+                } else {
+                    overlay
                 }
             }
         }

@@ -13,4 +13,6 @@ struct Icon {
 
     static let restart = "arrow.clockwise"
     static let back = "chevron.backward"
+
+    static let immersive = "mountain.2.fill"
 }

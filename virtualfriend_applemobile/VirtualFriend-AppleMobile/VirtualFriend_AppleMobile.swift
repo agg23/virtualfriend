@@ -44,10 +44,21 @@ struct VirtualFriend_VisionApp: App {
             return "main" as String?
         }
         #if os(visionOS)
+        // Window set to plain so the ImmersiveView doesn't show any window borders
+        .windowStyle(.plain)
         // Macs crash with contentSize
         .windowResizability(.contentSize)
         // Default window size
         .defaultSize(width: 1280, height: 720)
+        #endif
+
+        #if os(visionOS)
+        ImmersiveSpace(id: "ImmersiveSpace") {
+            ImmersiveView()
+        }
+        .immersionStyle(selection: Binding(get: {
+            .progressive
+        }, set: { _ in }), in: .progressive)
         #endif
     }
 }
