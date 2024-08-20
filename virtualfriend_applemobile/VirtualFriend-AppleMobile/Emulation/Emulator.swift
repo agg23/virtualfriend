@@ -242,6 +242,9 @@ class Emulator {
         let leftDpadUp = sticks?.dpad.up.isPressed ?? false
         let leftDpadDown = sticks?.dpad.down.isPressed ?? false
 
+        print(sticks?.buttonMenu.sfSymbolsName)
+        print(sticks?.buttonOptions?.sfSymbolsName)
+
         let start = sticks?.buttonMenu.isPressed ?? false
         let select = sticks?.buttonOptions?.isPressed ?? false
 

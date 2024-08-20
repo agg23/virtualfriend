@@ -34,6 +34,9 @@ struct SettingsView: View {
                     }
 
                     Section("Controls") {
+                        NavigationLink("Controller") {
+                            ControllerSettingsView()
+                        }
                         NavigationLink("Keyboard") {
                             KeyboardSettingsView()
                         }
