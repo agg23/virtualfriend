@@ -494,7 +494,7 @@ impl VIP {
 
         self.frame_count += 1;
 
-        if self.frame_count == self.frmcyc + 1 {
+        if self.frame_count > self.frmcyc {
             self.frame_count = 0;
 
             self.init_drawing_frame();
