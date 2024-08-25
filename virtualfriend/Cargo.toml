@@ -19,3 +19,6 @@ tartan-bitfield = "1.2.0"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+savefile = "0.17"
+savefile-derive = "0.17"

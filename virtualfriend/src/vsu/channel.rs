@@ -1,5 +1,6 @@
 use tartan_bitfield::bitfield;
 
+#[derive(Savefile)]
 pub struct Channel {
     /// Sound interval specification
     pub live_interval: u8,

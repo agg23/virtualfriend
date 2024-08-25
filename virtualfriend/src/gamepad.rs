@@ -5,6 +5,7 @@ use bitvec::prelude::Lsb0;
 
 use crate::constants::GAMEPAD_HARDWARE_READ_CYCLE_COUNT;
 
+#[derive(Savefile)]
 pub struct Gamepad {
     /// K-Int-Inh When clear, key input interrupt is enabled.
     ///

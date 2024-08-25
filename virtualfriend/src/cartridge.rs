@@ -6,23 +6,54 @@ use std::{
 
 use crate::constants::{MAX_ROM_RAM_SIZE, MAX_ROM_SIZE, MIN_ROM_RAM_SIZE};
 
-pub struct ROM {
-    // Max 16MB
-    // Buffers must be heap allocated, as stack allocation of large buffers causes segfaults on non-x86 platforms
-    rom_buffer: Box<[u8]>,
+#[derive(Savefile)]
+pub struct Cartridge {
+    #[savefile_ignore]
+    rom: Option<ROM>,
 
-    /// ROM address mask for word addresses
-    rom_address_mask: usize,
-    pub rom: &'static [u16],
     ram: Box<[u16]>,
 
     /// The maximum observed size of the RAM. If `None`, RAM has not been used.
     ram_size: Option<usize>,
 }
 
-impl ROM {
+#[derive(SavefileIntrospectOnly)]
+struct ROM {
+    // Max 16MB
+    // Buffers must be heap allocated, as stack allocation of large buffers causes segfaults on non-x86 platforms
+    _rom_buffer: Box<[u8]>,
+
+    /// ROM address mask for word addresses
+    rom_address_mask: usize,
+    #[savefile_ignore]
+    #[savefile_introspect_ignore]
+    rom: &'static [u16],
+}
+
+impl Cartridge {
     pub fn load_from_vec(vec: Vec<u8>) -> Self {
-        let rom_buffer = vec.into_boxed_slice();
+        // Initialize RAM to 0
+        let ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
+
+        let mut cart = Cartridge {
+            rom: None,
+            ram: ram,
+            ram_size: None,
+        };
+
+        cart.populate_rom(vec);
+
+        cart
+    }
+
+    pub fn load_from_file(path: &Path) -> Self {
+        let rom_buffer = fs::read(path).expect("Could not find file");
+
+        Cartridge::load_from_vec(rom_buffer)
+    }
+
+    pub fn populate_rom(&mut self, rom_vec: Vec<u8>) {
+        let rom_buffer = rom_vec.into_boxed_slice();
 
         if rom_buffer.len() > MAX_ROM_SIZE {
             panic!("ROM is too large");
@@ -33,23 +64,11 @@ impl ROM {
 
         let rom_address_mask = (rom_buffer.len() / 2) - 1;
 
-        // Initialize RAM to 0
-        let ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
-
-        ROM {
-            rom_buffer,
+        self.rom = Some(ROM {
+            _rom_buffer: rom_buffer,
             rom_address_mask,
             rom,
-            // TODO: Implement save loading
-            ram,
-            ram_size: None,
-        }
-    }
-
-    pub fn load_from_file(path: &Path) -> Self {
-        let rom_buffer = fs::read(path).expect("Could not find file");
-
-        ROM::load_from_vec(rom_buffer)
+        });
     }
 
     /// TODO: This is debug init to match with Mednafen
@@ -85,9 +104,11 @@ impl ROM {
     }
 
     pub fn get_rom(&self, address: usize) -> u16 {
-        let address = address & self.rom_address_mask;
+        let rom = self.rom.as_ref().expect("ROM access without init");
 
-        self.rom[address]
+        let address = address & rom.rom_address_mask;
+
+        rom.rom[address]
     }
 
     pub fn get_ram(&mut self, address: usize) -> u16 {

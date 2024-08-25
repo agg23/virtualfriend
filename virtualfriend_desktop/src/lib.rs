@@ -73,6 +73,7 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
     event_loop: Option<EventLoop<()>>,
     rom_path: &Path,
     save_path: Option<&Path>,
+    savestate_path: Option<&Path>,
     capture_callback: Option<F>,
 ) -> EventLoop<()> {
     // Window
@@ -378,6 +379,29 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
                             if pressed {
                                 println!("Pressing c");
                                 capture_next_frame = true;
+                            }
+                        }
+                        Key::Character("s") => {
+                            if pressed {
+                                println!("Pressing s");
+                                let savestate = virtualfriend.lock().unwrap().create_savestate();
+                                if let Some(savestate_path) = savestate_path {
+                                    fs::write(savestate_path, savestate).unwrap();
+                                }
+                            }
+                        }
+                        Key::Character("p") => {
+                            if pressed {
+                                println!("Pressing p");
+                                if let Some(savestate_path) = savestate_path {
+                                    let rom = fs::read(rom_path).unwrap();
+                                    let savestate = fs::read(savestate_path).unwrap();
+
+                                    virtualfriend
+                                        .lock()
+                                        .unwrap()
+                                        .load_savestate(rom, &savestate);
+                                }
                             }
                         }
                         _ => {}

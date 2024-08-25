@@ -1,5 +1,6 @@
 use bitvec::prelude::*;
 
+#[derive(Savefile)]
 pub struct ProgramStatusWord {
     pub zero: bool,
     pub sign: bool,

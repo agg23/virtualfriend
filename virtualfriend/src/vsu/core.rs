@@ -6,6 +6,7 @@ use super::{
     waveform::Waveform,
 };
 
+#[derive(Savefile)]
 pub struct VSU {
     waveforms: [Waveform; 5],
     modulation: [i8; 32],

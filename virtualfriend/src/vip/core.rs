@@ -20,6 +20,7 @@ use super::drawing::draw_block_row;
 use super::util::{framebuffer_addresses, RenderState};
 use super::vram::VRAM;
 
+#[derive(Savefile)]
 pub struct VIP {
     pub current_display_clock_cycle: usize,
 
@@ -72,7 +73,7 @@ pub struct VIP {
     frame_count: u8,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Savefile)]
 pub enum DisplayState {
     Left,
     Right,
@@ -80,6 +81,7 @@ pub enum DisplayState {
 }
 
 bitfield! {
+    #[derive(Savefile)]
     pub struct VIPInterrupt(u16) {
         /// Mirrors are not stable.
         [0] scanerr,

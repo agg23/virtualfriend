@@ -1,3 +1,4 @@
+#[derive(Savefile)]
 pub struct VRAM {
     // We map the entirety of VRAM due to overlapping sections
     // (upper background maps overlap with OAM and properties).

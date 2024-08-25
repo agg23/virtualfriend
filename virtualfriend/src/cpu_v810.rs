@@ -1,4 +1,4 @@
-use std::io::{StdoutLock, Write};
+use std::io::Write;
 use std::{fs::File, io::BufWriter};
 
 use bitvec::array::BitArray;
@@ -9,6 +9,7 @@ use crate::{
 };
 
 /// Tracks the most recent activity of the bus for the purposes of timing
+#[derive(Savefile)]
 pub enum BusActivity {
     Standard,
     Long,
@@ -19,6 +20,7 @@ pub enum BusActivity {
     StoreAfter,
 }
 
+#[derive(Savefile)]
 pub struct CpuV810 {
     pc: u32,
 

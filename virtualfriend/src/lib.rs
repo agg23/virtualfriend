@@ -1,9 +1,9 @@
-use std::{
-    collections::VecDeque,
-    env,
-    fs::{File, OpenOptions},
-    io::{self, BufWriter},
-};
+extern crate savefile;
+
+use savefile::prelude::*;
+
+#[macro_use]
+extern crate savefile_derive;
 
 use bus::Bus;
 use cpu_v810::CpuV810;
@@ -14,7 +14,9 @@ use vsu::{
     VSU,
 };
 
-use crate::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, gamepad::GamepadInputs, rom::ROM};
+use crate::{
+    cartridge::Cartridge, constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, gamepad::GamepadInputs,
+};
 
 pub mod bus;
 pub mod constants;
@@ -25,13 +27,14 @@ pub mod hardware;
 pub mod interrupt;
 #[macro_use]
 mod log;
+pub mod cartridge;
 pub mod manifest;
-pub mod rom;
 pub mod timer;
 pub mod util;
 pub mod vip;
 pub mod vsu;
 
+#[derive(Savefile)]
 pub struct VirtualFriend {
     cpu: CpuV810,
     bus: Bus,
@@ -71,7 +74,7 @@ impl VirtualFriend {
     pub fn new(vec: Vec<u8>) -> Self {
         println!("Loading ROM");
 
-        let rom = ROM::load_from_vec(vec);
+        let rom = Cartridge::load_from_vec(vec);
 
         let mut cpu = CpuV810::new();
 
@@ -177,11 +180,27 @@ impl VirtualFriend {
     }
 
     pub fn load_ram(&mut self, ram: Vec<u8>) {
-        self.bus.rom.load_ram(ram)
+        self.bus.cart.load_ram(ram)
     }
 
     pub fn dump_ram(&self) -> Vec<u8> {
-        self.bus.rom.dump_ram()
+        self.bus.cart.dump_ram()
+    }
+
+    pub fn create_savestate(&mut self) -> Vec<u8> {
+        save_to_mem(0, self).expect("Failed to create savestate")
+    }
+
+    pub fn load_savestate(&mut self, rom: Vec<u8>, savestate: &[u8]) {
+        let new_instance =
+            load_from_mem::<VirtualFriend>(savestate, 0).expect("Failed to load savestate");
+
+        self.bus = new_instance.bus;
+        self.cpu = new_instance.cpu;
+        self.cycle_count = new_instance.cycle_count;
+        self.video_frame_serviced = false;
+
+        self.bus.cart.populate_rom(rom);
     }
 
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {

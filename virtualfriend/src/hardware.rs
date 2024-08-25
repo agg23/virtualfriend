@@ -5,6 +5,7 @@ use bitvec::{bitarr, field::BitField};
 use crate::gamepad::Gamepad;
 use crate::timer::Timer;
 
+#[derive(Savefile)]
 pub struct Hardware {
     pub gamepad: Gamepad,
 
