@@ -4,21 +4,23 @@ use std::{
     slice::from_raw_parts,
 };
 
+use savefile::{
+    Deserialize, Packed, Schema, SchemaPrimitive, Serialize, VecOrStringLayout, WithSchema,
+};
+
 use crate::constants::{MAX_ROM_RAM_SIZE, MAX_ROM_SIZE, MIN_ROM_RAM_SIZE};
 
-#[derive(Savefile)]
+#[derive(SavefileIntrospectOnly)]
 pub struct Cartridge {
-    #[savefile_ignore]
-    #[savefile_introspect_ignore]
     rom: ROM,
 
-    ram: Box<[u16]>,
+    ram: Vec<u16>,
 
     /// The maximum observed size of the RAM. If `None`, RAM has not been used.
     ram_size: Option<usize>,
 }
 
-#[derive(Savefile)]
+#[derive(SavefileIntrospectOnly)]
 struct ROM {
     // Max 16MB
     // Buffers must be heap allocated, as stack allocation of large buffers causes segfaults on non-x86 platforms
@@ -45,16 +47,10 @@ impl ROM {
     }
 }
 
-impl Default for ROM {
-    fn default() -> Self {
-        Self::new(vec![])
-    }
-}
-
 impl Cartridge {
     pub fn load_from_vec(vec: Vec<u8>) -> Self {
         // Initialize RAM to 0
-        let ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
+        let ram = vec![0; MAX_ROM_RAM_SIZE / 2];
 
         Cartridge {
             rom: ROM::new(vec),
@@ -101,16 +97,20 @@ impl Cartridge {
     pub fn load_ram(&mut self, ram: Vec<u8>) {
         let array = unsafe { from_raw_parts(ram.as_ptr() as *const u16, ram.len() / 2) };
 
+        self.load_ram_u16(array);
+    }
+
+    fn load_ram_u16(&mut self, ram_array: &[u16]) {
         // Reinit RAM
-        self.ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
+        self.ram = vec![0; MAX_ROM_RAM_SIZE / 2];
 
         // Copy save words
-        for i in 0..array.len() {
-            self.ram[i] = array[i];
+        for i in 0..ram_array.len() {
+            self.ram[i] = ram_array[i];
         }
 
-        if array.len() > 0 {
-            self.build_ram_size(array.len() - 1);
+        if ram_array.len() > 0 {
+            self.build_ram_size(ram_array.len() - 1);
         } else {
             self.ram_size = None;
         }
@@ -158,5 +158,50 @@ impl Cartridge {
 
             self.ram_size = Some(size);
         }
+    }
+}
+
+impl WithSchema for Cartridge {
+    fn schema(_version: u32, _context: &mut savefile::WithSchemaContext) -> Schema {
+        Schema::Vector(
+            Box::new(Schema::Primitive(SchemaPrimitive::schema_u16)),
+            VecOrStringLayout::default(),
+        )
+    }
+}
+
+impl Serialize for Cartridge {
+    fn serialize(
+        &self,
+        serializer: &mut savefile::Serializer<impl std::io::Write>,
+    ) -> Result<(), savefile::SavefileError> {
+        let length = self.ram_size.unwrap_or(0);
+        let mut new_vec = Vec::<u16>::with_capacity(length);
+
+        new_vec.extend(&self.ram[0..length]);
+        println!("Serializing {:X} should be {length:X}", new_vec.len());
+        new_vec.serialize(serializer)?;
+
+        Ok(())
+    }
+}
+
+impl Deserialize for Cartridge {
+    fn deserialize(
+        deserializer: &mut savefile::Deserializer<impl std::io::Read>,
+    ) -> Result<Self, savefile::SavefileError> {
+        let ram = Vec::<u16>::deserialize(deserializer)?;
+
+        let mut cartridge = Cartridge::load_from_vec(vec![]);
+
+        cartridge.load_ram_u16(&ram);
+
+        Ok(cartridge)
+    }
+}
+
+impl Packed for Cartridge {
+    unsafe fn repr_c_optimization_safe(_version: u32) -> savefile::IsPacked {
+        savefile::IsPacked::yes()
     }
 }
