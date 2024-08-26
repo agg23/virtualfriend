@@ -135,14 +135,17 @@ impl Cartridge {
 
         if address >= size {
             // Address is outside of expected RAM bounds. Increase our internal representation of its size
-            if let Some(size) = self.ram_size {
+            // Addresses are 2 byte, and our min size is in bytes
+            let mut size = self.ram_size.unwrap_or(MIN_ROM_RAM_SIZE / 2);
+
+            while size <= address {
                 // RAM access is out of range. Up the RAM size
                 // Size cannot go over 16MB because address will never be larger than that
-                self.ram_size = Some(size * 2);
-            } else {
-                // Initialize RAM
-                self.ram_size = Some(MIN_ROM_RAM_SIZE / 2);
+                // If `address` equals `size`, then the address is at the beginning of the next `size` bank
+                size = size * 2;
             }
+
+            self.ram_size = Some(size);
         }
     }
 }
