@@ -9,7 +9,8 @@ use crate::constants::{MAX_ROM_RAM_SIZE, MAX_ROM_SIZE, MIN_ROM_RAM_SIZE};
 #[derive(Savefile)]
 pub struct Cartridge {
     #[savefile_ignore]
-    rom: Option<ROM>,
+    #[savefile_introspect_ignore]
+    rom: ROM,
 
     ram: Box<[u16]>,
 
@@ -17,17 +18,37 @@ pub struct Cartridge {
     ram_size: Option<usize>,
 }
 
-#[derive(SavefileIntrospectOnly)]
+#[derive(Savefile)]
 struct ROM {
     // Max 16MB
     // Buffers must be heap allocated, as stack allocation of large buffers causes segfaults on non-x86 platforms
-    _rom_buffer: Box<[u8]>,
+    rom_buffer: Box<[u8]>,
 
     /// ROM address mask for word addresses
     rom_address_mask: usize,
-    #[savefile_ignore]
-    #[savefile_introspect_ignore]
-    rom: &'static [u16],
+}
+
+impl ROM {
+    fn new(rom_vec: Vec<u8>) -> Self {
+        let rom_buffer = rom_vec.into_boxed_slice();
+
+        if rom_buffer.len() > MAX_ROM_SIZE {
+            panic!("ROM is too large");
+        }
+
+        let rom_address_mask = (rom_buffer.len() / 2) - 1;
+
+        ROM {
+            rom_buffer,
+            rom_address_mask,
+        }
+    }
+}
+
+impl Default for ROM {
+    fn default() -> Self {
+        Self::new(vec![])
+    }
 }
 
 impl Cartridge {
@@ -35,15 +56,11 @@ impl Cartridge {
         // Initialize RAM to 0
         let ram = vec![0; MAX_ROM_RAM_SIZE / 2].into_boxed_slice();
 
-        let mut cart = Cartridge {
-            rom: None,
+        Cartridge {
+            rom: ROM::new(vec),
             ram: ram,
             ram_size: None,
-        };
-
-        cart.populate_rom(vec);
-
-        cart
+        }
     }
 
     pub fn load_from_file(path: &Path) -> Self {
@@ -53,22 +70,7 @@ impl Cartridge {
     }
 
     pub fn populate_rom(&mut self, rom_vec: Vec<u8>) {
-        let rom_buffer = rom_vec.into_boxed_slice();
-
-        if rom_buffer.len() > MAX_ROM_SIZE {
-            panic!("ROM is too large");
-        }
-
-        let rom =
-            unsafe { from_raw_parts(rom_buffer.as_ptr() as *const u16, rom_buffer.len() / 2) };
-
-        let rom_address_mask = (rom_buffer.len() / 2) - 1;
-
-        self.rom = Some(ROM {
-            _rom_buffer: rom_buffer,
-            rom_address_mask,
-            rom,
-        });
+        self.rom = ROM::new(rom_vec);
     }
 
     /// TODO: This is debug init to match with Mednafen
@@ -104,11 +106,16 @@ impl Cartridge {
     }
 
     pub fn get_rom(&self, address: usize) -> u16 {
-        let rom = self.rom.as_ref().expect("ROM access without init");
+        let rom = unsafe {
+            from_raw_parts(
+                self.rom.rom_buffer.as_ptr() as *const u16,
+                self.rom.rom_buffer.len() / 2,
+            )
+        };
 
-        let address = address & rom.rom_address_mask;
+        let address = address & self.rom.rom_address_mask;
 
-        rom.rom[address]
+        rom[address]
     }
 
     pub fn get_ram(&mut self, address: usize) -> u16 {
