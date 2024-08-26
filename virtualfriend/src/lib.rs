@@ -184,7 +184,11 @@ impl VirtualFriend {
     }
 
     pub fn dump_ram(&self) -> Vec<u8> {
-        self.bus.cart.dump_ram()
+        let ram = self.bus.cart.dump_ram();
+
+        println!("Dumping RAM {:X}", ram.len());
+
+        ram
     }
 
     pub fn create_savestate(&mut self) -> Vec<u8> {

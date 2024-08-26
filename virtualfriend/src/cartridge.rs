@@ -88,7 +88,12 @@ impl Cartridge {
     }
 
     pub fn dump_ram(&self) -> Vec<u8> {
-        let array = unsafe { from_raw_parts(self.ram.as_ptr() as *const u8, self.ram.len()) };
+        let array = unsafe {
+            from_raw_parts(
+                self.ram.as_ptr() as *const u8,
+                self.ram_size.unwrap_or(self.ram.len() * 2),
+            )
+        };
 
         Vec::from(array)
     }
@@ -102,6 +107,12 @@ impl Cartridge {
         // Copy save words
         for i in 0..array.len() {
             self.ram[i] = array[i];
+        }
+
+        if array.len() > 0 {
+            self.build_ram_size(array.len() - 1);
+        } else {
+            self.ram_size = None;
         }
     }
 
