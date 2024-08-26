@@ -162,8 +162,8 @@ impl CpuV810 {
     pub fn log_instruction(
         &self,
         log_file: Option<&mut BufWriter<File>>,
-        cycle_count: usize,
-        extra_log_info: Option<String>,
+        _cycle_count: usize,
+        _extra_log_info: Option<String>,
     ) {
         // let mut tuples = vec![
         //     ("PC".to_string(), self.pc),
@@ -397,6 +397,7 @@ impl CpuV810 {
                 #[cfg(feature = "panic")]
                 panic!("Invalid opcode {opcode:x}");
 
+                #[cfg(not(feature = "panic"))]
                 (1, BusActivity::Standard)
             }
         }
@@ -1177,6 +1178,7 @@ impl CpuV810 {
                 #[cfg(feature = "panic")]
                 panic!("Invalid float or Nintendo instruction {sub_opcode:x}");
 
+                #[cfg(not(feature = "panic"))]
                 (1, BusActivity::Standard)
             }
         }

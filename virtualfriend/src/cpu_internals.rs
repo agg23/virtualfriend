@@ -112,11 +112,11 @@ impl ProgramStatusWord {
         &mut self,
         value: f32,
         set_fro: bool,
-        set_fiv: bool,
-        set_fzd: bool,
+        _set_fiv: bool,
+        _set_fzd: bool,
         set_fov: bool,
         set_fud: bool,
-        set_fpr: bool,
+        _set_fpr: bool,
     ) {
         // https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#numeric-cast
         if set_fro && value.is_nan() {

@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 
-members = [ "tools/manifest_generator",
+members = [
+  "tools/manifest_generator",
   "virtualfriend",
-  "virtualfriend_3ds",
   "virtualfriend_desktop",
   "virtualfriend_swift",
   "tools/manifest_generator"

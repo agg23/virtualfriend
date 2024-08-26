@@ -76,7 +76,7 @@ impl VirtualFriend {
 
         let rom = Cartridge::load_from_vec(vec);
 
-        let mut cpu = CpuV810::new();
+        let cpu = CpuV810::new();
 
         let vip = VIP::new();
         let vsu = VSU::new();

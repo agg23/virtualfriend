@@ -4,8 +4,7 @@ use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata, FFIVideoFrame};
 use virtualfriend::{
     gamepad::GamepadInputs,
     manifest::{Manifest, Metadata},
-    vsu::traits::AudioFrame,
-    Frame, VideoFrame,
+    Frame,
 };
 
 #[swift_bridge::bridge]

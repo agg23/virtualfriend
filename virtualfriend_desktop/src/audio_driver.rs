@@ -1,12 +1,8 @@
-use std::{cmp::Ordering, collections::VecDeque, time::Instant};
+use std::{cmp::Ordering, collections::VecDeque};
 
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     OutputCallbackInfo, Stream,
-};
-use rubato::{
-    FftFixedInOut, FftFixedOut, Resampler, SincFixedOut, SincInterpolationParameters,
-    SincInterpolationType, WindowFunction,
 };
 use virtualfriend::vsu::traits::AudioFrame;
 
@@ -19,7 +15,7 @@ pub struct AudioDriver {
 impl AudioDriver {
     pub fn new<TFunc>(
         sample_rate: u32,
-        desired_latency_ms: u32,
+        _desired_latency_ms: u32,
         mut on_frame_request: TFunc,
     ) -> Self
     where
@@ -53,19 +49,17 @@ impl AudioDriver {
 
         println!("Resampling to {}", config.max_sample_rate().0);
 
-        let buffer_frames = (sample_rate * desired_latency_ms / 1000 * 2) as usize;
+        // let buffer_frames = (sample_rate * desired_latency_ms / 1000 * 2) as usize;
 
         // let mut resampler: Option<SincFixedOut<f32>> = None;
-        let mut resampler: Option<FftFixedInOut<f32>> = None;
-        let mut resample_buffers: Option<(Vec<Vec<f32>>, Vec<Vec<f32>>)> = None;
+        // let mut resampler: Option<FftFixedInOut<f32>> = None;
+        // let mut resample_buffers: Option<(Vec<Vec<f32>>, Vec<Vec<f32>>)> = None;
 
         let mut resampler = LinearResampler::new(sample_rate, config.max_sample_rate().0);
 
         let rate_ratio = (config.max_sample_rate().0 as f32) / (sample_rate as f32);
 
         println!("Converting with ratio: {rate_ratio}");
-
-        let mut initial_buffer = true;
 
         let stream = output_device
             .build_output_stream(
