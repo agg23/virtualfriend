@@ -104,13 +104,23 @@ impl Cartridge {
         // Reinit RAM
         self.ram = vec![0; MAX_ROM_RAM_SIZE / 2];
 
+        // Track the highest address in use
+        // This lets us shrink saves created in the first release of VirtualFriend
+        let mut max_value_address = 0;
+
         // Copy save words
         for i in 0..ram_array.len() {
-            self.ram[i] = ram_array[i];
+            let value = ram_array[i];
+
+            if value > 0 {
+                max_value_address = i;
+            }
+
+            self.ram[i] = value;
         }
 
-        if ram_array.len() > 0 {
-            self.build_ram_size(ram_array.len() - 1);
+        if ram_array.len() > 0 && max_value_address > 0 {
+            self.build_ram_size(max_value_address);
         } else {
             self.ram_size = None;
         }
