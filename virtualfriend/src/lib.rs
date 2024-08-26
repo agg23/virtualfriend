@@ -1,10 +1,3 @@
-use std::{
-    collections::VecDeque,
-    env,
-    fs::{File, OpenOptions},
-    io::{self, BufWriter},
-};
-
 use bus::Bus;
 use cpu_v810::CpuV810;
 use hardware::Hardware;
@@ -73,7 +66,7 @@ impl VirtualFriend {
 
         let rom = ROM::load_from_vec(vec);
 
-        let mut cpu = CpuV810::new();
+        let cpu = CpuV810::new();
 
         let vip = VIP::new();
         let vsu = VSU::new();

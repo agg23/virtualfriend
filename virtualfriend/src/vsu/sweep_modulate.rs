@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use tartan_bitfield::bitfield;
 
 use crate::constants::{SWEEP_FAST_CYCLE_COUNT, SWEEP_SLOW_CYCLE_COUNT};
