@@ -1713,15 +1713,9 @@ version = "0.17.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9916fda480087d511b4c4fa3eab5be6bb60352d0986cbf8fb4a9415d5fe4f0cc"
 dependencies = [
- "arrayvec",
- "bit-set",
- "bit-vec",
  "byteorder",
- "indexmap 1.9.3",
  "memoffset",
- "parking_lot",
  "rustc_version",
- "smallvec",
 ]
 
 [[package]]
