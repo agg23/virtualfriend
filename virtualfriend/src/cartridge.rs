@@ -70,18 +70,14 @@ impl Cartridge {
     }
 
     /// TODO: This is debug init to match with Mednafen
-    pub fn debug_init(&mut self) {
-        for i in 0..3 {
-            for j in 0..0x24 {
-                // Set RAM without updating size
-                self.ram[i * 0x50 / 2 + j] = 0xFFFF;
-            }
-        }
-    }
-
-    pub fn debug_dump(&self) {
-        fs::write("mem.dump", self.dump_ram()).unwrap();
-    }
+    // pub fn debug_init(&mut self) {
+    //     for i in 0..3 {
+    //         for j in 0..0x24 {
+    //             // Set RAM without updating size
+    //             self.ram[i * 0x50 / 2 + j] = 0xFFFF;
+    //         }
+    //     }
+    // }
 
     pub fn dump_ram(&self) -> Vec<u8> {
         let array = unsafe {
@@ -189,7 +185,6 @@ impl Serialize for Cartridge {
         let mut new_vec = Vec::<u16>::with_capacity(length);
 
         new_vec.extend(&self.ram[0..length]);
-        println!("Serializing {:X} should be {length:X}", new_vec.len());
         new_vec.serialize(serializer)?;
 
         Ok(())
