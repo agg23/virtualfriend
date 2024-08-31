@@ -25,8 +25,10 @@ impl System {
         Self { cpu, bus }
     }
 
-    pub fn replace_from_savestate(&mut self, system: System) {
+    pub fn replace_from_savestate(&mut self, system: System, rom: Vec<u8>) {
         self.cpu = system.cpu;
         self.bus = system.bus;
+
+        self.bus.cart.populate_rom(rom);
     }
 }

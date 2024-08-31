@@ -38,16 +38,12 @@ impl Bus {
     }
 
     /// TODO: This is debug init to match with Mednafen
-    pub fn debug_init(&mut self) {
-        self.cart.debug_init();
+    // pub fn debug_init(&mut self) {
+    //     self.cart.debug_init();
 
-        // Don't randomize WRAM
-        self.wram = [0; 0x1_0000 / 2];
-    }
-
-    pub fn debug_dump(&self) {
-        self.cart.debug_dump();
-    }
+    //     // Don't randomize WRAM
+    //     self.wram = [0; 0x1_0000 / 2];
+    // }
 
     pub fn step(
         &mut self,
@@ -108,17 +104,17 @@ impl Bus {
         (upper << 16) | lower
     }
 
-    pub fn get_u8(&mut self, address: u32) -> u8 {
-        let word = self.get_u16(address);
+    // pub fn get_u8(&mut self, address: u32) -> u8 {
+    //     let word = self.get_u16(address);
 
-        let byte = match address & 0x1 {
-            0 => word & 0xFF,
-            1 => (word >> 8) & 0xFF,
-            _ => unreachable!(),
-        };
+    //     let byte = match address & 0x1 {
+    //         0 => word & 0xFF,
+    //         1 => (word >> 8) & 0xFF,
+    //         _ => unreachable!(),
+    //     };
 
-        byte as u8
-    }
+    //     byte as u8
+    // }
 
     pub fn set_u16(&mut self, address: u32, value: u16) {
         // Mask top 5 bits to mirror bus

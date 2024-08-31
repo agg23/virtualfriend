@@ -11,7 +11,7 @@ use std::{
 use audio_driver::AudioDriver;
 use pixels::{Pixels, SurfaceTexture};
 use single_value_channel::channel_starting_with;
-use virtualfriend::{gamepad::GamepadInputs, VideoFrame, VirtualFriend};
+use virtualfriend::{gamepad::GamepadInputs, Frame, VideoFrame, VirtualFriend};
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, WindowEvent},
@@ -148,6 +148,8 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
             select: false,
         });
 
+    let (mut rewind_receiver, rewind_transmitter) = channel_starting_with::<bool>(false);
+
     let rom = fs::read(&rom_path).expect("Could not load ROM");
     let mut virtualfriend = VirtualFriend::new(rom);
 
@@ -166,10 +168,21 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
 
     // 41.667kHz
     let mut audio_driver = AudioDriver::new(41667, 20, move |sample_count| {
-        let frame = virtualfriend_audio
-            .lock()
-            .unwrap()
-            .run_audio_frame(inputs_receiver.latest().clone(), sample_count);
+        let frame = if *rewind_receiver.latest() {
+            // Rewinding
+            let video = virtualfriend_audio.lock().unwrap().run_rewind_frame();
+
+            Frame {
+                video,
+                audio_buffer: vec![],
+            }
+        } else {
+            // Normal frame
+            virtualfriend_audio
+                .lock()
+                .unwrap()
+                .run_audio_frame(inputs_receiver.latest().clone(), sample_count)
+        };
 
         if let Some(video) = frame.video {
             // Send updated video frame
@@ -394,15 +407,14 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
                             if pressed {
                                 println!("Pressing p");
                                 if let Some(savestate_path) = savestate_path {
-                                    let rom = fs::read(rom_path).unwrap();
                                     let savestate = fs::read(savestate_path).unwrap();
 
-                                    virtualfriend
-                                        .lock()
-                                        .unwrap()
-                                        .load_savestate(rom, &savestate);
+                                    virtualfriend.lock().unwrap().load_savestate(&savestate);
                                 }
                             }
+                        }
+                        Key::Character("r") => {
+                            rewind_transmitter.update(pressed).unwrap();
                         }
                         _ => {}
                     }

@@ -32,6 +32,8 @@ pub mod vsu;
 pub struct VirtualFriend {
     system: System,
 
+    rom: Vec<u8>,
+
     savestate: SavestateController,
 
     // writer: BufWriter<File>,
@@ -66,10 +68,11 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
 }
 
 impl VirtualFriend {
-    pub fn new(vec: Vec<u8>) -> Self {
+    pub fn new(rom: Vec<u8>) -> Self {
         println!("Loading ROM");
 
-        let system = System::new(vec);
+        // TODO: Ideally we don't maintain two copies of the ROM in RAM for savestate loading
+        let system = System::new(rom.clone());
 
         let savestate = SavestateController::new();
 
@@ -97,6 +100,7 @@ impl VirtualFriend {
 
         Self {
             system,
+            rom,
             savestate,
             // writer,
             video_frame_serviced: false,
@@ -148,6 +152,20 @@ impl VirtualFriend {
         }
     }
 
+    pub fn run_rewind_frame(&mut self) -> Option<VideoFrame> {
+        if let Some(savestate) = self.savestate.rewind_tick() {
+            self.system
+                .replace_from_savestate(savestate.contents(), self.rom.clone());
+
+            return Some(VideoFrame {
+                left: savestate.left_frame,
+                right: savestate.right_frame,
+            });
+        }
+
+        None
+    }
+
     pub fn load_ram(&mut self, ram: Vec<u8>) {
         self.system.bus.cart.load_ram(ram)
     }
@@ -164,13 +182,12 @@ impl VirtualFriend {
         save_to_mem(0, &self.system).expect("Failed to create savestate")
     }
 
-    pub fn load_savestate(&mut self, rom: Vec<u8>, savestate: &[u8]) {
+    pub fn load_savestate(&mut self, savestate: &[u8]) {
         let new_instance = load_from_mem::<System>(savestate, 0).expect("Failed to load savestate");
 
         self.video_frame_serviced = false;
-        self.system.replace_from_savestate(new_instance);
-
-        self.system.bus.cart.populate_rom(rom);
+        self.system
+            .replace_from_savestate(new_instance, self.rom.clone());
     }
 
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {

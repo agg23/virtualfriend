@@ -1,8 +1,4 @@
-use std::{
-    fs::{self},
-    path::Path,
-    slice::from_raw_parts,
-};
+use std::slice::from_raw_parts;
 
 use savefile::{
     Deserialize, Packed, Schema, SchemaPrimitive, Serialize, VecOrStringLayout, WithSchema,
@@ -57,12 +53,6 @@ impl Cartridge {
             ram: ram,
             ram_size: None,
         }
-    }
-
-    pub fn load_from_file(path: &Path) -> Self {
-        let rom_buffer = fs::read(path).expect("Could not find file");
-
-        Cartridge::load_from_vec(rom_buffer)
     }
 
     pub fn populate_rom(&mut self, rom_vec: Vec<u8>) {
