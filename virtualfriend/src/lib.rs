@@ -183,11 +183,9 @@ impl VirtualFriend {
     }
 
     pub fn load_savestate(&mut self, savestate: &[u8]) {
-        let new_instance = load_from_mem::<System>(savestate, 0).expect("Failed to load savestate");
+        let system = self.savestate.load_savestate(savestate);
 
-        self.video_frame_serviced = false;
-        self.system
-            .replace_from_savestate(new_instance, self.rom.clone());
+        self.system.replace_from_savestate(system, self.rom.clone());
     }
 
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {

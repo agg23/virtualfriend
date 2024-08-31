@@ -8,11 +8,13 @@ use virtualfriend::vsu::traits::AudioFrame;
 
 use crate::linear_resampler::LinearResampler;
 
+#[allow(dead_code)]
 pub struct AudioDriver {
     stream: Stream,
 }
 
 impl AudioDriver {
+    #[allow(dead_code)]
     pub fn new<TFunc>(
         sample_rate: u32,
         _desired_latency_ms: u32,
@@ -186,6 +188,7 @@ impl AudioDriver {
         Self { stream }
     }
 
+    #[allow(dead_code)]
     pub fn shutdown(&mut self) {
         self.stream.pause().unwrap();
     }
