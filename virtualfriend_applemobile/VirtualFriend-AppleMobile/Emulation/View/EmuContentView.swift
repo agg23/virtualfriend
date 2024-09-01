@@ -20,6 +20,8 @@ struct EmuContentView: View {
     @State private var preventControlDismiss: Bool = false
     @State private var controlVisibility: Visibility = .hidden
 
+    @State private var showSavestates: Bool = false
+
     let controlsTimerDuration = 3.0
     let verticalBaseImagePadding = 16.0
     let visionOSImagePadding = 8.0
@@ -101,6 +103,12 @@ struct EmuContentView: View {
             }
         }
         #endif
+        .sheet(isPresented: self.$showSavestates, onDismiss: {
+            // Refresh overlay timer
+            self.resetTimer()
+        }, content: {
+            SavestatesView()
+        })
         .onChange(of: self.preventControlDismiss) { _, newValue in
             if newValue {
                 self.clearTimer()
@@ -112,7 +120,7 @@ struct EmuContentView: View {
 
     @ViewBuilder
     var controlsOverlay: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             // Clear does not get drawn on top of the StereoImageView in visionOS for some reason
             Color.white.opacity(0.0001)
                 .allowsHitTesting(false)
@@ -136,6 +144,8 @@ struct EmuContentView: View {
                     }
                 } onRestart: {
                     self.onRestart()
+                } onOpenSavestates: {
+                    self.showSavestates = true;
                 }
 
                 if self.immersiveModel.isImmersed {
@@ -184,6 +194,11 @@ struct EmuContentView: View {
         self.controlVisibilityTimer?.invalidate()
         self.controlVisibilityTimer = Timer.scheduledTimer(withTimeInterval: self.controlsTimerDuration, repeats: false, block: { _ in
             withAnimation {
+                // Don't hide overlay if we're in the savestates sheet
+                guard !self.showSavestates else {
+                    return
+                }
+
                 self.controlVisibility = .hidden
             }
         })
