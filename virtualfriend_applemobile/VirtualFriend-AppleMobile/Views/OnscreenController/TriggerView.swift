@@ -10,11 +10,14 @@ import SwiftUI
 struct TriggerView: View {
     @Environment(\.buttonColor) private var color
     @Environment(\.touchColor) private var touchColor
+    @Environment(\.dimOverlayColor) private var dimColor
 
     let controller: TouchController
 
     let name: String
     let title: String
+
+    let dim: Bool
 
     let onButtonChange: (_ pressed: Bool) -> Void
 
@@ -41,11 +44,16 @@ struct TriggerView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
             }
+            .overlay {
+                if self.dim {
+                    self.dimColor.clipShape(Capsule())
+                }
+            }
     }
 }
 
 #Preview {
-    TriggerView(controller: TouchController(), name: "l", title: "L") { _ in }
+    TriggerView(controller: TouchController(), name: "l", title: "L", dim: false) { _ in }
         .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: 20)
         .environment(\.buttonColor, .red)
 }

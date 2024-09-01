@@ -9,13 +9,14 @@ import SwiftUI
 
 struct EmuControllerView: View {
     let controller: EmuController
+    let dim: Bool
 
     var body: some View {
         ZStack(alignment: .bottom) {
             // Fill screen
             Color.clear
 
-            ControllerView() { direction, pressed in
+            ControllerView(dim: self.dim) { direction, pressed in
                 switch direction {
                 case .up:
                     self.controller.leftDpadUp = pressed
@@ -73,5 +74,5 @@ struct EmuControllerView: View {
 }
 
 #Preview {
-    EmuControllerView(controller: EmuController())
+    EmuControllerView(controller: EmuController(), dim: false)
 }

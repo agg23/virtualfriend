@@ -15,6 +15,10 @@ private struct TouchColorKey: EnvironmentKey {
     static let defaultValue: Color = .white
 }
 
+private struct DimColorKey: EnvironmentKey {
+    static let defaultValue: Color = .white
+}
+
 extension EnvironmentValues {
     var buttonColor: Color {
         get { self[ColorKey.self] }
@@ -24,5 +28,10 @@ extension EnvironmentValues {
     var touchColor: Color {
         get { self[TouchColorKey.self] }
         set { self[TouchColorKey.self] = newValue }
+    }
+
+    var dimOverlayColor: Color {
+        get { self[DimColorKey.self] }
+        set { self[DimColorKey.self] = newValue }
     }
 }

@@ -13,6 +13,8 @@ struct ControllerView: View {
     @State private var leftController: TouchController = TouchController()
     @State private var rightController: TouchController = TouchController()
 
+    let dim: Bool
+
     let leftDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
     let rightDpad: (_ direction: DpadDirection, _ pressed: Bool) -> Void
 
@@ -27,7 +29,7 @@ struct ControllerView: View {
 
     var body: some View {
         HStack {
-            ControllerSideView(controller: self.leftController, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Select", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
+            ControllerSideView(controller: self.leftController, dim: self.dim, triggerName: "l", triggleTitle: "L", triggerOnButtonChange: self.lButton, dpadPrefix: "left", dpadOnButtonChange: self.leftDpad, leftButtonName: "select", leftButtonTitle: "Select", leftButtonOnButtonChange: self.selectButton, rightButtonName: "start", rightButtonTitle: "Start", rightButtonOnButtonChange: self.startButton)
                 .padding([.leading, .top, .bottom], 24)
                 .overlay {
                     TouchGestureView(controller: self.leftController)
@@ -35,7 +37,7 @@ struct ControllerView: View {
 
             Spacer()
 
-            ControllerSideView(controller: self.rightController, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
+            ControllerSideView(controller: self.rightController, dim: self.dim, triggerName: "r", triggleTitle: "R", triggerOnButtonChange: self.rButton, dpadPrefix: "right", dpadOnButtonChange: self.rightDpad, leftButtonName: "b", leftButtonTitle: "B", leftButtonOnButtonChange: self.bButton, rightButtonName: "a", rightButtonTitle: "A", rightButtonOnButtonChange: self.aButton)
                 .padding([.trailing, .top, .bottom], 24)
                 .overlay {
                     TouchGestureView(controller: self.rightController)
@@ -49,6 +51,7 @@ struct ControllerView: View {
         .coordinateSpace(.named(self.leftController.COORDINATE_SPACE_NAME))
         .environment(\.buttonColor, self.ledBackgroundColor.isDark ? .init(white: 0.4, opacity: 0.5) : .init(white: 0.6, opacity: 0.5))
         .environment(\.touchColor, self.ledBackgroundColor.isDark ? .init(white: 0.6, opacity: 0.5) : .init(white: 0.8, opacity: 0.5))
+        .environment(\.dimOverlayColor, self.ledBackgroundColor.isDark ? .init(white: 0.1, opacity: 0.7) : .init(white: 0.9, opacity: 0.7))
     }
 }
 
@@ -78,6 +81,8 @@ private struct ControllerSideView: View {
 
     let controller: TouchController
 
+    let dim: Bool
+
     let triggerName: String
     let triggleTitle: String
     let triggerOnButtonChange: (_ pressed: Bool) -> Void
@@ -95,18 +100,18 @@ private struct ControllerSideView: View {
 
     var body: some View {
         ControllerLayout {
-            TriggerView(controller: self.controller, name: self.triggerName, title: self.triggleTitle, onButtonChange: self.triggerOnButtonChange)
+            TriggerView(controller: self.controller, name: self.triggerName, title: self.triggleTitle, dim: self.dim, onButtonChange: self.triggerOnButtonChange)
 
-                DpadView(controller: self.controller, prefix: self.dpadPrefix, onButtonChange: self.dpadOnButtonChange)
-                    .padding(.vertical, 16)
+            DpadView(controller: self.controller, prefix: self.dpadPrefix, dim: self.dim, onButtonChange: self.dpadOnButtonChange)
+                .padding(.vertical, 16)
 
-                HStack {
-                    FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, onButtonChange: self.leftButtonOnButtonChange)
+            HStack {
+                FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, dim: self.dim, onButtonChange: self.leftButtonOnButtonChange)
 
-                    Spacer()
+                Spacer()
 
-                    FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, onButtonChange: self.rightButtonOnButtonChange)
-                }
+                FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, dim: self.dim, onButtonChange: self.rightButtonOnButtonChange)
+            }
         }
         .background {
             GeometryReader { geometry in
@@ -180,7 +185,7 @@ private struct ControllerLayout: Layout {
 }
 
 #Preview {
-    ControllerView() { _, _ in
+    ControllerView(dim: false) { _, _ in
         
     } rightDpad: { _, _ in
 
