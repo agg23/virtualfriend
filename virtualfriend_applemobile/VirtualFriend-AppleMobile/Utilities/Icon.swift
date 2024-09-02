@@ -15,5 +15,8 @@ struct Icon {
     static let back = "chevron.backward"
 
     static let immersive = "mountain.2.fill"
-    static let savestate = "archivebox"
+
+    static let savestateVision = "tray.full.fill"
+    static let savestateCreate = "tray.and.arrow.down.fill"
+    static let savestateLoad = "tray.and.arrow.up.fill"
 }

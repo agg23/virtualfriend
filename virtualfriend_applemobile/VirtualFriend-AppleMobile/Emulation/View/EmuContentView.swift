@@ -144,6 +144,8 @@ struct EmuContentView: View {
                     }
                 } onRestart: {
                     self.onRestart()
+                } onCreateSavestate: {
+                    // TODO
                 } onOpenSavestates: {
                     self.showSavestates = true;
                 }

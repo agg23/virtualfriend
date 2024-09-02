@@ -18,9 +18,14 @@ struct EmuHeaderOverlayView: View {
     let onBack: () -> Void
     let onImmersive: () -> Void
     let onRestart: () -> Void
+
+    let onCreateSavestate: () -> Void
     let onOpenSavestates: () -> Void
 
     var body: some View {
+        // Line up with buttons in top bar
+        let buttonOutsidePadding = 18.0
+
         VStack {
             self.header
 
@@ -29,11 +34,37 @@ struct EmuHeaderOverlayView: View {
             #if !os(visionOS)
             HStack {
                 Button {
+                    self.onCreateSavestate()
+                } label: {
+                    Label {
+                        Text("Create Savestate")
+                    } icon: {
+                        Image(systemName: Icon.savestateCreate)
+                    }
+                }
+                .help("Create Savestate")
+                .padding(.leading, buttonOutsidePadding)
+
+                Spacer()
+
+                Button {
                     self.onOpenSavestates()
                 } label: {
-                    Text("Savestates")
+                    Label {
+                        Text("Load Savestate")
+                    } icon: {
+                        Image(systemName: Icon.savestateLoad)
+                    }
                 }
+                .help("Load Savestates")
+                .padding(.trailing, buttonOutsidePadding)
             }
+            .symbolRenderingMode(.hierarchical)
+            .labelStyle(.iconOnly)
+            .tint(.white)
+            .symbolVariant(.circle.fill)
+            .font(.title2)
+
             .frame(maxWidth: .infinity)
             .padding(.top, 16.0)
             .padding(.bottom, 8.0)
@@ -93,7 +124,7 @@ struct EmuHeaderOverlayView: View {
             .hidden()
             #endif
 
-            Text("Some super long name will they overlap")
+            Text(self.title)
                 #if os(visionOS)
                 .font(.title)
                 #else
@@ -110,7 +141,7 @@ struct EmuHeaderOverlayView: View {
                 Label {
                     Text("Savestates")
                 } icon: {
-                    Image(systemName: Icon.savestate)
+                    Image(systemName: Icon.savestateVision)
                 }
             }
             .help("Savestates")
