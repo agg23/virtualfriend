@@ -9,14 +9,11 @@ import SwiftUI
 
 struct DpadView: View {
     @Environment(\.buttonColor) private var color
-    @Environment(\.dimOverlayColor) private var dimColor
 
     @State private var size: CGSize = .zero
 
     let controller: TouchController
     let prefix: String?
-
-    let dim: Bool
 
     let onButtonChange: (_ direction: DpadDirection, _ pressed: Bool) -> Void
 
@@ -40,7 +37,7 @@ struct DpadView: View {
                 self.onButtonChange(.upLeft, pressed)
             }
 
-            DpadArm(controller: self.controller, name: up, dim: self.dim, cornerMatches: [upleft, upright]) { pressed in
+            DpadArm(controller: self.controller, name: up, cornerMatches: [upleft, upright]) { pressed in
                 self.onButtonChange(.up, pressed)
             }
 
@@ -49,19 +46,14 @@ struct DpadView: View {
             }
 
             // Row 2
-            DpadArm(controller: self.controller, name: left, dim: self.dim, cornerMatches: [upleft, downleft]) { pressed in
+            DpadArm(controller: self.controller, name: left, cornerMatches: [upleft, downleft]) { pressed in
                 self.onButtonChange(.left, pressed)
             }
 
             Rectangle()
                 .fill(self.color)
-                .overlay {
-                    if self.dim {
-                        self.dimColor
-                    }
-                }
 
-            DpadArm(controller: self.controller, name: right, dim: self.dim, cornerMatches: [upright, downright]) { pressed in
+            DpadArm(controller: self.controller, name: right, cornerMatches: [upright, downright]) { pressed in
                 self.onButtonChange(.right, pressed)
             }
 
@@ -70,7 +62,7 @@ struct DpadView: View {
                 self.onButtonChange(.downLeft, pressed)
             }
 
-            DpadArm(controller: self.controller, name: down, dim: self.dim, cornerMatches: [downleft, downright]) { pressed in
+            DpadArm(controller: self.controller, name: down, cornerMatches: [downleft, downright]) { pressed in
                 self.onButtonChange(.down, pressed)
             }
 
@@ -84,12 +76,9 @@ struct DpadView: View {
 private struct DpadArm: View {
     @Environment(\.buttonColor) private var color
     @Environment(\.touchColor) private var touchColor
-    @Environment(\.dimOverlayColor) private var dimColor
 
     let controller: TouchController
     let name: String
-
-    let dim: Bool
 
     let cornerMatches: [String]
 
@@ -111,11 +100,6 @@ private struct DpadArm: View {
                         .onChange(of: frame, initial: true, { _, newValue in
                             self.controller.register(named: self.name, frame: frame, callback: self.onButtonChange)
                         })
-                }
-            }
-            .overlay {
-                if self.dim {
-                    self.dimColor
                 }
             }
     }
@@ -196,5 +180,5 @@ enum DpadDirection {
 }
 
 #Preview {
-    DpadView(controller: TouchController(), prefix: nil, dim: false) { _, _ in }
+    DpadView(controller: TouchController(), prefix: nil) { _, _ in }
 }

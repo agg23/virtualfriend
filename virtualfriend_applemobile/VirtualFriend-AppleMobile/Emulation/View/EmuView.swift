@@ -102,6 +102,11 @@ struct EmuView: View {
         // TODO: Make Emulator stereoImageChannel updates cause rerenders
         DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
             self.createEmulator(self.fileEntry.entry.url)
+
+            if case .emulator(let emulator) = self.emulator {
+                // Start emulator paused
+                emulator.shutdown()
+            }
         }))
     }
 }

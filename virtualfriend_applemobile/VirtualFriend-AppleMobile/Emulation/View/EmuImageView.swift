@@ -15,9 +15,11 @@ struct EmuImageView: View {
     @Enable3D var enable3D
 
     let emulator: Emulator
+    let autostart: Bool
 
-    init(emulator: Emulator) {
+    init(emulator: Emulator, autostart: Bool = true) {
         self.emulator = emulator
+        self.autostart = autostart
     }
 
     var body: some View {
@@ -34,7 +36,9 @@ struct EmuImageView: View {
             .task {
                 // For some reason when transitioning between immersive mode, the destruction and recreation of EmuImageView will
                 // cause onAppear/onDisappear to run out of order. Use .task to ensure order
-                self.emulator.start()
+                if self.autostart {
+                    self.emulator.start()
+                }
             }
             .onDisappear {
                 self.emulator.shutdown()

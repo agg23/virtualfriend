@@ -24,7 +24,7 @@ struct EmuHeaderOverlayView: View {
 
     var body: some View {
         // Line up with buttons in top bar
-        let buttonOutsidePadding = 18.0
+        let buttonOutsidePadding = 16.0
 
         VStack {
             self.header
@@ -133,6 +133,7 @@ struct EmuHeaderOverlayView: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .foregroundColor(.white)
+                .frame(width: .infinity)
 
             #if os(visionOS)
             Button {

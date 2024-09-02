@@ -64,7 +64,8 @@ struct EmuContentView: View {
                 Group {
                     switch self.emulator {
                     case .emulator(let emulator):
-                        EmuImageView(emulator: emulator)
+                        // Only autostart if we're not in the overlay (i.e. pressed restart)
+                        EmuImageView(emulator: emulator, autostart: self.controlVisibility == .hidden)
                             .padding(.vertical, self.verticalBaseImagePadding)
                     case .error(let message):
                         VStack(alignment: .center) {
@@ -88,10 +89,21 @@ struct EmuContentView: View {
         #if !os(visionOS)
         .overlay {
             if self.controller.notification == .noController {
-                EmuControllerView(controller: self.controller, dim: self.controlVisibility == .visible)
+                EmuControllerView(controller: self.controller)
             }
         }
         #endif
+        .overlay {
+            if self.controlVisibility == .visible {
+                Group {
+                    self.ledBackgroundColor.isDark ? Color(white: 0.1, opacity: 0.7) : Color(white: 0.9, opacity: 0.7)
+                }
+                .ignoresSafeArea()
+                .onTapGesture {
+                    self.toggleVisibility()
+                }
+            }
+        }
         .overlay {
             self.controlsOverlay
         }

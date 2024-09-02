@@ -10,7 +10,6 @@ import SwiftUI
 struct FaceButtonView: View {
     @Environment(\.buttonColor) private var color
     @Environment(\.touchColor) private var touchColor
-    @Environment(\.dimOverlayColor) private var dimColor
 
     @State private var size: CGSize = .zero
 
@@ -18,8 +17,6 @@ struct FaceButtonView: View {
 
     let name: String
     let title: String
-
-    let dim: Bool
 
     let onButtonChange: (_ pressed: Bool) -> Void
 
@@ -49,14 +46,9 @@ struct FaceButtonView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
             }
-            .overlay {
-                if self.dim {
-                    self.dimColor.clipShape(Circle())
-                }
-            }
     }
 }
 
 #Preview {
-    FaceButtonView(controller: TouchController(), name: "start", title: "Start", dim: false) { _ in }
+    FaceButtonView(controller: TouchController(), name: "start", title: "Start") { _ in }
 }
