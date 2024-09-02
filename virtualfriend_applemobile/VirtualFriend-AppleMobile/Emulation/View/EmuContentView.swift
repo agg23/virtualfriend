@@ -17,7 +17,6 @@ struct EmuContentView: View {
     @Enable3D private var enable3D
 
     @State private var controlVisibilityTimer: Timer?
-    @State private var preventControlDismiss: Bool = false
     @State private var controlVisibility: Visibility = .hidden
 
     @State private var showSavestates: Bool = false
@@ -65,7 +64,7 @@ struct EmuContentView: View {
                 Group {
                     switch self.emulator {
                     case .emulator(let emulator):
-                        EmuImageView(emulator: emulator, controlVisibility: self.$controlVisibility, preventControlDismiss: self.$preventControlDismiss)
+                        EmuImageView(emulator: emulator)
                             .padding(.vertical, self.verticalBaseImagePadding)
                     case .error(let message):
                         VStack(alignment: .center) {
@@ -105,17 +104,10 @@ struct EmuContentView: View {
         #endif
         .sheet(isPresented: self.$showSavestates, onDismiss: {
             // Refresh overlay timer
-            self.resetTimer()
+//            self.resetTimer()
         }, content: {
             SavestatesView()
         })
-        .onChange(of: self.preventControlDismiss) { _, newValue in
-            if newValue {
-                self.clearTimer()
-            } else {
-                self.resetTimer()
-            }
-        }
     }
 
     @ViewBuilder
@@ -127,7 +119,7 @@ struct EmuContentView: View {
 
             if self.controlVisibility == .visible {
                 let overlay = EmuHeaderOverlayView(title: self.title, isImmersed: self.immersiveModel.isImmersed) {
-                    self.resetTimer()
+//                    self.resetTimer()
                 } onBack: {
                     self.router.currentRoute = .main
 
@@ -192,30 +184,13 @@ struct EmuContentView: View {
     }
     #endif
 
-    func resetTimer() {
-        self.controlVisibilityTimer?.invalidate()
-        self.controlVisibilityTimer = Timer.scheduledTimer(withTimeInterval: self.controlsTimerDuration, repeats: false, block: { _ in
-            withAnimation {
-                // Don't hide overlay if we're in the savestates sheet
-                guard !self.showSavestates else {
-                    return
-                }
-
-                self.controlVisibility = .hidden
-            }
-        })
-    }
-
-    func clearTimer() {
-        self.controlVisibilityTimer?.invalidate()
-        self.controlVisibilityTimer = nil
-    }
-
     func toggleVisibility() {
-        if self.controlVisibility == .visible {
-            self.clearTimer()
-        } else {
-            self.resetTimer()
+        if case .emulator(let emulator) = self.emulator {
+            if self.controlVisibility == .visible {
+                emulator.start()
+            } else {
+                emulator.shutdown()
+            }
         }
 
         withAnimation {

@@ -15,13 +15,9 @@ struct EmuImageView: View {
     @Enable3D var enable3D
 
     let emulator: Emulator
-    @Binding var controlVisibility: Visibility
-    @Binding var preventControlDismiss: Bool
 
-    init(emulator: Emulator, controlVisibility: Binding<Visibility>, preventControlDismiss: Binding<Bool>) {
+    init(emulator: Emulator) {
         self.emulator = emulator
-        self._controlVisibility = controlVisibility
-        self._preventControlDismiss = preventControlDismiss
     }
 
     var body: some View {
