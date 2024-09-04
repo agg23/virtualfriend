@@ -1,9 +1,12 @@
 use std::sync::Mutex;
 
-use ffi::{FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata, FFIVideoFrame};
+use ffi::{
+    FFIFrame, FFIGamepadInputs, FFIManifest, FFIMetadata, FFIUnparsedSavestate, FFIVideoFrame,
+};
 use virtualfriend::{
     gamepad::GamepadInputs,
     manifest::{Manifest, Metadata},
+    savestates::savestate::UnparsedSavestate,
     Frame,
 };
 
@@ -63,6 +66,16 @@ mod ffi {
         metadata: Option<FFIMetadata>,
     }
 
+    #[swift_bridge(swift_repr = "struct")]
+    struct FFIUnparsedSavestate {
+        left_frame: Vec<u8>,
+        right_frame: Vec<u8>,
+
+        timestamp_s: u64,
+
+        contents: Vec<u8>,
+    }
+
     extern "Rust" {
         type VirtualFriend;
 
@@ -72,11 +85,16 @@ mod ffi {
         fn load_ram(&mut self, ram: &[u8]);
         fn save_ram(&self) -> Vec<u8>;
 
+        fn apply_savestate(&mut self, savestate: FFIUnparsedSavestate);
+        fn create_savestate(&self) -> FFIUnparsedSavestate;
+
         fn run_audio_frame(&mut self, inputs: FFIGamepadInputs, buffer_size: usize) -> FFIFrame;
     }
 
     extern "Rust" {
         fn load_manifest(manifest_path: String) -> Option<FFIManifest>;
+
+        fn load_savestate(savestate_path: String) -> Option<FFIUnparsedSavestate>;
     }
 }
 
@@ -99,6 +117,14 @@ impl VirtualFriend {
         self.core.try_lock().expect("Could not acquire mutex lock for save_ram. Emulator host is misconfigured; is it running on multiple threads?").dump_ram()
     }
 
+    fn apply_savestate(&mut self, savestate: FFIUnparsedSavestate) {
+        self.core.try_lock().expect("Could not acquire mutex lock for apply_savestate. Emulator host is misconfigured; is it running on multiple threads?").load_savestate(&savestate.into());
+    }
+
+    fn create_savestate(&self) -> FFIUnparsedSavestate {
+        self.core.try_lock().expect("Could not acquire mutex lock for create_savestate. Emulator host is misconfigured; is it running on multiple threads?").create_savestate().into()
+    }
+
     fn run_audio_frame(&mut self, inputs: FFIGamepadInputs, buffer_size: usize) -> FFIFrame {
         self.core.try_lock().expect("Could not acquire mutex lock for run_audio_frame. Emulator host is misconfigured; is it running on multiple threads?").run_audio_frame(inputs.into(), buffer_size).into()
     }
@@ -106,6 +132,10 @@ impl VirtualFriend {
 
 fn load_manifest(manifest_path: String) -> Option<FFIManifest> {
     Manifest::load(manifest_path).and_then(|m| Some(m.into()))
+}
+
+fn load_savestate(savestate_path: String) -> Option<FFIUnparsedSavestate> {
+    UnparsedSavestate::load_from_path(savestate_path).map(|s| s.into())
 }
 
 impl FFIFrame {}
@@ -202,6 +232,44 @@ impl From<Metadata> for FFIMetadata {
             publisher,
             year,
             region,
+        }
+    }
+}
+
+impl FFIUnparsedSavestate {}
+
+impl From<UnparsedSavestate> for FFIUnparsedSavestate {
+    fn from(value: UnparsedSavestate) -> Self {
+        let UnparsedSavestate {
+            left_frame,
+            right_frame,
+            timestamp_s,
+            contents,
+        } = value;
+
+        Self {
+            left_frame,
+            right_frame,
+            timestamp_s,
+            contents,
+        }
+    }
+}
+
+impl From<FFIUnparsedSavestate> for UnparsedSavestate {
+    fn from(value: FFIUnparsedSavestate) -> Self {
+        let FFIUnparsedSavestate {
+            left_frame,
+            right_frame,
+            timestamp_s,
+            contents,
+        } = value;
+
+        Self {
+            left_frame,
+            right_frame,
+            timestamp_s,
+            contents,
         }
     }
 }

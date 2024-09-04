@@ -1,11 +1,9 @@
 extern crate savefile;
 
-use savefile::prelude::*;
-
 #[macro_use]
 extern crate savefile_derive;
 
-use savestates::SavestateController;
+use savestates::{savestate::UnparsedSavestate, SavestateController};
 use system::System;
 use vsu::traits::{AudioFrame, Sink};
 
@@ -22,7 +20,7 @@ mod interrupt;
 #[macro_use]
 mod log;
 pub mod manifest;
-mod savestates;
+pub mod savestates;
 mod system;
 mod timer;
 mod util;
@@ -178,14 +176,21 @@ impl VirtualFriend {
         ram
     }
 
-    pub fn create_savestate(&mut self) -> Vec<u8> {
-        save_to_mem(0, &self.system).expect("Failed to create savestate")
+    pub fn create_savestate(&mut self) -> UnparsedSavestate {
+        UnparsedSavestate::build(&self.system)
     }
 
-    pub fn load_savestate(&mut self, savestate: &[u8]) {
-        let system = self.savestate.load_savestate(savestate);
+    pub fn load_savestate(&mut self, savestate: &UnparsedSavestate) {
+        let system = self.savestate.load_savestate_to_system(savestate);
 
         self.system.replace_from_savestate(system, self.rom.clone());
+    }
+
+    // TODO: This should be failable
+    pub fn load_savestate_from_bytes(&mut self, bytes: &[u8]) {
+        let savestate = UnparsedSavestate::load(bytes).expect("Could not load savestate");
+
+        self.load_savestate(&savestate);
     }
 
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {

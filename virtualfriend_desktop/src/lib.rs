@@ -399,7 +399,7 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
                                 println!("Pressing s");
                                 let savestate = virtualfriend.lock().unwrap().create_savestate();
                                 if let Some(savestate_path) = savestate_path {
-                                    fs::write(savestate_path, savestate).unwrap();
+                                    fs::write(savestate_path, savestate.data()).unwrap();
                                 }
                             }
                         }
@@ -409,7 +409,10 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
                                 if let Some(savestate_path) = savestate_path {
                                     let savestate = fs::read(savestate_path).unwrap();
 
-                                    virtualfriend.lock().unwrap().load_savestate(&savestate);
+                                    virtualfriend
+                                        .lock()
+                                        .unwrap()
+                                        .load_savestate_from_bytes(&savestate);
                                 }
                             }
                         }
