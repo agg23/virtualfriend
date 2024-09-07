@@ -28,6 +28,7 @@ struct EmuContentView: View {
     let emulator: EmulatorStatus
     let controller: EmuController
     let title: String
+    let fileName: String
 
     let onRestart: () -> Void
 
@@ -118,7 +119,7 @@ struct EmuContentView: View {
             // Refresh overlay timer
 //            self.resetTimer()
         }, content: {
-            SavestatesView()
+            SavestatesView(fileName: self.fileName)
         })
     }
 
@@ -149,7 +150,9 @@ struct EmuContentView: View {
                 } onRestart: {
                     self.onRestart()
                 } onCreateSavestate: {
-                    // TODO
+                    if case .emulator(let emulator) = self.emulator {
+                        emulator.createSavestate()
+                    }
                 } onOpenSavestates: {
                     self.showSavestates = true;
                 }
@@ -212,7 +215,7 @@ struct EmuContentView: View {
 }
 
 #Preview {
-    EmuContentView(emulator: .none, controller: EmuController(), title: "Test Title", onRestart: {
+    EmuContentView(emulator: .none, controller: EmuController(), title: "Test Title", fileName: "Test.vb", onRestart: {
 
     })
     .environment(MainRouter())

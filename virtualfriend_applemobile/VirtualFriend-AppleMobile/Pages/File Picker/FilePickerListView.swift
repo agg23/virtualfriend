@@ -87,7 +87,7 @@ struct FilePickerListView: View {
 
             if let selectedFile = self.selectedFile {
                 VStack {
-                    StereoManifestImageView(entry: selectedFile)
+                    StereoManifestFileEntryImageView(entry: selectedFile)
 
                     Text(selectedFile.title)
                         .font(.largeTitle)

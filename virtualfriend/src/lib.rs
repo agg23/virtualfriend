@@ -188,7 +188,7 @@ impl VirtualFriend {
 
     // TODO: This should be failable
     pub fn load_savestate_from_bytes(&mut self, bytes: &[u8]) {
-        let savestate = UnparsedSavestate::load(bytes).expect("Could not load savestate");
+        let savestate = UnparsedSavestate::load(bytes);
 
         self.load_savestate(&savestate);
     }

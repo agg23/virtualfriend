@@ -95,6 +95,8 @@ mod ffi {
         fn load_manifest(manifest_path: String) -> Option<FFIManifest>;
 
         fn load_savestate(savestate_path: String) -> Option<FFIUnparsedSavestate>;
+
+        fn unparsed_savestate_data(savestate: FFIUnparsedSavestate) -> Vec<u8>;
     }
 }
 
@@ -236,8 +238,6 @@ impl From<Metadata> for FFIMetadata {
     }
 }
 
-impl FFIUnparsedSavestate {}
-
 impl From<UnparsedSavestate> for FFIUnparsedSavestate {
     fn from(value: UnparsedSavestate) -> Self {
         let UnparsedSavestate {
@@ -272,4 +272,10 @@ impl From<FFIUnparsedSavestate> for UnparsedSavestate {
             contents,
         }
     }
+}
+
+// TODO: I don't know how to make this a struct member, so for the sake of time it's just a standalone function
+fn unparsed_savestate_data(savestate: FFIUnparsedSavestate) -> Vec<u8> {
+    let savestate: UnparsedSavestate = savestate.into();
+    savestate.data()
 }

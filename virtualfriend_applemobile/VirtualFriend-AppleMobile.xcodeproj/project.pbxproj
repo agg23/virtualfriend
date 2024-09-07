@@ -24,6 +24,8 @@
 		664E4E822C6A816200ACD5D8 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664E4E812C6A816200ACD5D8 /* Task.swift */; };
 		664E4E842C6ABAB100ACD5D8 /* ImmersiveModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664E4E832C6ABAB100ACD5D8 /* ImmersiveModel.swift */; };
 		664E4E8F2C84B57300ACD5D8 /* SavestatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664E4E8E2C84B57300ACD5D8 /* SavestatesView.swift */; };
+		664E4E932C8CA46300ACD5D8 /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664E4E922C8CA46300ACD5D8 /* Date.swift */; };
+		664E4E962C8CABDC00ACD5D8 /* SavestateRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664E4E952C8CABDC00ACD5D8 /* SavestateRowView.swift */; };
 		665022C22C0CDF470012E9D4 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 665022C12C0CDF470012E9D4 /* AsyncAlgorithms */; };
 		665489152BDDC9F000C2BD96 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489142BDDC9F000C2BD96 /* MainWindowView.swift */; };
 		665489182BDDCA3B00C2BD96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665489172BDDCA3B00C2BD96 /* SettingsView.swift */; };
@@ -104,6 +106,8 @@
 		664E4E812C6A816200ACD5D8 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		664E4E832C6ABAB100ACD5D8 /* ImmersiveModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveModel.swift; sourceTree = "<group>"; };
 		664E4E8E2C84B57300ACD5D8 /* SavestatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavestatesView.swift; sourceTree = "<group>"; };
+		664E4E922C8CA46300ACD5D8 /* Date.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date.swift; sourceTree = "<group>"; };
+		664E4E952C8CABDC00ACD5D8 /* SavestateRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavestateRowView.swift; sourceTree = "<group>"; };
 		665489142BDDC9F000C2BD96 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		665489172BDDCA3B00C2BD96 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		665489192BDDCAE000C2BD96 /* CustomFileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileImporter.swift; sourceTree = "<group>"; };
@@ -284,6 +288,15 @@
 			name = ViewModifier;
 			sourceTree = "<group>";
 		};
+		664E4E942C8CABCD00ACD5D8 /* Savestates */ = {
+			isa = PBXGroup;
+			children = (
+				664E4E8E2C84B57300ACD5D8 /* SavestatesView.swift */,
+				664E4E952C8CABDC00ACD5D8 /* SavestateRowView.swift */,
+			);
+			path = Savestates;
+			sourceTree = "<group>";
+		};
 		665489132BDDC9D400C2BD96 /* Windows */ = {
 			isa = PBXGroup;
 			children = (
@@ -426,6 +439,7 @@
 		66C60F2B2B66BA6A00C1FDF4 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				664E4E922C8CA46300ACD5D8 /* Date.swift */,
 				66635BA22B66D1F6004FD096 /* Files.swift */,
 				66C60F2C2B66BA7F00C1FDF4 /* Hash.swift */,
 				66C4BC2F2BCCC05500AA8732 /* Icon.swift */,
@@ -438,8 +452,8 @@
 			isa = PBXGroup;
 			children = (
 				66E147182C385D1F00CB3BE7 /* OnscreenController */,
+				664E4E942C8CABCD00ACD5D8 /* Savestates */,
 				664E4E7E2C6A80BE00ACD5D8 /* ViewModifier */,
-				664E4E8E2C84B57300ACD5D8 /* SavestatesView.swift */,
 				662247DE2C4A0B36004E6BF1 /* TipsView.swift */,
 				66E147122C37950A00CB3BE7 /* Toast.swift */,
 			);
@@ -599,6 +613,7 @@
 				660955622B62202700A47B1B /* StereoImage.swift in Sources */,
 				66A061312BE67F5F0043D170 /* Color.swift in Sources */,
 				66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */,
+				664E4E932C8CA46300ACD5D8 /* Date.swift in Sources */,
 				66A061372BE7D5680043D170 /* FileImporter.swift in Sources */,
 				66C60F0E2B6595CE00C1FDF4 /* Utilities.swift in Sources */,
 				66CDBF392C3B05F600A97097 /* EmuControllerView.swift in Sources */,
@@ -634,6 +649,7 @@
 				6697298D2BDD56770013BCE2 /* FileEntry.swift in Sources */,
 				664E4E8F2C84B57300ACD5D8 /* SavestatesView.swift in Sources */,
 				6697F38F2C0EAE9E00229BDD /* StereoImageVisionView.swift in Sources */,
+				664E4E962C8CABDC00ACD5D8 /* SavestateRowView.swift in Sources */,
 				66E147152C3833FE00CB3BE7 /* EmuNotification.swift in Sources */,
 				664E4E802C6A80D000ACD5D8 /* Lifecycle.swift in Sources */,
 				66E43B152C305B9900B8C04E /* Emulator.swift in Sources */,

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct StereoManifestImageView: View {
+struct StereoManifestImageView<T: Equatable>: View {
     @LEDBackgroundColor var ledBackgroundColor;
     @LEDColor var ledColor
     @Enable3D var enable3D
@@ -15,6 +15,44 @@ struct StereoManifestImageView: View {
     @State var stereoStreamChannel = AsyncImageChannel()
     @State var task: Task<(), Error>?
 
+    let data: T
+    let generateImage: (T, VBColor) -> StereoImage
+    let onTap: (() -> Void)?
+    let integerScaling: Bool?
+
+    init(data: T, generateImage: @escaping (T, VBColor) -> StereoImage, onTap: (() -> Void)? = nil, integerScaling: Bool? = true) {
+        self.data = data
+        self.generateImage = generateImage
+        self.onTap = onTap
+        self.integerScaling = integerScaling
+    }
+
+    var body: some View {
+        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap, integerScaling: self.integerScaling, force2D: !self.enable3D)
+            .onDisappear {
+                self.task?.cancel()
+            }
+            .onChange(of: self.data, initial: true) { _, _ in
+                self.generateImageTask()
+            }
+            .onChange(of: self.ledColor) { _, _ in
+                self.generateImageTask()
+            }
+    }
+
+    func generateImageTask() {
+        self.task?.cancel()
+
+        self.task = Task {
+            //let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), color: self.ledColor)
+            let stereoImage = self.generateImage(self.data, self.ledColor)
+
+            await self.stereoStreamChannel.channel.send(stereoImage)
+        }
+    }
+}
+
+struct StereoManifestFileEntryImageView: View {
     let entry: FileEntryWithManifest
     let onTap: (() -> Void)?
     let integerScaling: Bool?
@@ -26,29 +64,12 @@ struct StereoManifestImageView: View {
     }
 
     var body: some View {
-        StereoImageView(width: 384, height: 224, scale: 0.1, stereoImageChannel: self.stereoStreamChannel, backgroundColor: self.$ledBackgroundColor, onTap: self.onTap, integerScaling: self.integerScaling, force2D: !self.enable3D)
-            .onDisappear {
-                self.task?.cancel()
-            }
-            .onChange(of: self.entry, initial: true) { _, _ in
-                self.generateImage()
-            }
-            .onChange(of: self.ledColor) { _, _ in
-                self.generateImage()
-            }
-    }
-
-    func generateImage() {
-        self.task?.cancel()
-
-        self.task = Task {
-            let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), color: self.ledColor)
-
-            await self.stereoStreamChannel.channel.send(stereoImage)
-        }
+        StereoManifestImageView(data: self.entry, generateImage: { data, ledColor in
+            FileEntry.image(from: data.manifest ?? FileEntry.getUnknownManifest(), color: ledColor)
+        }, onTap: self.onTap, integerScaling: self.integerScaling)
     }
 }
 
 #Preview {
-    StereoManifestImageView(entry: MOCK_FILE_ENTRY_WITH_MANIFEST())
+    StereoManifestFileEntryImageView(entry: MOCK_FILE_ENTRY_WITH_MANIFEST())
 }

@@ -30,7 +30,7 @@ struct EmuView: View {
     let fileEntry: FileEntryWithManifest
 
     var body: some View {
-        let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, onRestart: self.restart)
+        let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, fileName: self.fileEntry.entry.url.lastPathComponent, onRestart: self.restart)
 
         Group {
             #if os(visionOS)

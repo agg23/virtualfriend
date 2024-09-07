@@ -17,7 +17,7 @@ pub struct UnparsedSavestate {
 }
 
 impl UnparsedSavestate {
-    pub fn load(bytes: &[u8]) -> Option<Self> {
+    pub fn load(bytes: &[u8]) -> Self {
         let mut left_frame = vec![0; 384 * 224];
         let mut right_frame = vec![0; 384 * 224];
         let mut contents: Vec<u8> = vec![];
@@ -33,18 +33,18 @@ impl UnparsedSavestate {
 
         contents.extend(&bytes[2 * 384 * 224 + 8..]);
 
-        Some(UnparsedSavestate {
+        UnparsedSavestate {
             left_frame,
             right_frame,
             timestamp_s,
             contents,
-        })
+        }
     }
 
     pub fn load_from_path(path: String) -> Option<Self> {
-        let vec = read(path).ok()?;
+        let vec = read(path).ok().expect("Failed to load from path");
 
-        UnparsedSavestate::load(&vec)
+        Some(UnparsedSavestate::load(&vec))
     }
 
     pub(crate) fn build(contents: &System) -> Self {

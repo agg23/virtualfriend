@@ -36,7 +36,7 @@ struct FilePickerGridItemView: View {
         let videoAspectRatio = 384.0/224.0
         #endif
 
-        let videoView = StereoManifestImageView(entry: self.entry, onTap: {
+        let videoView = StereoManifestFileEntryImageView(entry: self.entry, onTap: {
             self.router.currentRoute = .emulator(entry: self.entry)
         }, integerScaling: false)
 
