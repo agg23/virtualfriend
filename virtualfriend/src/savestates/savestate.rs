@@ -18,8 +18,8 @@ pub struct UnparsedSavestate {
 
 impl UnparsedSavestate {
     pub fn load(bytes: &[u8]) -> Self {
-        let mut left_frame = vec![0; 384 * 224];
-        let mut right_frame = vec![0; 384 * 224];
+        let mut left_frame = vec![];
+        let mut right_frame = vec![];
         let mut contents: Vec<u8> = vec![];
 
         left_frame.extend(&bytes[0..384 * 224]);

@@ -44,7 +44,6 @@ struct StereoManifestImageView<T: Equatable>: View {
         self.task?.cancel()
 
         self.task = Task {
-            //let stereoImage = FileEntry.image(from: self.entry.manifest ?? FileEntry.getUnknownManifest(), color: self.ledColor)
             let stereoImage = self.generateImage(self.data, self.ledColor)
 
             await self.stereoStreamChannel.channel.send(stereoImage)

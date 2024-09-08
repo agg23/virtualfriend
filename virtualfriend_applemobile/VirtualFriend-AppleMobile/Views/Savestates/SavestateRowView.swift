@@ -34,7 +34,7 @@ struct SavestateRowView: View {
                 if let unparsedSavestate = self.unparsedSavestate {
                     StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
                         FileEntry.image(from: savestate.savestate, color: ledColor)
-                    }, onTap: self.tap)
+                    }, onTap: self.tap, integerScaling: false)
                     // TODO: Change for visionOS
                     .frame(height: 50)
                 } else {

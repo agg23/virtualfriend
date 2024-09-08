@@ -149,6 +149,14 @@ class Emulator {
     }
 
     func apply(savestate: FFIUnparsedSavestate) {
+        // Create image synchronously so we don't have threading issues with the Rust objects
+        let image = FileEntry.image(from: savestate, color: self.color)
+
+        Task {
+            // Update display to the image in the savestate
+            await self.stereoImageChannel.channel.send(image)
+        }
+
         self.virtualFriend.apply_savestate(savestate)
     }
 
