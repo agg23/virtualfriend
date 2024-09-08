@@ -119,7 +119,9 @@ struct EmuContentView: View {
             // Refresh overlay timer
 //            self.resetTimer()
         }, content: {
-            SavestatesView(fileName: self.fileName)
+            if case .emulator(let emulator) = self.emulator {
+                SavestatesView(fileName: self.fileName, emulator: emulator)
+            }
         })
     }
 

@@ -14,10 +14,12 @@ struct SavestatesView: View {
     @State private var sortedDates: [Date] = []
 
     let fileName: String
+    let emulator: Emulator
     let dateFormatter: DateFormatter
 
-    init(fileName: String) {
+    init(fileName: String, emulator: Emulator) {
         self.fileName = fileName
+        self.emulator = emulator
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .full
@@ -34,7 +36,11 @@ struct SavestatesView: View {
 
                     Section(dateFormatter.string(from: date)) {
                         ForEach(daySavestates, id: \.url) { savestate in
-                            SavestateRowView(datedUrl: savestate)
+                            SavestateRowView(datedUrl: savestate) { unparsedSavestate in
+                                self.dismiss()
+
+                                self.emulator.apply(savestate: unparsedSavestate)
+                            }
                         }
                     }
                 }
@@ -42,7 +48,7 @@ struct SavestatesView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", role: .cancel) {
-                        dismiss()
+                        self.dismiss()
                     }
                 }
             }
@@ -100,8 +106,4 @@ extension Array where Element == DatedSavestateUrl {
 
         return dictionary
     }
-}
-
-#Preview {
-    SavestatesView(fileName: "foo")
 }

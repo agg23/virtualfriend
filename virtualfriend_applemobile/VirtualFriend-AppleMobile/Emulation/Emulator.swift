@@ -148,6 +148,10 @@ class Emulator {
         }
     }
 
+    func apply(savestate: FFIUnparsedSavestate) {
+        self.virtualFriend.apply_savestate(savestate)
+    }
+
     private func startThread() {
         print("Starting emulation")
 

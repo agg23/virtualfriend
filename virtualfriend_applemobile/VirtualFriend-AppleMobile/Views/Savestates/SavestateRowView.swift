@@ -8,23 +8,31 @@
 import SwiftUI
 
 struct SavestateRowView: View {
+    @Environment(\.colorScheme) var colorScheme: ColorScheme
+
     @State private var unparsedSavestate: UnparsedSavestateWithUrl? = nil
 
     let datedUrl: DatedSavestateUrl
+    let onTap: (FFIUnparsedSavestate) -> Void
 
     var body: some View {
-        HStack {
-            if let unparsedSavestate = self.unparsedSavestate {
-                StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
-                    FileEntry.image(from: savestate.savestate, color: ledColor)
-                })
-            } else {
-                // TODO: Proper placeholder
-                Color.clear
-            }
+        Button {
+            self.tap()
+        } label: {
+            HStack {
+                if let unparsedSavestate = self.unparsedSavestate {
+                    StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
+                        FileEntry.image(from: savestate.savestate, color: ledColor)
+                    }, onTap: self.tap)
+                } else {
+                    // TODO: Proper placeholder
+                    Color.clear
+                }
 
-            Text(datedUrl.date.ISO8601Format())
+                Text(datedUrl.date.ISO8601Format())
+            }
         }
+        .tint(self.colorScheme == .light ? .black : .white)
         .onAppear {
             self.loadPreview()
         }
@@ -36,6 +44,12 @@ struct SavestateRowView: View {
         }
 
         self.unparsedSavestate = UnparsedSavestateWithUrl(savestate: savestate, url: self.datedUrl.url)
+    }
+
+    func tap() {
+        if let savestate = self.unparsedSavestate?.savestate {
+            self.onTap(savestate)
+        }
     }
 }
 
