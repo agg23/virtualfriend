@@ -8,12 +8,23 @@
 import SwiftUI
 
 struct SavestateRowView: View {
-    @Environment(\.colorScheme) var colorScheme: ColorScheme
+    @Environment(\.colorScheme) private var colorScheme: ColorScheme
 
     @State private var unparsedSavestate: UnparsedSavestateWithUrl? = nil
 
     let datedUrl: DatedSavestateUrl
     let onTap: (FFIUnparsedSavestate) -> Void
+    let timeFormatter: DateFormatter
+
+    init(datedUrl: DatedSavestateUrl, onTap: @escaping (FFIUnparsedSavestate) -> Void) {
+        self.datedUrl = datedUrl
+        self.onTap = onTap
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateStyle = .none
+        timeFormatter.timeStyle = .medium
+        self.timeFormatter = timeFormatter
+    }
 
     var body: some View {
         Button {
@@ -24,12 +35,14 @@ struct SavestateRowView: View {
                     StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
                         FileEntry.image(from: savestate.savestate, color: ledColor)
                     }, onTap: self.tap)
+                    // TODO: Change for visionOS
+                    .frame(height: 50)
                 } else {
                     // TODO: Proper placeholder
                     Color.clear
                 }
 
-                Text(datedUrl.date.ISO8601Format())
+                Text(timeFormatter.string(from: self.datedUrl.date))
             }
         }
         .tint(self.colorScheme == .light ? .black : .white)

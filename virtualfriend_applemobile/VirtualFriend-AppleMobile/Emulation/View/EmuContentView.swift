@@ -210,7 +210,7 @@ struct EmuContentView: View {
             }
         }
 
-        withAnimation {
+        withAnimation(.linear(duration: 0.2)) {
             self.controlVisibility = self.controlVisibility != .visible ? .visible : .hidden
         }
     }
