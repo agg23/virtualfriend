@@ -133,7 +133,8 @@ struct EmuHeaderOverlayView: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .foregroundColor(.white)
-                .frame(width: .infinity)
+                // Let text expand to fill full width of view
+                .frame(maxWidth: .infinity)
 
             #if os(visionOS)
             Button {
@@ -182,7 +183,6 @@ struct EmuHeaderOverlayView: View {
         #endif
         .padding(.bottom, bottomPadding)
         .padding(.top, buttonPadding)
-        .frame(maxWidth: .infinity)
         #if os(visionOS)
         // Vision looks bad with the (white) .secondary, so we use the same color as our details view
         .background(Color.black.opacity(0.4))

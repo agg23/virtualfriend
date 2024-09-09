@@ -93,7 +93,6 @@ struct EmuContentView: View {
                 EmuControllerView(controller: self.controller)
             }
         }
-        #endif
         .overlay {
             if self.controlVisibility == .visible {
                 Group {
@@ -105,6 +104,7 @@ struct EmuContentView: View {
                 }
             }
         }
+        #endif
         .overlay {
             self.controlsOverlay
         }
@@ -191,9 +191,7 @@ struct EmuContentView: View {
             }, maximumValueLabel: {
                 // More 3D
                 Text("4")
-            }) { editing in
-                self.preventControlDismiss = editing
-            }
+            })
         }
         .padding(24)
         .frame(width: 600)
@@ -221,4 +219,5 @@ struct EmuContentView: View {
 
     })
     .environment(MainRouter())
+    .environment(ImmersiveModel())
 }

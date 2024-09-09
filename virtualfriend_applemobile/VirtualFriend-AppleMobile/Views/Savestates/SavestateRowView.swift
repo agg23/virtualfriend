@@ -42,7 +42,7 @@ struct SavestateRowView: View {
                     Color.clear
                 }
 
-                Text(timeFormatter.string(from: self.datedUrl.date))
+                Text(self.timeFormatter.string(from: self.datedUrl.date))
             }
         }
         .tint(self.colorScheme == .light ? .black : .white)

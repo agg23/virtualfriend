@@ -63,7 +63,6 @@ impl Bus {
 
         // 4: Highest priority
         if self.vip.step(cycles_to_run) {
-            println!("VIP interrupt");
             request = Some(InterruptRequest::VIP);
         }
 
