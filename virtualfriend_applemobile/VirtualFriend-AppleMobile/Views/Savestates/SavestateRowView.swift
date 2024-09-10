@@ -31,16 +31,18 @@ struct SavestateRowView: View {
             self.tap()
         } label: {
             HStack {
-                if let unparsedSavestate = self.unparsedSavestate {
-                    StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
-                        FileEntry.image(from: savestate.savestate, color: ledColor)
-                    }, onTap: self.tap, integerScaling: false)
-                    // TODO: Change for visionOS
-                    .frame(height: 50)
-                } else {
-                    // TODO: Proper placeholder
-                    Color.clear
+                Group {
+                    if let unparsedSavestate = self.unparsedSavestate {
+                        StereoManifestImageView(data: unparsedSavestate, generateImage: { savestate, ledColor in
+                            FileEntry.image(from: savestate.savestate, color: ledColor)
+                        }, onTap: self.tap, integerScaling: false)
+                    } else {
+                        // This will probably never render, as file load should be instant
+                        Color.clear
+                            .aspectRatio(384.0/224.0, contentMode: .fit)
+                    }
                 }
+                .frame(height: 50)
 
                 Text(self.timeFormatter.string(from: self.datedUrl.date))
             }

@@ -42,17 +42,7 @@ struct SavestatesView: View {
                 } else {
                     List {
                         ForEach(self.sortedDates, id: \.self) { date in
-                            let daySavestates = self.savestates[date]!
-
-                            Section(dateFormatter.string(from: date)) {
-                                ForEach(daySavestates, id: \.url) { savestate in
-                                    SavestateRowView(datedUrl: savestate) { unparsedSavestate in
-                                        self.dismiss()
-
-                                        self.emulator.apply(savestate: unparsedSavestate)
-                                    }
-                                }
-                            }
+                            self.section(date)
                         }
                     }
                 }
@@ -60,14 +50,44 @@ struct SavestatesView: View {
             .navigationTitle("Savestates")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
+                    #if os(visionOS)
+                    VisionCloseButtonView {
+                        self.dismiss()
+                    }
+                    #else
                     Button("Cancel", role: .cancel) {
                         self.dismiss()
                     }
+                    #endif
                 }
             }
         }
         .onAppear {
             self.scanSavestates()
+        }
+    }
+
+    @ViewBuilder
+    private func section(_ date: Date) -> some View {
+        let daySavestates = self.savestates[date]!
+
+        Section(dateFormatter.string(from: date)) {
+            ForEach(daySavestates, id: \.url) { savestate in
+                SavestateRowView(datedUrl: savestate) { unparsedSavestate in
+                    self.dismiss()
+
+                    self.emulator.apply(savestate: unparsedSavestate)
+                }
+            }
+            .onDelete(perform: { indexSet in
+                for savestate in indexSet.map({ daySavestates[$0] }) {
+                    do {
+                        try FileManager.default.removeItem(at: savestate.url)
+                    } catch {
+                        print("Failed to delete at \(savestate.url)")
+                    }
+                }
+            })
         }
     }
 

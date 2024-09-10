@@ -65,6 +65,7 @@
 		66C60F0E2B6595CE00C1FDF4 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */; };
 		66C60F102B6596DE00C1FDF4 /* FilePickerGridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F0F2B6596DE00C1FDF4 /* FilePickerGridItemView.swift */; };
 		66C60F2D2B66BA7F00C1FDF4 /* Hash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C60F2C2B66BA7F00C1FDF4 /* Hash.swift */; };
+		66C866D02C8FE54600FE8403 /* VisionCloseButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C866CF2C8FE54600FE8403 /* VisionCloseButtonView.swift */; };
 		66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B12BC755F500BE5C0F /* StereoImageView.swift */; };
 		66CB32B42BC7583E00BE5C0F /* StereoImageMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */; };
 		66CB32B62BC758F600BE5C0F /* StereoImageMaterial.usda in Resources */ = {isa = PBXBuildFile; fileRef = 66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */; };
@@ -151,6 +152,7 @@
 		66C60F0D2B6595CE00C1FDF4 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		66C60F0F2B6596DE00C1FDF4 /* FilePickerGridItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerGridItemView.swift; sourceTree = "<group>"; };
 		66C60F2C2B66BA7F00C1FDF4 /* Hash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hash.swift; sourceTree = "<group>"; };
+		66C866CF2C8FE54600FE8403 /* VisionCloseButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionCloseButtonView.swift; sourceTree = "<group>"; };
 		66CB32B12BC755F500BE5C0F /* StereoImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageView.swift; sourceTree = "<group>"; };
 		66CB32B32BC7583E00BE5C0F /* StereoImageMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoImageMaterial.swift; sourceTree = "<group>"; };
 		66CB32B52BC758F600BE5C0F /* StereoImageMaterial.usda */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = StereoImageMaterial.usda; sourceTree = "<group>"; };
@@ -456,6 +458,7 @@
 				664E4E7E2C6A80BE00ACD5D8 /* ViewModifier */,
 				662247DE2C4A0B36004E6BF1 /* TipsView.swift */,
 				66E147122C37950A00CB3BE7 /* Toast.swift */,
+				66C866CF2C8FE54600FE8403 /* VisionCloseButtonView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -633,6 +636,7 @@
 				6688DED02B5DAC33004B2123 /* virtualfriend_swift.swift in Sources */,
 				6697F38B2C0E75B600229BDD /* Metal2DUIView.swift in Sources */,
 				6688DED12B5DAC33004B2123 /* SwiftBridgeCore.swift in Sources */,
+				66C866D02C8FE54600FE8403 /* VisionCloseButtonView.swift in Sources */,
 				66CB32B22BC755F500BE5C0F /* StereoImageView.swift in Sources */,
 				6662F80B2C3F538B00D80CC1 /* CGPoint.swift in Sources */,
 				66A061332BE7D2530043D170 /* FileType.swift in Sources */,
