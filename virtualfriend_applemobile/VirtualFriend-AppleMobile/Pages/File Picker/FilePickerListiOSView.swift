@@ -19,7 +19,7 @@ struct FilePickerListiOSView: View {
                 self.router.currentRoute = .emulator(entry: file)
             } label: {
                 HStack {
-                    StereoManifestImageView(entry: file, integerScaling: false)
+                    StereoManifestFileEntryImageView(entry: file, integerScaling: false)
                         .frame(height: 50)
 
                     VStack(alignment: .leading) {

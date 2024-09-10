@@ -1,10 +1,10 @@
 use rand::{thread_rng, Rng};
 
 use crate::{
+    cartridge::Cartridge,
     gamepad::GamepadInputs,
     hardware::Hardware,
     interrupt::InterruptRequest,
-    rom::ROM,
     vip::VIP,
     vsu::{
         traits::{AudioFrame, Sink},
@@ -12,17 +12,17 @@ use crate::{
     },
 };
 
+#[derive(Savefile)]
 pub struct Bus {
     wram: [u16; 0x1_0000 / 2],
-    pub rom: ROM,
+    pub cart: Cartridge,
     pub vip: VIP,
     vsu: VSU,
-    // TODO: Remove pub
-    pub hardware: Hardware,
+    hardware: Hardware,
 }
 
 impl Bus {
-    pub fn new(rom: ROM, vip: VIP, vsu: VSU, hardware: Hardware) -> Self {
+    pub fn new(cart: Cartridge, vip: VIP, vsu: VSU, hardware: Hardware) -> Self {
         let mut wram = [0; 0x1_0000 / 2];
 
         // Randomize starting data
@@ -30,7 +30,7 @@ impl Bus {
 
         Bus {
             wram,
-            rom,
+            cart,
             vip,
             vsu,
             hardware,
@@ -38,16 +38,12 @@ impl Bus {
     }
 
     /// TODO: This is debug init to match with Mednafen
-    pub fn debug_init(&mut self) {
-        self.rom.debug_init();
+    // pub fn debug_init(&mut self) {
+    //     self.cart.debug_init();
 
-        // Don't randomize WRAM
-        self.wram = [0; 0x1_0000 / 2];
-    }
-
-    pub fn debug_dump(&self) {
-        self.rom.debug_dump();
-    }
+    //     // Don't randomize WRAM
+    //     self.wram = [0; 0x1_0000 / 2];
+    // }
 
     pub fn step(
         &mut self,
@@ -89,15 +85,15 @@ impl Bus {
             //     todo!("Game Pak Expansion")
             // }
             0x0500_0000..=0x05FF_FFFF => self.wram[(address >> 1) & 0x7FFF],
-            0x0600_0000..=0x06FF_FFFF => self.rom.get_ram((address >> 1) & 0x7F_FFFF),
-            0x0700_0000..=0x07FF_FFFF => self.rom.get_rom((address >> 1) & 0x7F_FFFF),
+            0x0600_0000..=0x06FF_FFFF => self.cart.get_ram((address >> 1) & 0x7F_FFFF),
+            0x0700_0000..=0x07FF_FFFF => self.cart.get_rom((address >> 1) & 0x7F_FFFF),
             _ => 0,
         }
     }
 
     /// Hack to optimize PC fetch
     pub fn get_rom(&self, address: u32) -> u16 {
-        self.rom.get_rom(address as usize)
+        self.cart.get_rom(address as usize)
     }
 
     pub fn get_u32(&mut self, address: u32) -> u32 {
@@ -107,17 +103,17 @@ impl Bus {
         (upper << 16) | lower
     }
 
-    pub fn get_u8(&mut self, address: u32) -> u8 {
-        let word = self.get_u16(address);
+    // pub fn get_u8(&mut self, address: u32) -> u8 {
+    //     let word = self.get_u16(address);
 
-        let byte = match address & 0x1 {
-            0 => word & 0xFF,
-            1 => (word >> 8) & 0xFF,
-            _ => unreachable!(),
-        };
+    //     let byte = match address & 0x1 {
+    //         0 => word & 0xFF,
+    //         1 => (word >> 8) & 0xFF,
+    //         _ => unreachable!(),
+    //     };
 
-        byte as u8
-    }
+    //     byte as u8
+    // }
 
     pub fn set_u16(&mut self, address: u32, value: u16) {
         // Mask top 5 bits to mirror bus
@@ -136,7 +132,7 @@ impl Bus {
             //     todo!("Game Pak Expansion")
             // }
             0x0500_0000..=0x05FF_FFFF => self.wram[local_address_u16 & 0x7FFF] = value,
-            0x0600_0000..=0x06FF_FFFF => self.rom.set_ram(local_address_u16, value),
+            0x0600_0000..=0x06FF_FFFF => self.cart.set_ram(local_address_u16, value),
             0x0700_0000..=0x07FF_FFFF => {
                 // Game Pak ROM
                 // Do nothing

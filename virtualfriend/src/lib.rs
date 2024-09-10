@@ -1,33 +1,38 @@
-use bus::Bus;
-use cpu_v810::CpuV810;
-use hardware::Hardware;
-use vip::VIP;
-use vsu::{
-    traits::{AudioFrame, Sink},
-    VSU,
-};
+extern crate savefile;
 
-use crate::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, gamepad::GamepadInputs, rom::ROM};
+#[macro_use]
+extern crate savefile_derive;
 
-pub mod bus;
-pub mod constants;
-pub mod cpu_internals;
-pub mod cpu_v810;
+use savestates::{savestate::UnparsedSavestate, SavestateController};
+use system::System;
+use vsu::traits::{AudioFrame, Sink};
+
+use crate::{constants::LEFT_FRAME_BUFFER_CYCLE_OFFSET, gamepad::GamepadInputs};
+
+mod bus;
+mod cartridge;
+mod constants;
+mod cpu_internals;
+mod cpu_v810;
 pub mod gamepad;
-pub mod hardware;
-pub mod interrupt;
+mod hardware;
+mod interrupt;
 #[macro_use]
 mod log;
 pub mod manifest;
-pub mod rom;
-pub mod timer;
-pub mod util;
-pub mod vip;
+pub mod savestates;
+mod system;
+mod timer;
+mod util;
+mod vip;
 pub mod vsu;
 
 pub struct VirtualFriend {
-    cpu: CpuV810,
-    bus: Bus,
+    system: System,
+
+    rom: Vec<u8>,
+
+    savestate: SavestateController,
 
     // writer: BufWriter<File>,
     video_frame_serviced: bool,
@@ -61,18 +66,13 @@ impl Sink<AudioFrame> for SimpleAudioFrameSink {
 }
 
 impl VirtualFriend {
-    pub fn new(vec: Vec<u8>) -> Self {
+    pub fn new(rom: Vec<u8>) -> Self {
         println!("Loading ROM");
 
-        let rom = ROM::load_from_vec(vec);
+        // TODO: Ideally we don't maintain two copies of the ROM in RAM for savestate loading
+        let system = System::new(rom.clone());
 
-        let cpu = CpuV810::new();
-
-        let vip = VIP::new();
-        let vsu = VSU::new();
-
-        let hardware = Hardware::new();
-        let bus = Bus::new(rom, vip, vsu, hardware);
+        let savestate = SavestateController::new();
 
         // let mut temp_dir = env::temp_dir();
 
@@ -96,9 +96,10 @@ impl VirtualFriend {
 
         // cpu.debug_init();
 
-        VirtualFriend {
-            cpu,
-            bus,
+        Self {
+            system,
+            rom,
+            savestate,
             // writer,
             video_frame_serviced: false,
             cycle_count: 0,
@@ -111,21 +112,11 @@ impl VirtualFriend {
         loop {
             self.system_tick(&mut emu_audio_sink, &inputs);
 
-            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-                if !self.video_frame_serviced {
-                    // Render framebuffer
-                    self.video_frame_serviced = true;
-
-                    return Frame {
-                        video: Some(VideoFrame {
-                            left: self.bus.vip.left_rendered_framebuffer.clone(),
-                            right: self.bus.vip.right_rendered_framebuffer.clone(),
-                        }),
-                        audio_buffer: emu_audio_sink.inner,
-                    };
-                }
-            } else {
-                self.video_frame_serviced = false;
+            if let Some(frame) = self.frame_tick() {
+                return Frame {
+                    video: Some(frame),
+                    audio_buffer: emu_audio_sink.inner,
+                };
             }
         }
     }
@@ -145,18 +136,8 @@ impl VirtualFriend {
 
             self.system_tick(&mut emu_audio_sink, &inputs);
 
-            if self.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
-                if !self.video_frame_serviced {
-                    // Render framebuffer
-                    self.video_frame_serviced = true;
-
-                    buffered_video_frame = Some(VideoFrame {
-                        left: self.bus.vip.left_rendered_framebuffer.clone(),
-                        right: self.bus.vip.right_rendered_framebuffer.clone(),
-                    });
-                }
-            } else {
-                self.video_frame_serviced = false;
+            if let Some(frame) = self.frame_tick() {
+                buffered_video_frame = Some(frame);
             }
 
             if emu_audio_sink.inner.len() >= buffer_size {
@@ -169,21 +150,80 @@ impl VirtualFriend {
         }
     }
 
+    pub fn run_rewind_frame(&mut self) -> Option<VideoFrame> {
+        if let Some(savestate) = self.savestate.rewind_tick() {
+            self.system
+                .replace_from_savestate(savestate.contents(), self.rom.clone());
+
+            return Some(VideoFrame {
+                left: savestate.left_frame,
+                right: savestate.right_frame,
+            });
+        }
+
+        None
+    }
+
     pub fn load_ram(&mut self, ram: Vec<u8>) {
-        self.bus.rom.load_ram(ram)
+        self.system.bus.cart.load_ram(ram)
     }
 
     pub fn dump_ram(&self) -> Vec<u8> {
-        self.bus.rom.dump_ram()
+        let ram = self.system.bus.cart.dump_ram();
+
+        println!("Dumping RAM {:X}", ram.len());
+
+        ram
+    }
+
+    pub fn create_savestate(&mut self) -> UnparsedSavestate {
+        UnparsedSavestate::build(&self.system)
+    }
+
+    pub fn load_savestate(&mut self, savestate: &UnparsedSavestate) {
+        let system = self.savestate.load_savestate_to_system(savestate);
+
+        self.system.replace_from_savestate(system, self.rom.clone());
+    }
+
+    // TODO: This should be failable
+    pub fn load_savestate_from_bytes(&mut self, bytes: &[u8]) {
+        let savestate = UnparsedSavestate::load(bytes);
+
+        self.load_savestate(&savestate);
     }
 
     fn system_tick(&mut self, emu_audio_sink: &mut SimpleAudioFrameSink, inputs: &GamepadInputs) {
-        let step_cycle_count = self.cpu.step(&mut self.bus);
+        let step_cycle_count = self.system.cpu.step(&mut self.system.bus);
 
         self.cycle_count += step_cycle_count;
 
-        if let Some(request) = self.bus.step(step_cycle_count, emu_audio_sink, inputs) {
-            self.cpu.request_interrupt(request);
+        if let Some(request) = self
+            .system
+            .bus
+            .step(step_cycle_count, emu_audio_sink, inputs)
+        {
+            self.system.cpu.request_interrupt(request);
         }
+    }
+
+    fn frame_tick(&mut self) -> Option<VideoFrame> {
+        if self.system.bus.vip.current_display_clock_cycle < LEFT_FRAME_BUFFER_CYCLE_OFFSET {
+            if !self.video_frame_serviced {
+                // Render framebuffer
+                self.video_frame_serviced = true;
+
+                self.savestate.frame_tick(&self.system);
+
+                return Some(VideoFrame {
+                    left: self.system.bus.vip.left_rendered_framebuffer.clone(),
+                    right: self.system.bus.vip.right_rendered_framebuffer.clone(),
+                });
+            }
+        } else {
+            self.video_frame_serviced = false;
+        }
+
+        None
     }
 }

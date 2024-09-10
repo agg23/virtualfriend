@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Savefile)]
 pub struct Waveform {
     ram: [u8; 0x20],
 }

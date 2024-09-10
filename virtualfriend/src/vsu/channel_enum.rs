@@ -5,10 +5,12 @@ use crate::constants::{
 
 use super::{channel::Channel, sweep_modulate::SweepModulate, waveform::Waveform};
 
+#[derive(Savefile)]
 pub enum ChannelType {
     PCM {
         channel: Channel,
-        index: usize,
+        // Not called `index` as that breaks `Savefile`
+        channel_index: usize,
         waveform_bank_index: u8,
         current_sample_index: usize,
     },
@@ -32,7 +34,7 @@ impl ChannelType {
     pub fn new_pcm(index: usize) -> Self {
         Self::PCM {
             channel: Channel::new(),
-            index,
+            channel_index: index,
             waveform_bank_index: 0,
             current_sample_index: 0,
         }
@@ -76,7 +78,7 @@ impl ChannelType {
 
     pub fn index(&self) -> usize {
         match self {
-            ChannelType::PCM { index, .. } => *index,
+            ChannelType::PCM { channel_index, .. } => *channel_index,
             ChannelType::PCMCh5 { .. } => 4,
             ChannelType::Noise { .. } => 5,
         }
@@ -177,8 +179,6 @@ impl ChannelType {
 
             if self.channel().live_interval_counter >= (self.channel().live_interval + 1) {
                 // Stop the channel
-                println!("Stopping channel {}", self.index());
-
                 self.channel_mut().enable_playback = false;
                 self.channel_mut().live_interval_counter = 0;
             }

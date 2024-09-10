@@ -15,7 +15,7 @@ struct EmuControllerView: View {
             // Fill screen
             Color.clear
 
-            ControllerView() { direction, pressed in
+            ControllerView { direction, pressed in
                 switch direction {
                 case .up:
                     self.controller.leftDpadUp = pressed

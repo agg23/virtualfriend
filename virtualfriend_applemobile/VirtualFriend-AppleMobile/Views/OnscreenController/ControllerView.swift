@@ -97,16 +97,16 @@ private struct ControllerSideView: View {
         ControllerLayout {
             TriggerView(controller: self.controller, name: self.triggerName, title: self.triggleTitle, onButtonChange: self.triggerOnButtonChange)
 
-                DpadView(controller: self.controller, prefix: self.dpadPrefix, onButtonChange: self.dpadOnButtonChange)
-                    .padding(.vertical, 16)
+            DpadView(controller: self.controller, prefix: self.dpadPrefix, onButtonChange: self.dpadOnButtonChange)
+                .padding(.vertical, 16)
 
-                HStack {
-                    FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, onButtonChange: self.leftButtonOnButtonChange)
+            HStack {
+                FaceButtonView(controller: self.controller, name: self.leftButtonName, title: self.leftButtonTitle, onButtonChange: self.leftButtonOnButtonChange)
 
-                    Spacer()
+                Spacer()
 
-                    FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, onButtonChange: self.rightButtonOnButtonChange)
-                }
+                FaceButtonView(controller: self.controller, name: self.rightButtonName, title: self.rightButtonTitle, onButtonChange: self.rightButtonOnButtonChange)
+            }
         }
         .background {
             GeometryReader { geometry in
@@ -180,7 +180,7 @@ private struct ControllerLayout: Layout {
 }
 
 #Preview {
-    ControllerView() { _, _ in
+    ControllerView { _, _ in
         
     } rightDpad: { _, _ in
 

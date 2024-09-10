@@ -1,3 +1,4 @@
+#[derive(Savefile)]
 pub struct RenderState {
     /// BG color palette control register
     ///
@@ -67,7 +68,7 @@ impl RenderState {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Savefile)]
 pub struct PaletteRegister {
     pub character1: u8,
     pub character2: u8,

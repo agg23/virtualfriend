@@ -69,6 +69,13 @@ struct FileEntry {
 
         return StereoImage(left: left, right: right)
     }
+
+    static func image(from savestate: FFIUnparsedSavestate, color: VBColor) -> StereoImage {
+        let left = savestate.left_frame.ciImage(color: color)
+        let right = savestate.right_frame.ciImage(color: color)
+
+        return StereoImage(left: left, right: right)
+    }
 }
 
 extension FileEntry: Identifiable {

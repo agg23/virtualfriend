@@ -11,7 +11,7 @@ use std::{
 use audio_driver::AudioDriver;
 use pixels::{Pixels, SurfaceTexture};
 use single_value_channel::channel_starting_with;
-use virtualfriend::{gamepad::GamepadInputs, VideoFrame, VirtualFriend};
+use virtualfriend::{gamepad::GamepadInputs, Frame, VideoFrame, VirtualFriend};
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, Event, WindowEvent},
@@ -73,6 +73,7 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
     event_loop: Option<EventLoop<()>>,
     rom_path: &Path,
     save_path: Option<&Path>,
+    savestate_path: Option<&Path>,
     capture_callback: Option<F>,
 ) -> EventLoop<()> {
     // Window
@@ -147,6 +148,8 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
             select: false,
         });
 
+    let (mut rewind_receiver, rewind_transmitter) = channel_starting_with::<bool>(false);
+
     let rom = fs::read(&rom_path).expect("Could not load ROM");
     let mut virtualfriend = VirtualFriend::new(rom);
 
@@ -165,10 +168,21 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
 
     // 41.667kHz
     let mut audio_driver = AudioDriver::new(41667, 20, move |sample_count| {
-        let frame = virtualfriend_audio
-            .lock()
-            .unwrap()
-            .run_audio_frame(inputs_receiver.latest().clone(), sample_count);
+        let frame = if *rewind_receiver.latest() {
+            // Rewinding
+            let video = virtualfriend_audio.lock().unwrap().run_rewind_frame();
+
+            Frame {
+                video,
+                audio_buffer: vec![],
+            }
+        } else {
+            // Normal frame
+            virtualfriend_audio
+                .lock()
+                .unwrap()
+                .run_audio_frame(inputs_receiver.latest().clone(), sample_count)
+        };
 
         if let Some(video) = frame.video {
             // Send updated video frame
@@ -379,6 +393,31 @@ pub fn build_client<F: Fn(&ThreadFrame) -> bool>(
                                 println!("Pressing c");
                                 capture_next_frame = true;
                             }
+                        }
+                        Key::Character("s") => {
+                            if pressed {
+                                println!("Pressing s");
+                                let savestate = virtualfriend.lock().unwrap().create_savestate();
+                                if let Some(savestate_path) = savestate_path {
+                                    fs::write(savestate_path, savestate.data()).unwrap();
+                                }
+                            }
+                        }
+                        Key::Character("p") => {
+                            if pressed {
+                                println!("Pressing p");
+                                if let Some(savestate_path) = savestate_path {
+                                    let savestate = fs::read(savestate_path).unwrap();
+
+                                    virtualfriend
+                                        .lock()
+                                        .unwrap()
+                                        .load_savestate_from_bytes(&savestate);
+                                }
+                            }
+                        }
+                        Key::Character("r") => {
+                            rewind_transmitter.update(pressed).unwrap();
                         }
                         _ => {}
                     }

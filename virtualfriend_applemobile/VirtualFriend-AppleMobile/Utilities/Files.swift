@@ -22,3 +22,27 @@ extension FileManager {
         }
     }
 }
+
+func saveUrl(for name: String) -> URL {
+    var saveUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    saveUrl.append(component: "Saves")
+    saveUrl.append(component: "\(name).sav")
+
+    return saveUrl
+}
+
+func savestateBaseUrl(for name: String) -> URL {
+    var saveUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    saveUrl.append(component: "Savestates")
+    saveUrl.append(component: "\(name)")
+
+    return saveUrl
+}
+
+func savestateFileName(for name: String, date: Date) -> String {
+    let dateFormatter = savestateDateFormatter()
+
+    let formattedData = dateFormatter.string(from: date).replacingOccurrences(of: "/", with: ":")
+
+    return "\(formattedData) \(name).ss"
+}

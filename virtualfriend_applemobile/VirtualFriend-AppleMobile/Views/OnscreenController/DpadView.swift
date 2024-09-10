@@ -79,6 +79,7 @@ private struct DpadArm: View {
 
     let controller: TouchController
     let name: String
+
     let cornerMatches: [String]
 
     let onButtonChange: (_ pressed: Bool) -> Void

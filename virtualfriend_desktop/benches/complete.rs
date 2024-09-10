@@ -2,10 +2,10 @@ use std::{collections::VecDeque, path::Path};
 
 use virtualfriend::{
     bus::Bus,
+    cartridge::ROM,
     cpu_v810::CpuV810,
     gamepad::GamepadInputs,
     hardware::Hardware,
-    rom::ROM,
     vip::VIP,
     vsu::{
         traits::{AudioFrame, Sink},

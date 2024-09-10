@@ -30,7 +30,7 @@ struct EmuView: View {
     let fileEntry: FileEntryWithManifest
 
     var body: some View {
-        let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, onRestart: self.restart)
+        let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, fileName: self.fileEntry.entry.url.lastPathComponent, onRestart: self.restart)
 
         Group {
             #if os(visionOS)
@@ -102,6 +102,11 @@ struct EmuView: View {
         // TODO: Make Emulator stereoImageChannel updates cause rerenders
         DispatchQueue.main.asyncAfter(deadline: .now().advanced(by: .milliseconds(100)), execute: .init(block: {
             self.createEmulator(self.fileEntry.entry.url)
+
+            if case .emulator(let emulator) = self.emulator {
+                // Start emulator paused
+                emulator.shutdown()
+            }
         }))
     }
 }

@@ -4,6 +4,7 @@ use crate::constants::{SWEEP_FAST_CYCLE_COUNT, SWEEP_SLOW_CYCLE_COUNT};
 
 use super::channel::Channel;
 
+#[derive(Savefile)]
 pub struct SweepModulate {
     enable: bool,
 

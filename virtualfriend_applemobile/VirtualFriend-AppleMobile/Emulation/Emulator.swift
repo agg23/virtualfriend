@@ -132,6 +132,34 @@ class Emulator {
         }
     }
 
+    func createSavestate() {
+        let savestateData = Data(unparsed_savestate_data(self.virtualFriend.create_savestate()))
+        print("Creating savestate")
+
+        var baseUrl = savestateBaseUrl(for: self.fileName)
+
+        do {
+            try FileManager.default.createDirectory(at: baseUrl, withIntermediateDirectories: true)
+
+            baseUrl.append(component: savestateFileName(for: self.fileName, date: Date.now))
+            try savestateData.write(to: baseUrl)
+        } catch {
+            print("Could not write savestate \(error)")
+        }
+    }
+
+    func apply(savestate: FFIUnparsedSavestate) {
+        // Create image synchronously so we don't have threading issues with the Rust objects
+        let image = FileEntry.image(from: savestate, color: self.color)
+
+        Task {
+            // Update display to the image in the savestate
+            await self.stereoImageChannel.channel.send(image)
+        }
+
+        self.virtualFriend.apply_savestate(savestate)
+    }
+
     private func startThread() {
         print("Starting emulation")
 
@@ -252,12 +280,4 @@ class Emulator {
 enum EmulatorError: Error {
     case audioFormatInit
     case audioBufferInit
-}
-
-private func saveUrl(for name: String) -> URL {
-    var saveUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    saveUrl.append(component: "Saves")
-    saveUrl.append(component: "\(name).sav")
-
-    return saveUrl
 }

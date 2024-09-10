@@ -17,11 +17,13 @@ fn main() {
 
     let rom_path = rom_directory.join(format!("{rom_name}.vb"));
     let save_path = rom_directory.join(format!("{rom_name}.sav"));
+    let savestate_path = rom_directory.join(format!("{rom_name}.ss"));
 
     build_client(
         None,
         &rom_path,
         Some(&save_path),
+        Some(&savestate_path),
         Some(|frame: &ThreadFrame| {
             let mut base_path = PathBuf::from(&rom_path);
             base_path.set_extension("vf");

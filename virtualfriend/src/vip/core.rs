@@ -20,12 +20,17 @@ use super::drawing::draw_block_row;
 use super::util::{framebuffer_addresses, RenderState};
 use super::vram::VRAM;
 
+#[derive(Savefile)]
 pub struct VIP {
     pub current_display_clock_cycle: usize,
 
     vram: VRAM,
 
+    #[savefile_ignore]
+    #[savefile_default_fn = "new_framebuffer"]
     pub left_rendered_framebuffer: Vec<u8>,
+    #[savefile_ignore]
+    #[savefile_default_fn = "new_framebuffer"]
     pub right_rendered_framebuffer: Vec<u8>,
 
     interrupt_pending: VIPInterrupt,
@@ -72,7 +77,7 @@ pub struct VIP {
     frame_count: u8,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Savefile)]
 pub enum DisplayState {
     Left,
     Right,
@@ -80,6 +85,7 @@ pub enum DisplayState {
 }
 
 bitfield! {
+    #[derive(Savefile)]
     pub struct VIPInterrupt(u16) {
         /// Mirrors are not stable.
         [0] scanerr,
@@ -100,21 +106,23 @@ bitfield! {
     }
 }
 
+fn new_framebuffer() -> Vec<u8> {
+    let mut framebuffer = Vec::with_capacity(DISPLAY_PIXEL_LENGTH);
+
+    for _ in 0..DISPLAY_PIXEL_LENGTH {
+        framebuffer.push(0);
+    }
+
+    framebuffer
+}
+
 impl VIP {
     pub fn new() -> Self {
-        let mut left_rendered_framebuffer = Vec::with_capacity(DISPLAY_PIXEL_LENGTH);
-        let mut right_rendered_framebuffer = Vec::with_capacity(DISPLAY_PIXEL_LENGTH);
-
-        for _ in 0..DISPLAY_PIXEL_LENGTH {
-            left_rendered_framebuffer.push(0);
-            right_rendered_framebuffer.push(0);
-        }
-
-        VIP {
+        Self {
             current_display_clock_cycle: 0,
             vram: VRAM::new(),
-            left_rendered_framebuffer,
-            right_rendered_framebuffer,
+            left_rendered_framebuffer: new_framebuffer(),
+            right_rendered_framebuffer: new_framebuffer(),
             interrupt_pending: VIPInterrupt(0),
             interrupt_enabled: VIPInterrupt(0),
             render_state: RenderState::new(),

@@ -139,6 +139,7 @@ fn main() {
             event_loop,
             &path.path(),
             None,
+            None,
             Some(|frame: &ThreadFrame| {
                 let mut file = File::create(named_path.with_extension("vf")).unwrap();
 

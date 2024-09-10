@@ -5,6 +5,7 @@ use bitvec::prelude::Lsb0;
 
 use crate::constants::TIMER_MIN_INTERVAL_CYCLE_COUNT;
 
+#[derive(Savefile)]
 pub struct Timer {
     reload: u16,
     counter: u16,

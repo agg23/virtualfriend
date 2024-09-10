@@ -9,11 +9,11 @@ use ctru::{
 };
 use virtualfriend::{
     bus::Bus,
+    cartridge::Cartridge,
     constants::{DISPLAY_HEIGHT, DISPLAY_WIDTH, LEFT_FRAME_BUFFER_CYCLE_OFFSET},
     cpu_v810::CpuV810,
     gamepad::GamepadInputs,
     hardware::Hardware,
-    rom::ROM,
     vip::VIP,
 };
 
