@@ -33,31 +33,13 @@ struct EmuHeaderOverlayView: View {
 
             #if !os(visionOS)
             HStack {
-                Button {
-                    self.onCreateSavestate()
-                } label: {
-                    Label {
-                        Text("Create Savestate")
-                    } icon: {
-                        Image(systemName: Icon.savestateCreate)
-                    }
-                }
-                .help("Create Savestate")
-                .padding(.leading, buttonOutsidePadding)
+                self.createSavestateButton
+                    .padding(.leading, buttonOutsidePadding)
 
                 Spacer()
 
-                Button {
-                    self.onOpenSavestates()
-                } label: {
-                    Label {
-                        Text("Load Savestate")
-                    } icon: {
-                        Image(systemName: Icon.savestateLoad)
-                    }
-                }
-                .help("Load Savestates")
-                .padding(.trailing, buttonOutsidePadding)
+                self.loadSavestateButton
+                    .padding(.trailing, buttonOutsidePadding)
             }
             .symbolRenderingMode(.hierarchical)
             .labelStyle(.iconOnly)
@@ -114,14 +96,15 @@ struct EmuHeaderOverlayView: View {
             }
             .help(self.isImmersed ? "Leave immersive space" : "Enter immersive space")
             .padding(.leading, buttonPadding)
-            #else
-            // Placeholder button for padding
+
+            // Placeholder button
             Button {
 
             } label: {
                 Image(systemName: Icon.back)
             }
             .hidden()
+            .padding(.leading, buttonPadding)
             #endif
 
             Text(self.title)
@@ -137,25 +120,11 @@ struct EmuHeaderOverlayView: View {
                 .frame(maxWidth: .infinity)
 
             #if os(visionOS)
-            Button {
+            self.createSavestateButton
+                .padding(.trailing, buttonPadding)
 
-            } label: {
-                Label {
-                    Text("Savestates")
-                } icon: {
-                    Image(systemName: Icon.savestateVision)
-                }
-            }
-            .help("Savestates")
-            .padding(.trailing, buttonPadding)
-            #else
-            // Placeholder button for padding
-            Button {
-
-            } label: {
-                Image(systemName: Icon.back)
-            }
-            .hidden()
+            self.loadSavestateButton
+                .padding(.trailing, buttonPadding)
             #endif
 
             Button {
@@ -190,5 +159,33 @@ struct EmuHeaderOverlayView: View {
         // We insert .secondary background so we can ensure the control buttons are visible over the user configuable background color
         .background(self.ledBackgroundColor.isDark ? .secondary : Color.black.opacity(0.4))
         #endif
+    }
+
+    @ViewBuilder
+    private var createSavestateButton: some View {
+        Button {
+            self.onCreateSavestate()
+        } label: {
+            Label {
+                Text("Create Savestate")
+            } icon: {
+                Image(systemName: Icon.savestateCreate)
+            }
+        }
+        .help("Create Savestate")
+    }
+
+    @ViewBuilder
+    private var loadSavestateButton: some View {
+        Button {
+            self.onOpenSavestates()
+        } label: {
+            Label {
+                Text("Load Savestate")
+            } icon: {
+                Image(systemName: Icon.savestateLoad)
+            }
+        }
+        .help("Load Savestates")
     }
 }

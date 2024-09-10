@@ -16,7 +16,6 @@ struct Icon {
 
     static let immersive = "mountain.2.fill"
 
-    static let savestateVision = "tray.full.fill"
     static let savestateCreate = "tray.and.arrow.down.fill"
     static let savestateLoad = "tray.and.arrow.up.fill"
 }
