@@ -1,7 +1,4 @@
-use bitvec::array::BitArray;
-use bitvec::bitarr;
-use bitvec::field::BitField;
-use bitvec::prelude::Lsb0;
+use tartan_bitfield::bitfield;
 
 use crate::constants::TIMER_MIN_INTERVAL_CYCLE_COUNT;
 
@@ -17,6 +14,25 @@ pub struct Timer {
     timer_interval: bool,
 
     tick_interval_counter: usize,
+
+    /// Reload value was set to zero by software, interrupt is queued to next tick
+    deferred_interrupt: bool,
+}
+
+bitfield! {
+    #[derive(Savefile)]
+    struct TCR(u8) {
+        /// Timer is enabled.
+        [0] enabled,
+        /// [Readonly] Set when counter reaches zero.
+        [1] did_zero,
+        /// [Writeonly] Clears `did_zero`.
+        [2] did_zero_clear,
+        /// Interrupt enabled.
+        [3] interrupt_enabled,
+        /// Timer interval. High is 20us, low is 100us.
+        [4] timer_interval,
+    }
 }
 
 impl Timer {
@@ -29,6 +45,7 @@ impl Timer {
             interrupt_enabled: false,
             timer_interval: false,
             tick_interval_counter: 0,
+            deferred_interrupt: false,
         }
     }
 
@@ -43,40 +60,49 @@ impl Timer {
             self.reload = (self.reload & 0xFF00) | (reload_half as u16);
         }
 
+        if self.enabled && self.reload == 0 {
+            self.deferred_interrupt = true;
+        }
+
         // Reset counter to current reload
         self.counter = self.reload;
-        // TODO: Unsure if this is correct
         // Reset timer tick count
+        // "When either register is written, the entire 16-bit value will be loaded into the counter and reset the current timer tick to the beginning of its wait interval."
         self.tick_interval_counter = 0;
     }
 
     pub fn get_config(&self) -> u8 {
         // TCR Timer control register
         // Default all bits to set
-        let mut value = bitarr![u8, Lsb0; 0xFF; 8];
+        let mut value = TCR(0xFF);
 
-        value.set(0, self.enabled);
-        value.set(1, self.did_zero);
-        value.set(3, self.interrupt_enabled);
-        value.set(4, self.timer_interval);
+        value.set_enabled(self.enabled);
+        value.set_did_zero(self.did_zero);
+        value.set_interrupt_enabled(self.interrupt_enabled);
+        value.set_timer_interval(self.timer_interval);
 
-        value.load()
+        value.0
     }
 
     pub fn set_config(&mut self, value: u8) {
-        let array = BitArray::<_, Lsb0>::new([value]);
+        let value = TCR(value);
 
-        self.enabled = *array.get(0).unwrap();
+        // According to red-viper, cannot disable timer and clear zero at the same time
+        if self.enabled && !value.enabled() && value.did_zero_clear() {
+            return;
+        }
 
-        if *array.get(2).unwrap() {
+        self.enabled = value.enabled();
+
+        if value.did_zero_clear() {
             // Write to Z-Stat-Clr
             self.did_zero = false;
 
             // TODO: Do we need to do something special to acknowledge the interrupt?
         }
 
-        self.interrupt_enabled = *array.get(3).unwrap();
-        self.timer_interval = *array.get(4).unwrap();
+        self.interrupt_enabled = value.interrupt_enabled();
+        self.timer_interval = value.timer_interval();
     }
 
     /// Run the timer for 1 cycle.
@@ -88,6 +114,12 @@ impl Timer {
         if !self.enabled {
             // Do nothing
             return false;
+        }
+
+        let was_deferred_interrupt = self.deferred_interrupt;
+
+        if self.deferred_interrupt {
+            self.deferred_interrupt = false;
         }
 
         let mut request_interrupt = false;
@@ -108,12 +140,12 @@ impl Timer {
                 if self.tick() {
                     // println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
-                    request_interrupt = true;
+                    request_interrupt = self.interrupt_enabled;
                 }
             }
         }
 
-        request_interrupt
+        request_interrupt || was_deferred_interrupt
     }
 
     /// Tick the timer.
