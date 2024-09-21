@@ -87,11 +87,6 @@ impl Timer {
     pub fn set_config(&mut self, value: u8) {
         let value = TCR(value);
 
-        // According to red-viper, cannot disable timer and clear zero at the same time
-        if self.enabled && !value.enabled() && value.did_zero_clear() {
-            return;
-        }
-
         self.enabled = value.enabled();
 
         if value.did_zero_clear() {
