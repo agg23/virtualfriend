@@ -81,7 +81,12 @@ struct FilePickerGridItemView: View {
             #endif
         }
         // Custom button style as we can't make the black above span the entire width of the button without it
+        #if os(visionOS)
         .buttonStyle(.plain)
+        #else
+        // Force button to use black/white instead of app theme color (red)
+        .foregroundStyle(.primary)
+        #endif
         .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
 
         ZStack {
