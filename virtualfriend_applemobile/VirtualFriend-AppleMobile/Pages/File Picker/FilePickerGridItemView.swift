@@ -59,6 +59,7 @@ struct FilePickerGridItemView: View {
                     .font(.title3)
                     #endif
                     .lineLimit(1)
+                    .padding(.horizontal, 16)
                 Group {
                     if let metadata = metadata {
                         Text(metadata.publisher.toString() + " " + metadata.year.toString())
