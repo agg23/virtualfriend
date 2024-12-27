@@ -15,6 +15,9 @@ pub struct Timer {
 
     tick_interval_counter: usize,
 
+    /// The current tick state of the timer, 0-4. Setting the value to 0 is a 100us tick
+    tick_20us_counter: usize,
+
     /// Reload value was set to zero by software, interrupt is queued to next tick
     deferred_interrupt: bool,
 }
@@ -45,6 +48,7 @@ impl Timer {
             interrupt_enabled: false,
             timer_interval: false,
             tick_interval_counter: 0,
+            tick_20us_counter: 0,
             deferred_interrupt: false,
         }
     }
@@ -97,7 +101,17 @@ impl Timer {
         }
 
         self.interrupt_enabled = value.interrupt_enabled();
-        self.timer_interval = value.timer_interval();
+
+        let new_timer_interval = value.timer_interval();
+
+        if !self.timer_interval && new_timer_interval {
+            // When switching from 100us to 20us, if internal 20us counter isn't at 0, decrement timer
+            if self.tick_20us_counter != 0 {
+                self.tick(true);
+            }
+        }
+
+        self.timer_interval = new_timer_interval;
     }
 
     /// Run the timer for 1 cycle.
@@ -120,19 +134,23 @@ impl Timer {
         let mut request_interrupt = false;
 
         for _ in 0..cycles_to_run {
-            let required_cycle_count = if self.timer_interval {
-                TIMER_MIN_INTERVAL_CYCLE_COUNT
-            } else {
-                TIMER_MIN_INTERVAL_CYCLE_COUNT * 5
-            };
+            // let required_cycle_count = if self.timer_interval {
+            //     TIMER_MIN_INTERVAL_CYCLE_COUNT
+            // } else {
+            //     TIMER_MIN_INTERVAL_CYCLE_COUNT * 5
+            // };
 
             self.tick_interval_counter += 1;
 
-            if self.tick_interval_counter >= required_cycle_count {
-                // Fire timer tick
+            if self.tick_interval_counter >= TIMER_MIN_INTERVAL_CYCLE_COUNT {
+                // Fire 20us timer tick
                 self.tick_interval_counter = 0;
 
-                if self.tick() {
+                self.tick_20us_counter = (self.tick_20us_counter + 1) % 5;
+
+                let timer_tick = self.timer_interval || self.tick_20us_counter == 0;
+
+                if timer_tick && self.tick(false) {
                     // println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
                     request_interrupt = self.interrupt_enabled;
@@ -146,7 +164,7 @@ impl Timer {
     /// Tick the timer.
     ///
     /// Returns true if an interrupt should fire
-    fn tick(&mut self) -> bool {
+    fn tick(&mut self, defer_interrupt: bool) -> bool {
         if self.counter == 0 {
             // Reset counter
             // Separating this from the interrupt (1) case allows setting the timer to 0
@@ -159,6 +177,10 @@ impl Timer {
             // Fire interrupt and zero
             self.counter -= 1;
             self.did_zero = true;
+
+            if defer_interrupt {
+                self.deferred_interrupt = true;
+            }
 
             true
         } else {
