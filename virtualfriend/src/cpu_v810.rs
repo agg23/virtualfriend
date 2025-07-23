@@ -401,9 +401,12 @@ impl CpuV810 {
     }
 
     fn fetch_instruction_word(&mut self, bus: &mut Bus) -> u16 {
-        // let instruction = bus.get_u16(self.pc);
-        // Hack for speed. This will break if there are instructions fetched from outside of ROM
-        let instruction = bus.get_rom(self.pc >> 1);
+        let instruction: u16 = if ((self.pc >> 24) & 7) == 7 {
+            // Fast-path for speed, since most instructions are in ROM.
+            bus.get_rom(self.pc >> 1)
+        } else {
+            bus.get_u16(self.pc)
+        };
 
         // Increment PC by 2 bytes
         self.pc = self.pc.wrapping_add(2);
