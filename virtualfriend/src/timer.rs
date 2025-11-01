@@ -20,6 +20,9 @@ pub struct Timer {
 
     /// Reload value was set to zero by software, interrupt is queued to next tick
     deferred_interrupt: bool,
+
+    /// Tracks whether an interrupt is pending (level-triggered behavior)
+    interrupt_pending: bool,
 }
 
 bitfield! {
@@ -50,6 +53,7 @@ impl Timer {
             tick_interval_counter: 0,
             tick_20us_counter: 0,
             deferred_interrupt: false,
+            interrupt_pending: false,
         }
     }
 
@@ -97,7 +101,8 @@ impl Timer {
             // Write to Z-Stat-Clr
             self.did_zero = false;
 
-            // TODO: Do we need to do something special to acknowledge the interrupt?
+            // Clear interrupt pending state when interrupt is acknowledged
+            self.interrupt_pending = false;
         }
 
         self.interrupt_enabled = value.interrupt_enabled();
@@ -158,9 +163,13 @@ impl Timer {
             }
         }
 
-        // Return true if interrupt was just generated OR if did_zero is still set from a previous
-        // interrupt that hasn't been acknowledged yet. This ensures level-triggered behavior.
-        request_interrupt || was_deferred_interrupt || (self.did_zero && self.interrupt_enabled)
+        // Set interrupt_pending if a new interrupt was generated
+        if request_interrupt || was_deferred_interrupt {
+            self.interrupt_pending = true;
+        }
+
+        // Return the persistent interrupt state (level-triggered behavior)
+        self.interrupt_pending
     }
 
     /// Tick the timer.
