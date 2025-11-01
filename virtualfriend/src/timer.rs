@@ -158,7 +158,9 @@ impl Timer {
             }
         }
 
-        request_interrupt || was_deferred_interrupt
+        // Return true if interrupt was just generated OR if did_zero is still set from a previous
+        // interrupt that hasn't been acknowledged yet. This ensures level-triggered behavior.
+        request_interrupt || was_deferred_interrupt || (self.did_zero && self.interrupt_enabled)
     }
 
     /// Tick the timer.

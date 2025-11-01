@@ -233,7 +233,9 @@ impl CpuV810 {
     /// Returns the number of cycles consumed
     pub fn step(&mut self, bus: &mut Bus) -> usize {
         if self.is_halted {
-            // Do nothing. 1 cycle consumed
+            // CPU is halted. Consume 1 cycle per step but don't execute instructions.
+            // The CPU will resume when an interrupt is received (handled by request_interrupt
+            // which clears is_halted in perform_exception).
             return 1;
         }
 
@@ -262,17 +264,17 @@ impl CpuV810 {
             return;
         }
 
-        if self.psw.nmi_pending {
-            // Fatal exception. Terminating program and halting
-            panic!(
-                "Fatal exception. Code: {:04X}, PSW: {:08X}, PC: {:08X}",
-                request.code(),
-                self.psw.get(),
-                self.pc
-            )
-        }
-
         self.perform_exception(request.code());
+
+        // Check if exception processing resulted in NMI (duplexed exception)
+        // This can happen if exception_pending was true when perform_exception was called,
+        // but that case should have been caught by the check above. This is defensive.
+        if self.psw.nmi_pending {
+            // Fatal exception occurred during exception processing
+            // This is already handled in perform_exception by jumping to 0xFFFF_FFD0
+            // No further interrupt masking should be applied
+            return;
+        }
 
         if self.psw.interrupt_level < 15 {
             // Mask interrupts at this level or lower
@@ -847,8 +849,8 @@ impl CpuV810 {
             // One last shift to finish it
             let result = carry_result << 1;
 
-            // Carry is the last bit that's shifted out
-            let carry = reg2 != 0 && carry_result & 0x8000_0000 != 0;
+            // Carry is the MSB that gets shifted out (bit 31 of carry_result before final shift)
+            let carry = carry_result & 0x8000_0000 != 0;
 
             (result, carry)
         } else {

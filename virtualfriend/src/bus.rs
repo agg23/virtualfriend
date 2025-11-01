@@ -56,16 +56,21 @@ impl Bus {
         self.hardware.gamepad.step(cycles_to_run, inputs);
         self.vsu.step(cycles_to_run, audio_sink);
 
-        // Priority 1
+        // Check interrupts in priority order (highest priority last so it overwrites)
+        // Priority 1: Timer (lower priority)
         if self.hardware.timer.step(cycles_to_run) {
             request = Some(InterruptRequest::TimerZero);
         }
 
-        // 4: Highest priority
+        // Priority 4: VIP (highest priority)
+        // If VIP fires, it takes precedence over timer
         if self.vip.step(cycles_to_run) {
             request = Some(InterruptRequest::VIP);
         }
 
+        // NOTE: If both timer and VIP fire in the same step, only VIP is returned
+        // due to its higher priority. The timer interrupt will be lost unless the
+        // timer continues to assert it on subsequent steps.
         request
     }
 
