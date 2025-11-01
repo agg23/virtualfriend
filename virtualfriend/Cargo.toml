@@ -14,7 +14,7 @@ panic = []
 [dependencies]
 rand = "0.8.5"
 # Custom fork and branch upgrades `radium` to 1.0, which prevents atomics errors on more special platforms
-bitvec = { git = "https://github.com/alexanderkjall/bitvec", branch = "upgrade-radium-to-1", default-features = false }
+bitvec = { git = "https://github.com/agg23/ferrilab" }
 tartan-bitfield = "1.2.0"
 
 serde = { version = "1.0", features = ["derive"] }
