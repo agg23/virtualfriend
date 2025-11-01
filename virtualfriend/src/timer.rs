@@ -20,6 +20,9 @@ pub struct Timer {
 
     /// Reload value was set to zero by software, interrupt is queued to next tick
     deferred_interrupt: bool,
+
+    /// Tracks whether an interrupt is pending (level-triggered behavior)
+    interrupt_pending: bool,
 }
 
 bitfield! {
@@ -50,6 +53,7 @@ impl Timer {
             tick_interval_counter: 0,
             tick_20us_counter: 0,
             deferred_interrupt: false,
+            interrupt_pending: false,
         }
     }
 
@@ -97,10 +101,18 @@ impl Timer {
             // Write to Z-Stat-Clr
             self.did_zero = false;
 
-            // TODO: Do we need to do something special to acknowledge the interrupt?
+            // Clear interrupt pending state when interrupt is acknowledged
+            self.interrupt_pending = false;
         }
 
-        self.interrupt_enabled = value.interrupt_enabled();
+        let new_interrupt_enabled = value.interrupt_enabled();
+        
+        // Clear interrupt when disabling Tim-Z-Int
+        if self.interrupt_enabled && !new_interrupt_enabled {
+            self.interrupt_pending = false;
+        }
+        
+        self.interrupt_enabled = new_interrupt_enabled;
 
         let new_timer_interval = value.timer_interval();
 
@@ -131,8 +143,6 @@ impl Timer {
             self.deferred_interrupt = false;
         }
 
-        let mut request_interrupt = false;
-
         for _ in 0..cycles_to_run {
             // let required_cycle_count = if self.timer_interval {
             //     TIMER_MIN_INTERVAL_CYCLE_COUNT
@@ -153,12 +163,20 @@ impl Timer {
                 if timer_tick && self.tick(false) {
                     // println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
-                    request_interrupt = self.interrupt_enabled;
+                    if self.interrupt_enabled {
+                        self.interrupt_pending = true;
+                    }
                 }
             }
         }
 
-        request_interrupt || was_deferred_interrupt
+        // Set interrupt_pending if a deferred interrupt was generated
+        if was_deferred_interrupt {
+            self.interrupt_pending = true;
+        }
+
+        // Return the persistent interrupt state (level-triggered behavior)
+        self.interrupt_pending
     }
 
     /// Tick the timer.
