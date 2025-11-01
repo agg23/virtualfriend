@@ -143,8 +143,6 @@ impl Timer {
             self.deferred_interrupt = false;
         }
 
-        let mut request_interrupt = false;
-
         for _ in 0..cycles_to_run {
             // let required_cycle_count = if self.timer_interval {
             //     TIMER_MIN_INTERVAL_CYCLE_COUNT
@@ -165,13 +163,15 @@ impl Timer {
                 if timer_tick && self.tick(false) {
                     // println!("Timer fire");
                     // This technically allows the interrupt to become desynced with the timer, as it fires, but the timer can keep running
-                    request_interrupt = self.interrupt_enabled;
+                    if self.interrupt_enabled {
+                        self.interrupt_pending = true;
+                    }
                 }
             }
         }
 
-        // Set interrupt_pending if a new interrupt was generated
-        if request_interrupt || was_deferred_interrupt {
+        // Set interrupt_pending if a deferred interrupt was generated
+        if was_deferred_interrupt {
             self.interrupt_pending = true;
         }
 
