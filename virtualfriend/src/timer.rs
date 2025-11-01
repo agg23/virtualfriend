@@ -105,7 +105,14 @@ impl Timer {
             self.interrupt_pending = false;
         }
 
-        self.interrupt_enabled = value.interrupt_enabled();
+        let new_interrupt_enabled = value.interrupt_enabled();
+        
+        // Clear interrupt when disabling Tim-Z-Int
+        if self.interrupt_enabled && !new_interrupt_enabled {
+            self.interrupt_pending = false;
+        }
+        
+        self.interrupt_enabled = new_interrupt_enabled;
 
         let new_timer_interval = value.timer_interval();
 
