@@ -525,12 +525,8 @@ impl VIP {
 
             // Enter render mode
             self.in_drawing = true;
-        } else {
-            // Immediately mark drawing as ended, as we're not drawing at all
-            // TODO: This should actually be after 2.8ms
-            self.interrupt_pending.set_xpend(true);
-            self.in_drawing = false;
         }
+        // When drawing is disabled, do nothing, including no XPEND
     }
 
     fn display_framebuffer(&mut self) {
