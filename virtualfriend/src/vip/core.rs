@@ -336,7 +336,11 @@ impl VIP {
                     self.render_state.sbcount = 0;
 
                     self.interrupt_enabled.set_xpend(false);
+                    self.interrupt_enabled.set_sbhit(false);
+                    self.interrupt_enabled.set_timeerr(false);
                     self.interrupt_pending.set_xpend(false);
+                    self.interrupt_pending.set_sbhit(false);
+                    self.interrupt_pending.set_timeerr(false);
                 }
 
                 self.drawing_enabled = *array.get(1).unwrap();
