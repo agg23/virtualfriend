@@ -143,9 +143,9 @@ impl SweepModulate {
 
     pub fn step(&mut self, channel: &mut Channel, modulation_data: &[i8]) {
         let period = if self.should_use_slow_clock {
-            SWEEP_FAST_CYCLE_COUNT
-        } else {
             SWEEP_SLOW_CYCLE_COUNT
+        } else {
+            SWEEP_FAST_CYCLE_COUNT
         };
 
         self.step_counter += 1;
@@ -171,20 +171,12 @@ impl SweepModulate {
         // Update to latest frequency
         self.current_frequency = self.next_frequency;
 
-        if self.current_frequency > 2047 {
-            // Immediately stop this channel
-            // A hardware bug causes this to occur even if the sweep/mod is disabled
-            channel.enable_playback = false;
-
-            return;
-        }
-
         // Halt if interval is set to 0
         if !channel.enable_playback || !self.enable || self.modification_interval == 0 {
             return;
         }
 
-        self.next_frequency = if self.should_modulate {
+        if self.should_modulate {
             // Modulate
             let mod_data = modulation_data[self.modulation_index];
 
@@ -194,16 +186,28 @@ impl SweepModulate {
             if self.modulation_index < 31 || self.loop_modulation {
                 // If loop modulation and 31, add 1 and wrap to 0
                 self.modulation_index = (self.modulation_index + 1) & 0x1F;
+            } else {
+                // Completed incrementing through modulation values. Loop is not set. Stop applying modulation
+                self.enable = false;
             }
 
-            new_frequency
+            self.next_frequency = new_frequency;
         } else {
             // Sweep
             let shift = self.current_frequency >> (self.sweep_shift as usize);
             if self.sweep_direction {
-                self.current_frequency.wrapping_add(shift) & 0x7FF
+                let new_frequency = self.current_frequency + shift;
+                if new_frequency > 2047 {
+                    // Immediately stop this channel
+                    // A hardware bug causes this to occur even if the sweep is disabled
+                    // This cannot happen for modulation as the frequency value is masked
+                    channel.enable_playback = false;
+                    return;
+                }
+                self.next_frequency = new_frequency;
             } else {
-                self.current_frequency.wrapping_sub(shift) & 0x7FF
+                // Clamp to 0 instead of wrapping
+                self.next_frequency = self.current_frequency.saturating_sub(shift);
             }
         }
     }

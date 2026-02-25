@@ -84,6 +84,9 @@ impl Channel {
                 self.auto_deactivate = register.auto_deactivate();
                 self.enable_playback = register.enable_playback();
 
+                // Reset auto-stop counter to the new interval value
+                self.live_interval_counter = self.live_interval;
+
                 // Reset frequency delay counter to beginning of current sample
                 self.sampling_frequency_counter = 0;
 
