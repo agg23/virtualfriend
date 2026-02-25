@@ -22,6 +22,7 @@ pub struct Timer {
     deferred_interrupt: bool,
 
     /// Tracks whether an interrupt is pending (level-triggered behavior)
+    #[savefile_versions = "1.."]
     interrupt_pending: bool,
 }
 
@@ -95,24 +96,25 @@ impl Timer {
     pub fn set_config(&mut self, value: u8) {
         let value = TCR(value);
 
+        let prev_enabled = self.enabled;
         self.enabled = value.enabled();
 
         if value.did_zero_clear() {
-            // Write to Z-Stat-Clr
-            self.did_zero = false;
+            // Z-Stat-Clr only clears did_zero when:
+            // - Timer was already disabled, OR
+            // - Timer is staying enabled AND counter is non-zero
+            // If we're disabling the timer in this set, do not clear
+            if !prev_enabled || (self.enabled && self.counter != 0) {
+                self.did_zero = false;
+            }
+        }
 
-            // Clear interrupt pending state when interrupt is acknowledged
+        // Clear interrupt pending if did_zero was cleared or interrupt is being disabled
+        if !self.did_zero || !value.interrupt_enabled() {
             self.interrupt_pending = false;
         }
 
-        let new_interrupt_enabled = value.interrupt_enabled();
-        
-        // Clear interrupt when disabling Tim-Z-Int
-        if self.interrupt_enabled && !new_interrupt_enabled {
-            self.interrupt_pending = false;
-        }
-        
-        self.interrupt_enabled = new_interrupt_enabled;
+        self.interrupt_enabled = value.interrupt_enabled();
 
         let new_timer_interval = value.timer_interval();
 

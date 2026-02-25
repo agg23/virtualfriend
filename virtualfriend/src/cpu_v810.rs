@@ -664,7 +664,7 @@ impl CpuV810 {
 
         self.set_gen_purpose_reg(30, (result >> 32) as u32);
         self.set_gen_purpose_reg(reg2_index, result_low);
-        // Multiplication only uses lower 32 bits
+        // Multiplication only uses lower 32 bits (according to Scroll). Red Viper uses full 64
         self.psw.update_alu_flags(result_low, overflow, None);
 
         (13, BusActivity::Long)

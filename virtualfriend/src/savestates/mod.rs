@@ -6,7 +6,7 @@ use crate::System;
 
 pub mod savestate;
 
-const MAX_REWIND_HISTORY: usize = 200;
+const MAX_REWIND_HISTORY: usize = 1000;
 
 const FRAME_RECORDING_FREQUENCY: usize = 10;
 const FRAME_REPLAY_FREQUENCY: usize = 4;
