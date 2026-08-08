@@ -8,3 +8,6 @@ members = [ "tools/manifest_generator",
   "virtualfriend_swift",
   "tools/manifest_generator"
 ]
+
+[patch.crates-io]
+radium = { git = "https://github.com/youknowone/ferrilab", branch = "fix-nightly" }
