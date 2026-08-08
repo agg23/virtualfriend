@@ -14,6 +14,7 @@
 		6629A1DB2B4E538200FE2AB3 /* ImageBasedLighting.skybox in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DA2B4E538200FE2AB3 /* ImageBasedLighting.skybox */; };
 		6629A1DD2B4E538300FE2AB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */; };
 		6629A1E02B4E538300FE2AB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */; };
+		662E200D30278D17009620D6 /* FileContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662E200C30278D17009620D6 /* FileContextMenu.swift */; };
 		66307AFF2C39A64A00F07826 /* TouchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307AFE2C39A64A00F07826 /* TouchController.swift */; };
 		66307B012C39EC2A00F07826 /* TouchGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */; };
 		66307B032C39EE8000F07826 /* ControllerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66307B022C39EE8000F07826 /* ControllerView.swift */; };
@@ -97,6 +98,7 @@
 		6629A1DC2B4E538300FE2AB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6629A1DF2B4E538300FE2AB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		6629A1E12B4E538300FE2AB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		662E200C30278D17009620D6 /* FileContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileContextMenu.swift; sourceTree = "<group>"; };
 		66307AFE2C39A64A00F07826 /* TouchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchController.swift; sourceTree = "<group>"; };
 		66307B002C39EC2A00F07826 /* TouchGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchGestureRecognizer.swift; sourceTree = "<group>"; };
 		66307B022C39EE8000F07826 /* ControllerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerView.swift; sourceTree = "<group>"; };
@@ -396,6 +398,7 @@
 				6662F80A2C3F538B00D80CC1 /* CGPoint.swift */,
 				66A061302BE67F5F0043D170 /* Color.swift */,
 				66CDBF3A2C3B86D600A97097 /* Environment.swift */,
+				662E200C30278D17009620D6 /* FileContextMenu.swift */,
 				66A061382BE7EC8B0043D170 /* URL.swift */,
 				66C4BC2B2BCC230E00AA8732 /* View+WindowGeometryPreferences.swift */,
 			);
@@ -614,6 +617,7 @@
 				6688DED72B5DF876004B2123 /* EmuView.swift in Sources */,
 				66E43B1C2C3099C800B8C04E /* EmulatorAudio.swift in Sources */,
 				660955622B62202700A47B1B /* StereoImage.swift in Sources */,
+				662E200D30278D17009620D6 /* FileContextMenu.swift in Sources */,
 				66A061312BE67F5F0043D170 /* Color.swift in Sources */,
 				66C60F0B2B643A5500C1FDF4 /* FilePickerView.swift in Sources */,
 				664E4E932C8CA46300ACD5D8 /* Date.swift in Sources */,

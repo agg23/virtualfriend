@@ -88,6 +88,7 @@ struct FilePickerGridItemView: View {
         .foregroundStyle(.primary)
         #endif
         .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
+        .fileContextMenu(self.entry.entry.url)
 
         ZStack {
             #if os(visionOS)

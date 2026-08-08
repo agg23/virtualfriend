@@ -20,11 +20,10 @@ struct FilePickerView: View {
 
     /// Binding to open fileImporter
     @State private var selectFolder = false
-    @State private var directoryContents: DirectoryContentsState = .loading
 
     var body: some View {
         NavigationStack {
-            switch self.directoryContents {
+            switch self.fileImporter.directoryContents {
             case .loading:
                 ProgressView()
             case .data(let directoryContents):
@@ -53,41 +52,22 @@ struct FilePickerView: View {
                 }
             }
         }
+        .environment(self.fileImporter)
         .onAppear {
+            // Since this view tree gets destroyed when opening the emulator, this onAppear is not a duplicate with the scenePhase onChange
             self.fileImporter.rescanTitles()
-
-            self.buildEntries()
         }
         .onChange(of: self.scenePhase, { prevValue, nextValue in
             if nextValue == .active && prevValue != .active {
                 // We're becoming active after not previously being. Rebuild directories
                 self.fileImporter.rescanTitles()
-
-                self.buildEntries()
             }
         })
         .customFileImporter(self.$selectFolder, onOpen: { url, _ in
             Task {
                 self.fileImporter.importFiles(from: url)
-
-                self.buildEntries()
             }
         })
-    }
-
-    func buildEntries() {
-        self.directoryContents = .data(self.fileImporter.knownTitles.filter { (_, url) in
-            url.pathExtension == "vb"
-        }.sorted { a, b in
-            a.value.lastPathComponent < b.value.lastPathComponent
-        }.map { (hash, url) in
-            FileEntry(url: url, hash: hash)
-        })
-    }
-
-    enum DirectoryContentsState {
-        case loading
-        case data([FileEntry])
     }
 }
 

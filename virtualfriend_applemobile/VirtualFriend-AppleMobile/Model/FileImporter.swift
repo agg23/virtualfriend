@@ -7,9 +7,14 @@
 
 import Foundation
 
-struct FileImporter {
+enum DirectoryContentsState {
+    case loading
+    case data([FileEntry])
+}
+
+@Observable class FileImporter {
     let titlesDirectory: URL
-    var knownTitles: [String: URL] = [:]
+    var directoryContents: DirectoryContentsState = .loading
 
     init() {
         var documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -17,7 +22,7 @@ struct FileImporter {
         self.titlesDirectory = documents
     }
 
-    mutating func rescanTitles() {
+    func fetchKnownTitles() -> [String: URL] {
         var knownTitles: [String: URL] = [:]
 
         do {
@@ -32,14 +37,23 @@ struct FileImporter {
             print("Could not load title directory contents \(error)")
         }
 
-        self.knownTitles = knownTitles
+        return knownTitles
     }
 
-    mutating func importFiles(from url: URL) {
+    func rescanTitles() {
+        self.buildEntries(self.fetchKnownTitles())
+    }
+
+    func delete(at url: URL) {
+        try? FileManager.default.removeItem(at: url)
+        self.rescanTitles()
+    }
+
+    func importFiles(from url: URL) {
         var files: [URL] = []
 
         // Start by rescanning existing titles
-        self.rescanTitles()
+        var knownTitles = self.fetchKnownTitles()
 
         let _ = url.startAccessingSecurityScopedResource()
 
@@ -66,7 +80,7 @@ struct FileImporter {
 
             defer { file.stopAccessingSecurityScopedResource() }
 
-            guard let hash = hashOfFile(atUrl: file), self.knownTitles[hash] == nil else {
+            guard let hash = hashOfFile(atUrl: file), knownTitles[hash] == nil else {
                 print("Importing \(file) failed due to duplicate hash")
 
                 continue
@@ -90,9 +104,21 @@ struct FileImporter {
                 print("Could not copy file \(file) to \(destinationUrl): \(error)")
             }
 
-            self.knownTitles[hash] = destinationUrl
+            knownTitles[hash] = destinationUrl
         }
 
         url.stopAccessingSecurityScopedResource()
+
+        self.buildEntries(knownTitles)
+    }
+
+    private func buildEntries(_ knownTitles: [String: URL]) {
+        self.directoryContents = .data(knownTitles.filter { (_, url) in
+            url.pathExtension == "vb"
+        }.sorted { a, b in
+            a.value.lastPathComponent < b.value.lastPathComponent
+        }.map { (hash, url) in
+            FileEntry(url: url, hash: hash)
+        })
     }
 }

@@ -40,6 +40,7 @@ struct FilePickerListiOSView: View {
                 }
             }
             .tint(self.colorScheme == .light ? .black : .white)
+            .fileContextMenu(file.entry.url)
         }
     }
 }
