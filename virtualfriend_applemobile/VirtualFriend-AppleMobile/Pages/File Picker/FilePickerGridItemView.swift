@@ -82,6 +82,7 @@ struct FilePickerGridItemView: View {
         // Custom button style as we can't make the black above span the entire width of the button without it
         .buttonStyle(.plain)
         .buttonBorderShape(.roundedRectangle(radius: CORNER_RADIUS))
+        .fileContextMenu(self.entry.entry.url)
 
         ZStack {
             #if os(visionOS)

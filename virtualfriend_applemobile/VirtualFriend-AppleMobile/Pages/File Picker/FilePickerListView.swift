@@ -47,6 +47,7 @@ struct FilePickerListView: View {
                     }
                 }
                 .tag(entry)
+                .fileContextMenu(entry.entry.url)
             }
         }
         .onAppear {

@@ -7,12 +7,24 @@
 
 import SwiftUI
 
-struct FileContextMenu: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+struct FileContextMenu: ViewModifier {
+    @Environment(FileImporter.self) private var fileImporter
+
+    let url: URL
+
+    func body(content: Content) -> some View {
+        content.contextMenu {
+            Button(role: .destructive) {
+                self.fileImporter.delete(at: self.url)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 }
 
-#Preview {
-    FileContextMenu()
+extension View {
+    func fileContextMenu(_ url: URL) -> some View {
+        modifier(FileContextMenu(url: url))
+    }
 }
