@@ -28,14 +28,14 @@ struct StereoImageVisionView: View {
 
     let stereoImageChannel: AsyncImageChannel
 
-    let onTap: (() -> Void)?
+    let isInteractive: Bool
 
     let force2D: Bool
 
     // We add a margin around the displayed image so there aren't wraparound textures displayed on the sides
     let MARGIN: Int = 1
 
-    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<CGColor>, onTap: (() -> Void)? = nil, force2D: Bool = false) {
+    init(width: Int, height: Int, scale: Float, stereoImageChannel: AsyncImageChannel, backgroundColor: Binding<CGColor>, isInteractive: Bool = false, force2D: Bool = false) {
         self.width = width
         self.height = height
         self.scale = scale
@@ -43,7 +43,7 @@ struct StereoImageVisionView: View {
         self._backgroundColor = backgroundColor
         self.stereoImageChannel = stereoImageChannel
 
-        self.onTap = onTap
+        self.isInteractive = isInteractive
 
         self.force2D = force2D
     }
@@ -53,9 +53,11 @@ struct StereoImageVisionView: View {
             // Purposefully synchronous
             let entity = ModelEntity(mesh: .generatePlane(width: self.scale * Float(self.width) / Float(self.height), height: self.scale))
 
-            // Set up gesture support
-            entity.generateCollisionShapes(recursive: false)
-            entity.components.set(InputTargetComponent())
+            // Set up gesture support IFF parent handles taps somehow
+            if self.isInteractive {
+                entity.generateCollisionShapes(recursive: false)
+                entity.components.set(InputTargetComponent())
+            }
 
             // Default material until the stereo material is ready
             entity.model?.materials = [PlaceholderMaterial.material(for: self.backgroundColor)]

@@ -51,7 +51,7 @@ struct StereoImageView: View {
 
             Group {
                 #if os(visionOS)
-                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor, force2D: force2D)
+                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor, isInteractive: self.onTap != nil, force2D: force2D)
                 #else
                 let contentView = Metal2DView(stereoImageChannel: self.stereoImageChannel, size: CGSize(width: self.width, height: self.height), integerScaling: self.integerScaling ?? true, backgroundColor: self.backgroundColor)
                 #endif
