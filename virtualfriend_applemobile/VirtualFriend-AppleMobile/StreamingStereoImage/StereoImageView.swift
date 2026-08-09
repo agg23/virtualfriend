@@ -49,9 +49,9 @@ struct StereoImageView: View {
             // Background to prevent flash when loading
             Color(cgColor: self.backgroundColor)
 
-            GeometryReader { geometry in
+            Group {
                 #if os(visionOS)
-                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, geometry: geometry, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor, force2D: force2D)
+                let contentView = StereoImageVisionView(width: self.width, height: self.height, scale: self.scale, stereoImageChannel: self.stereoImageChannel, backgroundColor: self.$backgroundColor, force2D: force2D)
                 #else
                 let contentView = Metal2DView(stereoImageChannel: self.stereoImageChannel, size: CGSize(width: self.width, height: self.height), integerScaling: self.integerScaling ?? true, backgroundColor: self.backgroundColor)
                 #endif
