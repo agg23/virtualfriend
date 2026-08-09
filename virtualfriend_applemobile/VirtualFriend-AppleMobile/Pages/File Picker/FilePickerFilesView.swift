@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+private let viewStyles: [FilePickerViewType] = [.list, .grid];
+
 struct FilePickerFilesView: View {
     @AppStorage("fileViewType") fileprivate var fileViewType: FilePickerViewType = .list
 
@@ -35,28 +37,29 @@ struct FilePickerFilesView: View {
         }
         .navigationTitle("Library")
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                HStack {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
                     Picker("View Style", selection: self.$fileViewType) {
-                        Button("List", systemImage: "list.bullet") {
+                        ForEach(viewStyles, id: \.self) { style in
+                            Button(style.title, systemImage: style.image) {
 
+                            }
+                            .help(style.title)
+                            .tag(style)
                         }
-                        .help("List")
-                        .tag(FilePickerViewType.list)
-
-                        Button("Grid", systemImage: "square.grid.2x2") {
-
-                        }
-                        .help("Grid")
-                        .tag(FilePickerViewType.grid)
                     }
-                    .pickerStyle(.segmented)
-
-                    Spacer()
+                } label: {
+                    Label(self.fileViewType.title, systemImage: self.fileViewType.image)
                 }
             }
 
-            ToolbarItem(placement: .topBarTrailing) {
+            #if !os(visionOS)
+            if #available(iOS 26.0, *) {
+                ToolbarSpacer(placement: .primaryAction)
+            }
+            #endif
+
+            ToolbarItem(placement: .primaryAction) {
                 Button("Import Titles", systemImage: "plus") {
                     self.onImport()
                 }
@@ -68,6 +71,24 @@ struct FilePickerFilesView: View {
 private enum FilePickerViewType: String {
     case list
     case grid
+
+    var title: String {
+        switch (self) {
+        case .list:
+            "List"
+        case .grid:
+            "Grid"
+        }
+    }
+
+    var image: String {
+        switch (self) {
+        case .list:
+            "list.bullet"
+        case .grid:
+            "square.grid.2x2"
+        }
+    }
 }
 
 #Preview {
