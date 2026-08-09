@@ -31,6 +31,17 @@ struct EmuView: View {
 
     var body: some View {
         let content = EmuContentView(emulator: self.emulator, controller: self.controller, title: self.fileEntry.title, fileName: self.fileEntry.entry.url.lastPathComponent, onRestart: self.restart)
+            // This is required so the emulator receives input events that would normally be caught by the OS
+            // Annoyingly this won't let me stop the gamepad from causing the window grabber to highlight, so the window grabber is not set to hidden
+            .handlesGameControllerEvents(matching: .gamepad, withOptions: .receivesEventsInView(false))
+            .onChange(of: self.fileEntry, initial: true) { _, newValue in
+                self.createEmulator(newValue.entry.url)
+            }
+            .onChange(of: self.scenePhase) { prevValue, newValue in
+                guard case .emulator(let emulator) = self.emulator else {
+                    return
+                }
+            }
 
         Group {
             #if os(visionOS)
