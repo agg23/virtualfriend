@@ -9,24 +9,27 @@ import Foundation
 import RealityKit
 
 #if os(visionOS)
+@MainActor
 class StereoImageMaterial {
     static let shared = StereoImageMaterial()
 
-    let task: Task<ShaderGraphMaterial?, Error>
-
-    var material: ShaderGraphMaterial? {
-        get async {
-            guard let material = try? await self.task.value else {
-                fatalError("Could not load material")
-            }
-
-            return material
-        }
-    }
+    private let task: Task<ShaderGraphMaterial?, Never>
 
     private init() {
         self.task = Task {
-            return try? await ShaderGraphMaterial(named: "/Root/SideBySideStereoRenderMaterial", from: "StereoImageMaterial")
+            do {
+                return try await ShaderGraphMaterial(named: "/Root/SideBySideStereoRenderMaterial", from: "StereoImageMaterial")
+            } catch {
+                print("Could not load stereo material: \(error)")
+
+                return nil
+            }
+        }
+    }
+
+    var material: ShaderGraphMaterial? {
+        get async {
+            await self.task.value
         }
     }
 }

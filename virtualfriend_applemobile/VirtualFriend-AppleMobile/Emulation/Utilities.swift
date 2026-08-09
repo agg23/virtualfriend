@@ -8,6 +8,7 @@
 import Foundation
 import CoreImage
 import UIKit
+import Accelerate
 
 private let PIXEL_WIDTH = 384
 private let PIXEL_HEIGHT = 224
@@ -18,29 +19,31 @@ private let context = CIContext()
 
 /// Cache color mixing calculations to speed up generation of rendered images
 struct VBColor {
-    private var red: [UInt8]
-    private var green: [UInt8]
-    private var blue: [UInt8]
+    /// Pixel per brightness value, in the layout `vImageLookupTable_Planar8toPlanar24` expects with RGB as bytes 1, 2, and 3. Byte 0 is unused
+    private var pixels: [UInt32]
 
     init(foregroundColor: CGColor, backgroundColor: CGColor) {
         let highlightComponents = foregroundColor.components!
         let backgroundComponents = backgroundColor.components!
 
-        self.red = [UInt8](repeating: 0, count: 256)
-        self.green = [UInt8](repeating: 0, count: 256)
-        self.blue = [UInt8](repeating: 0, count: 256)
+        self.pixels = [UInt32](repeating: 0, count: 256)
 
         for i in 0..<256 {
             let percent = Double(i) / 255.0
 
-            self.red[i]   = UInt8(truncating: (backgroundComponents[0] + (highlightComponents[0] - backgroundComponents[0]) * percent) * 255.0 as NSNumber)
-            self.green[i] = UInt8(truncating: (backgroundComponents[1] + (highlightComponents[1] - backgroundComponents[1]) * percent) * 255.0 as NSNumber)
-            self.blue[i]  = UInt8(truncating: (backgroundComponents[2] + (highlightComponents[2] - backgroundComponents[2]) * percent) * 255.0 as NSNumber)
+            let red   = UInt32(truncating: (backgroundComponents[0] + (highlightComponents[0] - backgroundComponents[0]) * percent) * 255.0 as NSNumber)
+            let green = UInt32(truncating: (backgroundComponents[1] + (highlightComponents[1] - backgroundComponents[1]) * percent) * 255.0 as NSNumber)
+            let blue  = UInt32(truncating: (backgroundComponents[2] + (highlightComponents[2] - backgroundComponents[2]) * percent) * 255.0 as NSNumber)
+
+            // 0, R, G, B
+            self.pixels[i] = red << 8 | green << 16 | blue << 24
         }
     }
 
-    func get(value: UInt8) -> (UInt8, UInt8, UInt8) {
-        (self.red[Int(value)], self.green[Int(value)], self.blue[Int(value)])
+    func withPixelTable<T>(_ body: (UnsafePointer<UInt32>) -> T) -> T {
+        self.pixels.withUnsafeBufferPointer { buffer in
+            body(buffer.baseAddress!)
+        }
     }
 }
 
@@ -50,21 +53,28 @@ extension VBColor: Equatable {
 
 extension RustVec<UInt8> {
     func ciImage(color: VBColor) -> CIImage {
-        var bytes = [UInt8](repeating: 0, count: PIXEL_BYTE_COUNT)
+        var bitmapData = Data(count: PIXEL_BYTE_COUNT)
 
-        for i in 0..<PIXEL_COUNT {
-            let value = self[i]
+        // Map to RGB, then add alpha in final step
+        var rgbData = Data(count: PIXEL_COUNT * 3)
 
-            let (red, green, blue) = color.get(value: value)
+        withExtendedLifetime(self) {
+            var source = vImage_Buffer(data: UnsafeMutableRawPointer(mutating: self.as_ptr()), height: vImagePixelCount(PIXEL_HEIGHT), width: vImagePixelCount(PIXEL_WIDTH), rowBytes: PIXEL_WIDTH)
 
-            bytes[i * 4 + 0] = red
-            bytes[i * 4 + 1] = green
-            bytes[i * 4 + 2] = blue
-            // Alpha
-            bytes[i * 4 + 3] = 255
+            rgbData.withUnsafeMutableBytes { rgbRaw in
+                var rgb = vImage_Buffer(data: rgbRaw.baseAddress, height: vImagePixelCount(PIXEL_HEIGHT), width: vImagePixelCount(PIXEL_WIDTH), rowBytes: PIXEL_WIDTH * 3)
+
+                color.withPixelTable { table in
+                    _ = vImageLookupTable_Planar8toPlanar24(&source, &rgb, table, vImage_Flags(kvImageDoNotTile))
+                }
+
+                bitmapData.withUnsafeMutableBytes { rgbaRaw in
+                    var rgba = vImage_Buffer(data: rgbaRaw.baseAddress, height: vImagePixelCount(PIXEL_HEIGHT), width: vImagePixelCount(PIXEL_WIDTH), rowBytes: PIXEL_WIDTH * 4)
+
+                    _ = vImageConvert_RGB888toRGBA8888(&rgb, nil, 255, &rgba, false, vImage_Flags(kvImageDoNotTile))
+                }
+            }
         }
-
-        let bitmapData = Data(bytes)
 
         return CIImage(bitmapData: bitmapData, bytesPerRow: PIXEL_WIDTH * 4, size: .init(width: PIXEL_WIDTH, height: PIXEL_HEIGHT), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.displayP3)!)
     }
