@@ -11,6 +11,8 @@ private let SAMPLE_RATE = 41667
 private let FRAME_RATE = 50.0
 private let AUDIO_FRAMES_PER_LOOP: UInt = 400
 
+private let STICK_DEADZONE: Float = 0.6
+
 class Emulator {
     private let fileName: String
     private let controller: EmuController
@@ -260,15 +262,15 @@ class Emulator {
         let sticks = GCController.current?.extendedGamepad?.capture()
 
         // TODO: These controls are broken in the simulator due to https://developer.apple.com/forums/thread/734774
-        let rightDpadDown = sticks?.rightThumbstick.down.isPressed ?? false
-        let rightDpadUp = sticks?.rightThumbstick.up.isPressed ?? false
-        let rightDpadLeft = sticks?.rightThumbstick.left.isPressed ?? false
-        let rightDpadRight = sticks?.rightThumbstick.right.isPressed ?? false
+        let rightDpadDown = isDirectionPressed(sticks?.rightThumbstick.down)
+        let rightDpadUp = isDirectionPressed(sticks?.rightThumbstick.up)
+        let rightDpadLeft = isDirectionPressed(sticks?.rightThumbstick.left)
+        let rightDpadRight = isDirectionPressed(sticks?.rightThumbstick.right)
 
-        let leftDpadRight = sticks?.dpad.right.isPressed ?? false
-        let leftDpadLeft = sticks?.dpad.left.isPressed ?? false
-        let leftDpadUp = sticks?.dpad.up.isPressed ?? false
-        let leftDpadDown = sticks?.dpad.down.isPressed ?? false
+        let leftDpadRight = isDirectionPressed(sticks?.dpad.right) || isDirectionPressed(sticks?.leftThumbstick.right)
+        let leftDpadLeft = isDirectionPressed(sticks?.dpad.left) || isDirectionPressed(sticks?.leftThumbstick.left)
+        let leftDpadUp = isDirectionPressed(sticks?.dpad.up) || isDirectionPressed(sticks?.leftThumbstick.up)
+        let leftDpadDown = isDirectionPressed(sticks?.dpad.down) || isDirectionPressed(sticks?.leftThumbstick.down)
 
         let start = sticks?.buttonMenu.isPressed ?? false
         let select = sticks?.buttonOptions?.isPressed ?? false
@@ -280,4 +282,12 @@ class Emulator {
 enum EmulatorError: Error {
     case audioFormatInit
     case audioBufferInit
+}
+
+private func isDirectionPressed(_ input: GCControllerButtonInput?) -> Bool {
+    guard let input else {
+        return false
+    }
+
+    return input.isAnalog ? input.value >= STICK_DEADZONE : input.isPressed;
 }
